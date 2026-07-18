@@ -317,11 +317,20 @@
   .guide-help{margin-top:17px; padding-top:14px; border-top:1px solid var(--line);}
   .guide-help h3{font-size:14px; margin-bottom:7px;}
   .guide-help ul{padding-left:19px; color:var(--sub); font-size:12.5px; line-height:1.7;}
+  .migration-route{display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin:0 0 16px;}
+  .migration-route span{border:1px solid var(--line); border-radius:9px; background:var(--side-bg); padding:9px 7px; text-align:center; font-size:11.5px; font-weight:800; line-height:1.45;}
+  .migration-route b{display:block; color:var(--green-d); font-size:15px; margin-bottom:2px;}
+  .migration-counts{display:grid; grid-template-columns:1fr 1fr; gap:9px; margin:14px 0; padding:12px; border:1px solid var(--line); border-radius:10px; background:var(--side-bg);}
+  .migration-counts label{display:grid; gap:5px; font-size:12px; font-weight:700; color:var(--sub);}
+  .migration-counts input{min-width:0; border:1px solid var(--line-strong); border-radius:7px; background:var(--bg); color:var(--ink); padding:8px 9px; font:inherit;}
+  .migration-counts p{grid-column:1/-1; margin:0; font-size:11.5px; line-height:1.55; color:var(--sub);}
+  .migration-warning{border:1px solid #e3c462; background:#fff8dc; color:#654e00; border-radius:9px; padding:10px 12px; font-size:12.5px; line-height:1.55; margin-bottom:13px;}
+  :root[data-theme="dark"] .migration-warning{background:#322b17; color:#e5d18b; border-color:#6f5d2b;}
   .guide-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:16px;}
   .guide-action{border:1px solid var(--line-strong); border-radius:8px; background:#fff; color:var(--ink); padding:8px 12px; font-size:12.5px; font-weight:700; cursor:pointer; text-decoration:none;}
   .guide-action.primary{background:var(--green); border-color:var(--green); color:#fff;}
   .guide-action:hover{border-color:var(--green);}
-  @media(max-width:640px){.guide-overlay{padding:10px; align-items:flex-end;}.guide-dialog{max-height:92vh; border-radius:14px 14px 8px 8px;}.guide-head,.guide-body{padding-left:16px;padding-right:16px;}}
+  @media(max-width:640px){.guide-overlay{padding:10px; align-items:flex-end;}.guide-dialog{max-height:92vh; border-radius:14px 14px 8px 8px;}.guide-head,.guide-body{padding-left:16px;padding-right:16px;}.migration-route{grid-template-columns:1fr 1fr;}.migration-counts{grid-template-columns:1fr;}.migration-counts p{grid-column:auto;}}
 
   /* ═══ ENEX 가져오기 미리보기 ═══ */
   .import-preview-overlay{display:none; position:fixed; inset:0; z-index:1100; background:rgba(20,20,18,.62); padding:24px; align-items:center; justify-content:center;}
@@ -425,9 +434,9 @@
   <div class="persist-strip" id="banner"><span id="persistMessage">저장소를 준비하고 있습니다…</span><button class="persist-retry" id="persistRetry" type="button">저장 다시 시도</button></div>
 
   <div class="evernote-bar" id="evernoteBar">
-    <span>🐘➡️ 기존 Evernote 사용자이신가요? 지금까지 쓰던 노트를 전부 가져올 수 있어요.</span>
-    <label class="eb-btn" for="enexFile">Evernote 파일 선택 (.enex)</label>
-    <button class="eb-btn guide" id="enexGuideTop" type="button">📖 ENEX 추출 방법</button>
+    <span>🐘➡️ Evernote의 모든 노트·첨부를 안전하게 백업하고 옮기세요.</span>
+    <button class="eb-btn" id="enexGuideTop" type="button">전체 이전 시작</button>
+    <label class="eb-btn guide" for="enexFile">준비된 ENEX 모두 선택</label>
     <button class="enex-job-action undo" id="enexUndo" type="button">↶ 방금 가져온 묶음 되돌리기</button>
     <button class="eb-close" id="enexClose" title="닫기">✕ 나중에</button>
     <span class="eb-status" id="enexStatus"></span>
@@ -438,6 +447,7 @@
     </div>
   </div>
   <input type="file" id="enexFile" accept=".enex,application/xml,text/xml" multiple style="display:none;">
+  <input type="file" id="enexFolder" accept=".enex,application/xml,text/xml" webkitdirectory directory multiple style="display:none;">
 
   <div class="main" id="main">
     <!-- 사이드바 -->
@@ -457,8 +467,8 @@
       <div id="tagWrap"><div id="tagList"></div></div>
 
       <div class="sec full" style="cursor:default;">가져오기 · 백업</div>
-      <label class="backup-btn enex full" for="enexFile">🐘 Evernote 가져오기 (.enex)</label>
-      <button class="backup-btn enex-guide full" id="enexGuideSide" type="button">📖 Evernote 파일 추출 안내</button>
+      <button class="backup-btn enex full" id="enexGuideSide" type="button">🐘 Evernote 전체 이전 도우미</button>
+      <label class="backup-btn enex-guide full" for="enexFile">준비된 ENEX 모두 선택</label>
       <div class="backup-row full">
         <button class="backup-btn" id="exportBtn">⬇ 내보내기</button>
         <label class="backup-btn" for="importFile">⬆ 가져오기</label>
@@ -480,7 +490,7 @@
         <button class="backup-btn" id="installAppBtn">⊞ 홈 화면에 추가</button>
       </div>
       <div class="backup-status full" id="backupStatus">전체 노트를 파일 하나로 저장·복원합니다.</div>
-      <div class="backup-hint full">Evernote에서 노트북별로 각각 .enex로 내보낸 뒤, 여러 파일을 한번에 선택하세요 (파일명이 노트북 이름이 됩니다). 서식·링크·표·체크박스·웹클립 원본주소와 이미지·PDF·녹음 첨부를 보존합니다.</div>
+      <div class="backup-hint full">권장: Evernote의 모든 노트북을 같은 폴더에 각각 ENEX로 백업한 뒤 그 폴더를 한 번에 선택하세요. 파일명이 노트북 이름이 되며 이미지·PDF·녹음 첨부도 함께 옮깁니다.</div>
       <button class="backup-btn theme-toggle full" id="themeBtn" type="button" aria-pressed="false">🌙 다크 모드</button>
       <div class="backup-fallback full" id="backupFallback">
         <textarea id="backupFallbackText" readonly></textarea>
@@ -568,31 +578,40 @@
 <div class="guide-overlay" id="enexGuide" aria-hidden="true">
   <section class="guide-dialog" role="dialog" aria-modal="true" aria-labelledby="enexGuideTitle">
     <div class="guide-head">
-      <div><h2 id="enexGuideTitle">Evernote에서 ENEX 파일 꺼내기</h2><p>Windows·Mac 데스크톱 앱 기준 · 원본 노트는 삭제되거나 변경되지 않습니다.</p></div>
+      <div><h2 id="enexGuideTitle">Evernote 전체 백업 · 이전 도우미</h2><p>원본은 그대로 두고, 모든 노트북을 먼저 컴퓨터에 백업한 다음 노트플러스P로 옮깁니다.</p></div>
       <button class="guide-close" id="enexGuideClose" type="button" aria-label="추출 안내 닫기">×</button>
     </div>
     <div class="guide-body">
-      <div class="guide-important"><strong>먼저 확인:</strong> 내보내기는 Evernote 웹·모바일이 아니라 <strong>Windows 또는 Mac 데스크톱 앱</strong>에서 진행해야 합니다.</div>
+      <div class="migration-route" aria-label="전체 이전 순서"><span><b>1</b>전체량 확인</span><span><b>2</b>ENEX 백업</span><span><b>3</b>폴더 선택</span><span><b>4</b>검토·완료</span></div>
+      <div class="guide-important"><strong>가장 중요한 점:</strong> Evernote 공식 기능은 계정 전체를 한 번에 한 파일로 내보내지 못합니다. <strong>Windows 또는 Mac 데스크톱 앱</strong>에서 노트북 전체를 하나씩 ENEX로 내보내 같은 폴더에 모으는 것이 가장 빠르고 확실한 전체 백업 방법입니다.</div>
+      <div class="migration-warning"><strong>웹·휴대폰에서는 내보낼 수 없습니다.</strong> 개별 노트를 고르면 한 번에 최대 100개이므로, 빠뜨리지 않으려면 반드시 <strong>노트북 전체</strong>를 선택해 내보내세요.</div>
       <div class="guide-steps">
-        <div class="guide-step"><strong>Evernote 데스크톱 앱을 엽니다</strong>노트가 들어 있는 계정으로 로그인하세요.</div>
-        <div class="guide-step"><strong>노트북 또는 옮길 노트를 선택합니다</strong>노트북별로 내보내면 파일명이 노트플러스P의 노트북 이름으로 사용되어 정리가 쉽습니다.</div>
-        <div class="guide-step"><strong>선택 항목을 마우스 오른쪽 버튼으로 누릅니다</strong>메뉴에서 <b>Export…(내보내기…)</b>를 선택하세요.</div>
-        <div class="guide-step"><strong>파일 형식으로 ENEX를 선택합니다</strong>태그·생성일 같은 속성도 함께 내보내도록 체크한 뒤 <b>Export</b>를 누르세요.</div>
-        <div class="guide-step"><strong>저장된 .enex 파일을 확인합니다</strong>일반적으로 바탕화면에 저장됩니다. 파일이 250MB를 넘으면 노트를 더 작은 묶음으로 나눠 다시 내보내세요.</div>
-        <div class="guide-step"><strong>노트플러스P로 돌아와 파일을 선택합니다</strong>여러 ENEX를 한 번에 선택할 수 있으며 노트·서식·이미지·PDF·녹음을 가져옵니다.</div>
+        <div class="guide-step"><strong>전용 백업 폴더를 먼저 만드세요</strong>예: 바탕화면에 <b>Evernote 전체 백업</b> 폴더를 만듭니다. 이 폴더는 이전이 끝나도 원본 백업으로 보관하세요.</div>
+        <div class="guide-step"><strong>Evernote 데스크톱 앱에서 노트북을 엽니다</strong>왼쪽 <b>Notebooks(노트북)</b>에서 첫 노트북을 선택하고 마우스 오른쪽 버튼 → <b>Export…(내보내기…)</b>를 누릅니다.</div>
+        <div class="guide-step"><strong>ENEX와 모든 속성을 선택합니다</strong>형식은 <b>ENEX</b>, 태그·생성일·수정일·작성자 등 표시되는 속성은 모두 체크합니다. PDF 형식은 실제 첨부파일을 온전히 담지 못하므로 사용하지 마세요.</div>
+        <div class="guide-step"><strong>노트북 이름으로 같은 폴더에 저장합니다</strong>예: <b>업무.enex</b>, <b>개인.enex</b>. 모든 노트북에 같은 작업을 반복합니다. 노트북 하나가 250MB를 넘으면 Evernote 내보내기 크기를 나누어 저장합니다.</div>
+        <div class="guide-step"><strong>빠진 노트북이 없는지 확인합니다</strong>Evernote의 노트북 수와 백업 폴더의 ENEX 파일 수를 비교하세요. 분할 파일이 있으면 ENEX 파일 수가 더 많아도 정상입니다.</div>
+        <div class="guide-step"><strong>아래에서 백업 폴더 전체를 선택합니다</strong>노트플러스P가 ENEX만 골라 분석하고, 저장하기 전에 파일·노트·첨부 수와 중복을 보여줍니다. 확인 전에는 기존 노트가 바뀌지 않습니다.</div>
+      </div>
+      <div class="migration-counts">
+        <label>Evernote에서 확인한 전체 노트 수<input id="enexExpectedNotes" type="number" min="0" inputmode="numeric" placeholder="모르면 비워두기"></label>
+        <label>Evernote의 전체 노트북 수<input id="enexExpectedNotebooks" type="number" min="0" inputmode="numeric" placeholder="모르면 비워두기"></label>
+        <p>선택사항입니다. 숫자를 적으면 가져오기 미리보기에서 발견한 수와 비교해 누락 가능성을 알려드립니다. Evernote 계정 요약의 수에는 휴지통·공유 항목이 포함될 수 있어 차이가 항상 오류를 뜻하지는 않습니다.</p>
       </div>
       <div class="guide-help">
-        <h3>메뉴가 보이지 않을 때</h3>
+        <h3>완료 기준</h3>
         <ul>
-          <li>Evernote 웹을 사용 중이면 데스크톱 앱을 설치해 같은 계정으로 로그인하세요.</li>
-          <li>한 번에 선택한 개별 노트는 최대 100개까지 내보낼 수 있습니다. 노트북 전체 내보내기도 가능합니다.</li>
-          <li>HTML이나 PDF가 아니라 <b>ENEX</b> 형식을 선택해야 첨부와 메타데이터를 가장 온전히 옮길 수 있습니다.</li>
-          <li>250MB 초과 ENEX는 노트 선택 범위를 줄여 여러 파일로 나누세요.</li>
+          <li>백업 폴더에 모든 노트북의 ENEX가 있으며 파일 크기가 0KB가 아닙니다.</li>
+          <li>미리보기의 발견 노트 수가 기대한 수와 맞거나, 차이 원인을 확인했습니다.</li>
+          <li>가져오기 완료 뒤 노트북·태그·이미지·PDF·녹음 표본을 열어 확인했습니다.</li>
+          <li>확인이 끝날 때까지 Evernote 원본과 ENEX 백업 폴더를 삭제하지 않습니다.</li>
         </ul>
       </div>
       <div class="guide-actions">
-        <button class="guide-action primary" type="button" id="enexGuideChoose">ENEX 파일 선택</button>
+        <button class="guide-action primary" type="button" id="enexGuideChooseFolder">백업 폴더 전체 선택</button>
+        <button class="guide-action" type="button" id="enexGuideChoose">ENEX 파일 여러 개 선택</button>
         <a class="guide-action" href="https://help.evernote.com/hc/en-us/articles/209005557-Export-Notes-and-Notebooks-as-ENEX-or-HTML" target="_blank" rel="noopener noreferrer">Evernote 공식 안내 열기</a>
+        <a class="guide-action" href="https://help.evernote.com/hc/en-us/articles/47135452927251-How-to-check-your-current-usage" target="_blank" rel="noopener noreferrer">전체 노트 수 확인 방법</a>
       </div>
     </div>
   </section>
@@ -865,7 +884,11 @@ document.getElementById("themeBtn").onclick=function(){
   persist().then(function(ok){ setBackupStatus(ok?"화면 모드를 저장했습니다.":"화면 모드는 이번 세션에만 유지됩니다."); });
 };
 
-var enexGuideLastFocus=null;
+var enexGuideLastFocus=null,enexExpectedNotes=0,enexExpectedNotebooks=0;
+function captureEnexExpectations(){
+  enexExpectedNotes=Math.max(0,Number(document.getElementById("enexExpectedNotes").value)||0);
+  enexExpectedNotebooks=Math.max(0,Number(document.getElementById("enexExpectedNotebooks").value)||0);
+}
 function openEnexGuide(opener){
   var guide=document.getElementById("enexGuide");
   enexGuideLastFocus=opener||document.activeElement;
@@ -881,7 +904,14 @@ function closeEnexGuide(returnFocus){
 document.getElementById("enexGuideTop").onclick=function(){openEnexGuide(this);};
 document.getElementById("enexGuideSide").onclick=function(){openEnexGuide(this);};
 document.getElementById("enexGuideClose").onclick=function(){closeEnexGuide(true);};
-document.getElementById("enexGuideChoose").onclick=function(){closeEnexGuide(false);document.getElementById("enexFile").click();};
+document.getElementById("enexGuideChoose").onclick=function(){captureEnexExpectations();closeEnexGuide(false);document.getElementById("enexFile").click();};
+document.getElementById("enexGuideChooseFolder").onclick=function(){captureEnexExpectations();closeEnexGuide(false);document.getElementById("enexFolder").click();};
+document.getElementById("enexFolder").onchange=function(){
+  var input=this,all=Array.prototype.slice.call(input.files||[]),files=all.filter(function(file){return /\.enex$/i.test(file.name||"");});
+  if(!files.length){var msg="선택한 폴더에서 ENEX 파일을 찾지 못했습니다. Evernote 데스크톱 앱에서 .enex 형식으로 먼저 내보내세요.";document.getElementById("enexStatus").textContent=msg;setBackupStatus(msg);input.value="";return;}
+  if(files.length!==all.length)setBackupStatus("폴더의 "+all.length+"개 항목 중 ENEX "+files.length+"개만 안전하게 선택했습니다.");
+  document.getElementById("enexFile").onchange({target:{files:files,value:""}});input.value="";
+};
 document.getElementById("enexGuide").addEventListener("click",function(e){if(e.target===this) closeEnexGuide(true);});
 document.addEventListener("keydown",function(e){
   var guide=document.getElementById("enexGuide");
@@ -977,12 +1007,20 @@ function renderImportPreview(){
   });
   updateImportPreviewSelection();
 }
+function migrationCoverageText(payload){
+  var notebookNames={};(payload.notes||[]).forEach(function(note){notebookNames[note.notebook||"기본 노트북"]=true;});
+  var foundNotes=(payload.notes||[]).length,foundNotebooks=Object.keys(notebookNames).length,parts=[];
+  if(enexExpectedNotes) parts.push(foundNotes===enexExpectedNotes?"✓ 전체 노트 수 일치":"⚠ 기대 노트 "+enexExpectedNotes+"개와 "+Math.abs(enexExpectedNotes-foundNotes)+"개 차이");
+  if(enexExpectedNotebooks) parts.push(foundNotebooks>=enexExpectedNotebooks?"✓ 노트북 수 확인":"⚠ 기대 노트북 "+enexExpectedNotebooks+"개, 발견 "+foundNotebooks+"개");
+  return parts.join(" · ");
+}
 function showImportPreview(payload){
   payload.duplicateCount=markImportDuplicates(payload.notes);
+  payload.coverageMessage=migrationCoverageText(payload);
   pendingEnexImport=payload; importPreviewLastFocus=document.activeElement;
   var preview=document.getElementById("importPreview");
   var failureText=payload.failFiles?" · 실패·제외 "+payload.failFiles+"개":"";
-  document.getElementById("importPreviewSummary").textContent=payload.okFiles+"개 파일에서 노트 "+payload.notes.length+"개와 첨부 "+payload.attachments.length+"개를 찾았습니다"+(payload.duplicateCount?" · 중복 후보 "+payload.duplicateCount+"개":"")+failureText+". 확인 전에는 기존 데이터가 바뀌지 않습니다.";
+  document.getElementById("importPreviewSummary").textContent=payload.okFiles+"개 파일에서 노트 "+payload.notes.length+"개와 첨부 "+payload.attachments.length+"개를 찾았습니다"+(payload.duplicateCount?" · 중복 후보 "+payload.duplicateCount+"개":"")+failureText+(payload.coverageMessage?" · "+payload.coverageMessage:"")+". 확인 전에는 기존 데이터가 바뀌지 않습니다.";
   renderImportPreview();
   preview.classList.add("show"); preview.setAttribute("aria-hidden","false");
   document.getElementById("importPreviewList").scrollTop=0;
@@ -1065,6 +1103,7 @@ function confirmPendingEnexImport(){
     render();
     refreshEvernoteBar();
     var msg=payload.okFiles+"개 파일에서 선택한 노트 "+selectedCount+"개 · 새 노트 "+newNotes.length+"개 · 첨부 "+selectedAttachments.length+"개 가져옴";
+    if(payload.coverageMessage) msg+=" · "+payload.coverageMessage;
     if(mergePlans.length) msg+=" · 기존 노트 "+mergePlans.length+"개에 태그·첨부 병합";
     if(payload.totalAttachmentErrors>0) msg+=" · 지원하지 않거나 손상된 첨부 "+payload.totalAttachmentErrors+"개 제외";
     if(!saved) msg+=" · 첨부는 현재 세션에만 유지됨";
