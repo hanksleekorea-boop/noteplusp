@@ -308,7 +308,7 @@
   /* ═══ Evernote ENEX 추출 튜토리얼 ═══ */
   .guide-overlay{display:none; position:fixed; inset:0; z-index:1000; background:rgba(20,20,18,.56); padding:24px; align-items:center; justify-content:center;}
   .guide-overlay.show{display:flex;}
-  .guide-dialog{width:min(720px,100%); max-height:min(88vh,820px); overflow-y:auto; background:var(--bg); color:var(--ink); border:1px solid var(--line-strong); border-radius:14px; box-shadow:0 18px 60px rgba(0,0,0,.28);}
+  .guide-dialog{width:min(860px,100%); max-height:min(90vh,900px); overflow-y:auto; background:var(--bg); color:var(--ink); border:1px solid var(--line-strong); border-radius:14px; box-shadow:0 18px 60px rgba(0,0,0,.28);}
   .guide-head{display:flex; align-items:flex-start; gap:16px; padding:20px 22px 14px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:1;}
   .guide-head h2{font-size:20px; line-height:1.35; margin:0;}
   .guide-head p{font-size:12.5px; color:var(--sub); margin-top:4px; line-height:1.5;}
@@ -320,6 +320,16 @@
   .guide-step{counter-increment:guide-step; position:relative; border:1px solid var(--line); border-radius:10px; padding:12px 14px 12px 48px; min-height:48px; line-height:1.55; font-size:13.5px;}
   .guide-step::before{content:counter(guide-step); position:absolute; left:13px; top:12px; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--green); color:#fff; font-size:12px; font-weight:800;}
   .guide-step strong{display:block; margin-bottom:2px;}
+  .guide-step p{margin:4px 0 0;}
+  .guide-shot{margin:12px 0 2px; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:#fff;}
+  .guide-shot img{display:block; width:100%; height:auto; background:#f4f4f2;}
+  .guide-shot figcaption{padding:8px 10px; color:var(--sub); background:var(--side-bg); border-top:1px solid var(--line); font-size:11.5px; line-height:1.5;}
+  .guide-shot a{color:var(--green-d); font-weight:700;}
+  .guide-screen-badge{display:inline-block; margin-right:6px; padding:2px 7px; border-radius:999px; background:var(--green-l); color:var(--green-d); font-size:10.5px; font-weight:800;}
+  .guide-exact{margin-top:9px; padding:9px 10px; border-left:4px solid var(--green); border-radius:0 7px 7px 0; background:var(--green-ll); font-size:12.5px; line-height:1.6;}
+  .guide-trap{margin-top:8px; padding:8px 10px; border-radius:7px; background:#fff0ee; color:#7a2920; font-size:12px; line-height:1.55;}
+  :root[data-theme="dark"] .guide-shot{background:#171816;}
+  :root[data-theme="dark"] .guide-trap{background:#3a201d; color:#f0b6ae;}
   .guide-help{margin-top:17px; padding-top:14px; border-top:1px solid var(--line);}
   .guide-help h3{font-size:14px; margin-bottom:7px;}
   .guide-help ul{padding-left:19px; color:var(--sub); font-size:12.5px; line-height:1.7;}
@@ -336,7 +346,7 @@
   .guide-action{border:1px solid var(--line-strong); border-radius:8px; background:#fff; color:var(--ink); padding:8px 12px; font-size:12.5px; font-weight:700; cursor:pointer; text-decoration:none;}
   .guide-action.primary{background:var(--green); border-color:var(--green); color:#fff;}
   .guide-action:hover{border-color:var(--green);}
-  @media(max-width:640px){.guide-overlay{padding:10px; align-items:flex-end;}.guide-dialog{max-height:92vh; border-radius:14px 14px 8px 8px;}.guide-head,.guide-body{padding-left:16px;padding-right:16px;}.migration-route{grid-template-columns:1fr 1fr;}.migration-counts{grid-template-columns:1fr;}.migration-counts p{grid-column:auto;}}
+  @media(max-width:640px){.guide-overlay{padding:10px; align-items:flex-end;}.guide-dialog{max-height:94vh; border-radius:14px 14px 8px 8px;}.guide-head,.guide-body{padding-left:16px;padding-right:16px;}.guide-head h2{font-size:18px;}.migration-route{grid-template-columns:1fr 1fr;}.migration-counts{grid-template-columns:1fr;}.migration-counts p{grid-column:auto;}.guide-step{padding-left:43px;padding-right:10px}.guide-step::before{left:10px}.guide-shot{margin-left:-32px;}.guide-shot figcaption{font-size:10.5px;}}
 
   /* ═══ ENEX 가져오기 미리보기 ═══ */
   .import-preview-overlay{display:none; position:fixed; inset:0; z-index:1100; background:rgba(20,20,18,.62); padding:24px; align-items:center; justify-content:center;}
@@ -588,20 +598,20 @@
 <div class="guide-overlay" id="enexGuide" aria-hidden="true">
   <section class="guide-dialog" role="dialog" aria-modal="true" aria-labelledby="enexGuideTitle">
     <div class="guide-head">
-      <div><h2 id="enexGuideTitle">Evernote 전체 백업 · 이전 도우미</h2><p>원본은 그대로 두고, 모든 노트북을 먼저 컴퓨터에 백업한 다음 노트플러스P로 옮깁니다.</p></div>
+      <div><h2 id="enexGuideTitle">Evernote 모든 파일 가져오기 — 그대로 따라 하기</h2><p>실제 Evernote Windows 화면을 보며 모든 노트북을 한 폴더에 백업하고, 그 폴더를 노트플러스P에서 한 번만 선택합니다.</p></div>
       <button class="guide-close" id="enexGuideClose" type="button" aria-label="추출 안내 닫기">×</button>
     </div>
     <div class="guide-body">
-      <div class="migration-route" aria-label="전체 이전 순서"><span><b>1</b>전체량 확인</span><span><b>2</b>ENEX 백업</span><span><b>3</b>폴더 선택</span><span><b>4</b>검토·완료</span></div>
-      <div class="guide-important"><strong>가장 중요한 점:</strong> Evernote 공식 기능은 계정 전체를 한 번에 한 파일로 내보내지 못합니다. <strong>Windows 또는 Mac 데스크톱 앱</strong>에서 노트북 전체를 하나씩 ENEX로 내보내 같은 폴더에 모으는 것이 가장 빠르고 확실한 전체 백업 방법입니다.</div>
-      <div class="migration-warning"><strong>웹·휴대폰에서는 내보낼 수 없습니다.</strong> 개별 노트를 고르면 한 번에 최대 100개이므로, 빠뜨리지 않으려면 반드시 <strong>노트북 전체</strong>를 선택해 내보내세요.</div>
+      <div class="migration-route" aria-label="전체 이전 순서"><span><b>1</b>PC 앱 열기</span><span><b>2</b>노트북별 ENEX</span><span><b>3</b>한 폴더에 모으기</span><span><b>4</b>폴더 한 번 선택</span></div>
+      <div class="guide-important"><strong>완료 모습:</strong> <b>업무.enex · 개인.enex · 자료.enex…</b>처럼 모든 노트북의 ENEX가 한 폴더에 모입니다. 마지막에 노트플러스P의 <strong>백업 폴더 전체 선택</strong>을 한 번 누르면 이미지·PDF·녹음까지 함께 분석합니다.</div>
+      <div class="migration-warning"><strong>Evernote 공식 제한을 먼저 알아두세요.</strong> 계정 전체를 한 파일로 내보내는 버튼은 없습니다. 개별 노트를 선택하면 최대 100개뿐이므로, <strong>Windows 또는 Mac 데스크톱 앱에서 노트북 전체를 하나씩</strong> 내보내야 빠짐없이 옮길 수 있습니다. 웹·휴대폰에서는 ENEX 내보내기가 되지 않습니다.</div>
       <div class="guide-steps">
-        <div class="guide-step"><strong>전용 백업 폴더를 먼저 만드세요</strong>예: 바탕화면에 <b>Evernote 전체 백업</b> 폴더를 만듭니다. 이 폴더는 이전이 끝나도 원본 백업으로 보관하세요.</div>
-        <div class="guide-step"><strong>Evernote 데스크톱 앱에서 노트북을 엽니다</strong>왼쪽 <b>Notebooks(노트북)</b>에서 첫 노트북을 선택하고 마우스 오른쪽 버튼 → <b>Export…(내보내기…)</b>를 누릅니다.</div>
-        <div class="guide-step"><strong>ENEX와 모든 속성을 선택합니다</strong>형식은 <b>ENEX</b>, 태그·생성일·수정일·작성자 등 표시되는 속성은 모두 체크합니다. PDF 형식은 실제 첨부파일을 온전히 담지 못하므로 사용하지 마세요.</div>
-        <div class="guide-step"><strong>노트북 이름으로 같은 폴더에 저장합니다</strong>예: <b>업무.enex</b>, <b>개인.enex</b>. 모든 노트북에 같은 작업을 반복합니다. 노트북 하나가 250MB를 넘으면 Evernote 내보내기 크기를 나누어 저장합니다.</div>
-        <div class="guide-step"><strong>빠진 노트북이 없는지 확인합니다</strong>Evernote의 노트북 수와 백업 폴더의 ENEX 파일 수를 비교하세요. 분할 파일이 있으면 ENEX 파일 수가 더 많아도 정상입니다.</div>
-        <div class="guide-step"><strong>아래에서 백업 폴더 전체를 선택합니다</strong>노트플러스P가 ENEX만 골라 분석하고, 저장하기 전에 파일·노트·첨부 수와 중복을 보여줍니다. 확인 전에는 기존 노트가 바뀌지 않습니다.</div>
+        <div class="guide-step"><strong>PC에서 Evernote 데스크톱 앱을 열고 동기화를 끝냅니다</strong><p>노트가 들어 있는 계정으로 로그인한 뒤, 노트북 목록과 최근 노트가 모두 보일 때까지 기다립니다. 바탕화면에 <b>Evernote 전체 백업</b> 폴더 하나를 만들어 두세요.</p><div class="guide-exact"><b>화면에서 찾을 말:</b> 왼쪽 메뉴의 <b>Notebooks(노트북)</b>. <b>Notes(노트)</b>가 아닙니다.</div></div>
+        <div class="guide-step"><strong>Notebooks → 첫 노트북의 점 3개(…) → Export notebook…</strong><p>Windows에서는 노트북 행 오른쪽의 점 3개를 누릅니다. 점 3개가 없으면 노트북 이름을 마우스 오른쪽 버튼으로 누르고 <b>Export notebook… / Export…</b>를 고릅니다. Mac도 노트북 이름을 오른쪽 클릭합니다.</p><figure class="guide-shot"><img src="./assets/evernote-guide/evernote-windows-notebook-menu.png" alt="실제 Evernote Windows 노트북 목록에서 왼쪽 Notebooks, 노트북 오른쪽 점 3개, Export notebook 메뉴가 표시된 화면" width="1520" height="824"><figcaption><span class="guide-screen-badge">실제 Evernote Windows 화면</span>빨간 점선 3곳을 순서대로 누르세요. 화면 예시 출처: <a href="https://www.cbackup.com/articles/backup-evernote-to-google-drive.html" target="_blank" rel="noopener noreferrer">CBackup 안내</a></figcaption></figure><div class="guide-trap"><b>여기서 가장 많이 틀립니다:</b> 왼쪽 <b>Notes</b>에서 전체 선택하거나 <b>File → Export Notes…</b>를 누르면 100개 제한에 걸릴 수 있습니다. 반드시 노트북 이름의 메뉴를 여세요.</div></div>
+        <div class="guide-step"><strong>ENEX format (.enex) + 모든 속성 체크 → Export</strong><p><b>ENEX format (.enex)</b>를 선택하고 Note title·Created date·Updated date·Author·Reminders·Tags·Tasks·Location·Source URL처럼 보이는 속성을 모두 체크합니다. 큰 노트북은 <b>Split file size</b>를 켜고 <b>300MB</b>로 지정하세요.</p><figure class="guide-shot"><img src="./assets/evernote-guide/evernote-windows-enex-settings.png" alt="실제 Evernote Windows 내보내기 창에서 ENEX 형식, 모든 노트 속성, Export 버튼이 표시된 화면" width="1520" height="825"><figcaption><span class="guide-screen-badge">실제 Evernote Windows 화면</span>빨간 점선 영역 2곳을 확인하고 오른쪽 아래 <b>Export</b>를 누르세요. 화면 예시 출처: <a href="https://www.cbackup.com/articles/backup-evernote-to-google-drive.html" target="_blank" rel="noopener noreferrer">CBackup 안내</a></figcaption></figure><div class="guide-trap"><b>PDF를 선택하지 마세요.</b> PDF 내보내기는 PDF·문서·녹음 같은 첨부 원본을 완전한 파일로 보존하지 못할 수 있습니다.</div></div>
+        <div class="guide-step"><strong>노트북 이름으로 같은 폴더에 저장하고 모든 노트북에 반복합니다</strong><p>예: <b>업무.enex</b>, <b>개인.enex</b>, <b>자료.enex</b>. 저장 위치는 매번 처음 만든 <b>Evernote 전체 백업</b> 폴더로 고정합니다. 한 노트북이 여러 ENEX로 나뉘어도 모두 같은 폴더에 두면 됩니다.</p><div class="guide-exact"><b>반복 종료 기준:</b> Evernote의 노트북 목록을 위에서 아래까지 내려가며 각 노트북을 한 번씩 내보냈습니다.</div></div>
+        <div class="guide-step"><strong>노트북 수와 ENEX 파일 수를 비교합니다</strong><p>분할이 없다면 두 수가 같아야 합니다. 분할 파일이 있으면 ENEX 파일 수가 더 많아도 정상입니다. 0KB 파일은 실패한 것이므로 그 노트북만 다시 내보내세요.</p></div>
+        <div class="guide-step"><strong>아래 ‘백업 폴더 전체 선택’을 딱 한 번 누릅니다</strong><p>방금 만든 폴더를 고르면 노트플러스P가 안의 ENEX를 모두 찾아 분석합니다. 저장하기 전 미리보기에서 파일·노트·첨부·중복·제외 항목을 보여주며, 확인 전에는 기존 노트가 바뀌지 않습니다.</p><div class="guide-exact"><b>이 단계부터는 한 번에 진행됩니다.</b> 전체 용량이 크면 안전한 묶음으로 자동 나누어 순서대로 처리합니다.</div></div>
       </div>
       <div class="migration-counts">
         <label>Evernote에서 확인한 전체 노트 수<input id="enexExpectedNotes" type="number" min="0" inputmode="numeric" placeholder="모르면 비워두기"></label>
@@ -1207,7 +1217,7 @@ function confirmPendingEnexImport(){
         msg+=" · 다음 자동 묶음을 준비합니다.";document.getElementById("enexStatus").textContent=msg;setBackupStatus(msg);startNextEnexBatch();return;
       }
       var finalCoverage=enexBatchCoverageText();
-      msg="전체 자동 분할 가져오기 완료 · 파일 "+enexBatchSession.importedFiles+"개 · 노트 "+enexBatchSession.importedNotes+"개"+(enexBatchSession.rejected.length?" · 250MB 초과 제외 "+enexBatchSession.rejected.length+"개":"")+(enexBatchSession.persistenceLimited?" · 일부 첨부는 현재 세션에만 유지됨":"")+(finalCoverage?" · "+finalCoverage:"");
+      msg="전체 자동 분할 가져오기 완료 · 파일 "+enexBatchSession.importedFiles+"개 · 노트 "+enexBatchSession.importedNotes+"개"+(enexBatchSession.rejected.length?" · 350MB 초과 제외 "+enexBatchSession.rejected.length+"개":"")+(enexBatchSession.persistenceLimited?" · 일부 첨부는 현재 세션에만 유지됨":"")+(finalCoverage?" · "+finalCoverage:"");
       clearEnexBatchSession();activeEnexReport=null;
     }
     document.getElementById("enexStatus").textContent=msg; setBackupStatus(msg);
@@ -2136,7 +2146,7 @@ document.getElementById("enexClose").onclick=function(){
 };
 var ENEX_WARN_FILE_BYTES=50*1024*1024;
 var ENEX_WARN_TOTAL_BYTES=150*1024*1024;
-var ENEX_MAX_FILE_BYTES=250*1024*1024;
+var ENEX_MAX_FILE_BYTES=350*1024*1024;
 var ENEX_MAX_TOTAL_BYTES=500*1024*1024;
 var ENEX_STORAGE_RESERVE_RATIO=1.25;
 var ENEX_STORAGE_MIN_RESERVE_BYTES=16*1024*1024;
@@ -2165,7 +2175,7 @@ function checkEnexStoragePreflight(inputFiles){
 function createEnexImportReport(files,split,preflight){
   files=Array.prototype.slice.call(files||[]);split=split||{batches:[files],rejected:[]};
   return normalizeImportReport({id:"report_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8),startedAt:Date.now(),outcome:"in-progress",automaticBatch:split.batches.length>1,plannedBatchCount:Math.max(1,split.batches.length),selectedFileCount:files.length,
-    sourceFiles:files.map(function(file){return {name:file.name,size:Number(file.size)||0};}),rejectedFiles:(split.rejected||[]).map(function(file){return file.name+" (250MB 초과)";}),expectedNoteCount:enexExpectedNotes,expectedNotebookCount:enexExpectedNotebooks,storagePreflight:preflight||null});
+    sourceFiles:files.map(function(file){return {name:file.name,size:Number(file.size)||0};}),rejectedFiles:(split.rejected||[]).map(function(file){return file.name+" (350MB 초과)";}),expectedNoteCount:enexExpectedNotes,expectedNotebookCount:enexExpectedNotebooks,storagePreflight:preflight||null});
 }
 function currentEnexReport(){return enexBatchSession&&enexBatchSession.report?enexBatchSession.report:activeEnexReport;}
 function saveCurrentEnexReport(report){
@@ -2579,7 +2589,7 @@ document.getElementById("enexFile").onchange = function(e){
     activeEnexReport=createEnexImportReport(selectedFiles,split,activeEnexPreflight);
     if(split.batches.length>1){
       enexBatchSession={queue:split.batches.slice(1),total:split.batches.length,current:1,foundNotes:0,notebooks:{},importedNotes:0,importedFiles:0,persistenceLimited:false,undoBatch:null,report:activeEnexReport,rejected:split.rejected.map(function(file){return file.name;})};
-      var batchMsg="전체 "+selectedFiles.length+"개 ENEX를 안전한 크기의 "+split.batches.length+"개 묶음으로 자동 처리합니다."+(split.rejected.length?" 250MB 초과 "+split.rejected.length+"개는 제외합니다.":"");
+      var batchMsg="전체 "+selectedFiles.length+"개 ENEX를 안전한 크기의 "+split.batches.length+"개 묶음으로 자동 처리합니다."+(split.rejected.length?" 350MB 초과 "+split.rejected.length+"개는 제외합니다.":"");
       document.getElementById("enexStatus").textContent=batchMsg;setBackupStatus(batchMsg);
       document.getElementById("enexFile").onchange({target:{files:split.batches[0],value:""},_enexBatch:true});e.target.value="";return;
     }
@@ -2595,9 +2605,9 @@ document.getElementById("enexFile").onchange = function(e){
   var files=plan.accepted;
   var totalNotes=0,totalAttachNotes=0,totalAttachmentErrors=0,totalAttachmentIssues=[],stagedNotes=[],importedAttachments=[],okFiles=0;
   var failFiles=plan.rejected.length;
-  var failNames=plan.rejected.map(function(file){return file.name+"(250MB 초과)";});
+  var failNames=plan.rejected.map(function(file){return file.name+"(350MB 초과)";});
   if(!files.length){
-    var noneMsg="가져올 수 있는 파일이 없습니다 — "+failNames.join(", ")+". 큰 ENEX는 250MB보다 작게 나눠 내보내세요.";
+    var noneMsg="가져올 수 있는 파일이 없습니다 — "+failNames.join(", ")+". 큰 ENEX는 Evernote에서 300MB로 나눠 다시 내보내세요.";
     recordEnexReportResult({notes:[],okFiles:0,failFiles:failFiles,failNames:failNames,totalAttachmentErrors:0},[],[],[]);persist();
     restoreEnexBannerAfterNoChange();document.getElementById("enexStatus").textContent=noneMsg; setBackupStatus(noneMsg+" 기존 노트는 그대로입니다.");
     setEnexProgress(0,"가져오기 없음",true); e.target.value=""; return;

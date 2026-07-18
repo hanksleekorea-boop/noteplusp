@@ -266,6 +266,16 @@
 - 화면 검증: `artifacts/notebook_tag_management.png`를 직접 확인했다.
 - 다음 자동 개발 항목은 모바일 화면 탐색 구조 개선이다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
 
+## 39. 2026-07-18 · 실제 Evernote 화면 기반 전체 이전 튜토리얼
+- 앱의 최우선 온보딩 제목을 `Evernote 모든 파일 가져오기 — 그대로 따라 하기`로 바꾸고, 목표를 `모든 노트북의 ENEX를 한 폴더에 모은 뒤 백업 폴더 전체 선택을 한 번 누르기`로 고정했다.
+- 실제 Windows Evernote 화면 2장을 로컬 정적 자산으로 포함했다. `Notebooks → 노트북 행 점 3개 → Export notebook…`과 `ENEX format + 모든 속성 → Export` 화면이며, 앱 안에 실제 화면·출처 링크를 명시했다. 이 PC에는 Evernote 데스크톱 앱이 노출되지 않아 사용자 계정 화면을 캡처하지 않았고, 공개된 실제 화면 예시를 사용했다.
+- 화면 자료는 `assets/evernote-guide/evernote-windows-notebook-menu.png`, `assets/evernote-guide/evernote-windows-enex-settings.png`이다. 노트 HTML이나 외부 URL에서 이미지를 불러오지 않으며 서비스 워커 셸에도 로컬 경로로만 포함한다.
+- 가장 흔한 실패인 `Notes → 전체 선택 → Export Notes…`는 최대 100개 제한에 걸릴 수 있다고 실제 화면 바로 아래에서 경고한다. 공식 성공 경로는 노트북 이름의 메뉴를 여는 것이다.
+- Evernote 공식 도움말의 ENEX 분할 범위가 300MB~2GB인데 기존 앱은 250MB 초과를 거부해 안내와 구현이 충돌했다. 단일 ENEX 허용 한도를 350MB로 올리고 사용자에게는 Evernote에서 300MB로 분할하도록 안내했다. 총 500MB 자동 묶음·저장공간 사전 점검·무변경 차단은 유지한다.
+- 보안 경계는 그대로다. 가져온 HTML은 기존 화이트리스트 새니타이저를 거치고, 첨부는 검증된 id와 Blob URL로 코드가 만든 DOM에만 렌더하며 Object URL 해제·저장 실패 폴백·정직 고지를 유지한다.
+- 검증: `new Function`, `test_enex_tutorial.mjs`, `test_productivity_mobile.mjs`, `test_enex_progress.mjs`, `test_enex_preview.mjs`, `test_noteplus_regress.mjs` 통과. 실제 300MB 계획 파일 수용, 로컬 이미지 2개 로드·alt·외부 이미지 src 0개, 모바일·다크모드를 확인했다.
+- 시각 증빙: `artifacts/evernote_visual_tutorial_desktop.png`, `artifacts/evernote_visual_tutorial_mobile.png`. 서비스 워커 캐시 `noteplusp-v5-shell-10`. 정본 SHA-256: `936CD84FB798FCBEA4D06A4DF082338EC33947876B9861A954C6D895B1D5689D`.
+
 ## 29. 2026-07-18 · 심화 생산성·검증 묶음
 - `test_productivity_mobile.mjs`가 암호화 백업 복호화, PWA 등록·오프라인 재시작, 모바일 회전, 1,000노트 검색, 표 행 조작, 이력 비교, 역링크, 템플릿, 저장 검색, 색인 재구축과 고아 첨부 안전 정리까지 커버한다.
 - 구현 보완: PWA 개발용 신뢰 origin에 `127.0.0.1`도 포함했다. 서비스 워커가 제어하는 뒤에만 오프라인 회귀를 실행한다.
