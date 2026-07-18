@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>노트</title>
+<style>
+  :root{
+    --green:#00a82d; --green-d:#008a25; --green-l:#e9f6ec; --green-ll:#f0f9f2;
+    --ink:#1f1f1e; --sub:#737270; --faint:#a9a7a0;
+    --line:#e9e7e0; --line-strong:#ddd9cf;
+    --side-bg:#f7f6f3; --side-hover:#efede6; --bg:#ffffff;
+    --hl:#fff8b8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;
+    color:var(--ink); background:var(--bg); overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{display:flex; flex-direction:column; height:100vh;}
+
+  /* ── 상태 스트립 (저장 불가 환경 고지) ── */
+  .persist-strip{
+    display:none; background:#fdf3e0; color:#7a5300; border-bottom:1px solid #f0dfb6;
+    font-size:12.5px; padding:7px 16px; flex-shrink:0;
+  }
+  .persist-strip.show{display:block;}
+
+  /* ── Evernote 가져오기 스트립 ── */
+  .evernote-bar{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:#fbf6e9; border-bottom:1px solid #ecdca8; padding:8px 16px;
+    font-size:12.5px; color:#5c4a1a; flex-shrink:0;
+  }
+  .evernote-bar.hide{display:none;}
+  .eb-btn{
+    border:1px solid #c9a227; background:#fff; color:#7a5c00; border-radius:6px; padding:5px 10px;
+    font-size:12px; font-weight:700; cursor:pointer;
+  }
+  .eb-btn:hover{background:#fdf3d8;}
+  .eb-close{margin-left:auto; border:none; background:none; color:#8a7440; cursor:pointer; font-size:13px; padding:2px 6px;}
+  .eb-close:hover{color:#5c4a1a;}
+  .eb-status{font-size:12px; color:#5c4a1a; width:100%; flex-basis:100%;}
+
+  .main{flex:1; display:grid; grid-template-columns:236px 320px 1fr; min-height:0;}
+  @media(max-width:900px){ .main{grid-template-columns:64px 260px 1fr;} .sidebar .full{display:none;} .side-logo span.word{display:none;} }
+  @media(max-width:640px){ .main{grid-template-columns:1fr;} .list,.sidebar{display:none;} }
+
+  /* ═══ 사이드바 ═══ */
+  .sidebar{
+    background:var(--side-bg); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; min-height:0; overflow-y:auto;
+  }
+  .sidebar > *{flex-shrink:0;}
+  .side-logo{
+    display:flex; align-items:center; gap:8px; padding:16px 16px 10px;
+    font-size:15px; font-weight:800; letter-spacing:-.01em; color:#2e2d2b;
+  }
+  .side-logo .el{font-size:20px;}
+  .side-pad{padding:4px 12px 8px;}
+  .newbtn{
+    width:100%; height:42px; background:var(--green); color:#fff; border:none; border-radius:21px;
+    font-size:14px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    box-shadow:0 1px 3px rgba(0,120,40,.25);
+    transition:background .12s, box-shadow .12s;
+  }
+  .newbtn:hover{background:var(--green-d); box-shadow:0 2px 6px rgba(0,120,40,.3);}
+  .newbtn:active{box-shadow:none;}
+  .search{
+    width:100%; margin-top:10px; border:1px solid transparent; border-radius:8px; background:var(--side-hover);
+    padding:9px 10px 9px 32px; font-size:13px; color:var(--ink); outline:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%23737270' stroke-width='2'><circle cx='11' cy='11' r='7'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
+    background-repeat:no-repeat; background-position:10px center;
+    transition:border-color .12s, background .12s;
+  }
+  .search:focus{border-color:var(--green); background:#fff;}
+  .sec{
+    display:flex; align-items:center; gap:5px;
+    font-size:11px; font-weight:800; color:var(--faint); letter-spacing:.07em; text-transform:uppercase;
+    padding:16px 14px 4px; cursor:pointer; user-select:none;
+  }
+  .sec .chev{font-size:9px; transition:transform .15s;}
+  .sec.closed .chev{transform:rotate(-90deg);}
+  .navitem{
+    display:flex; align-items:center; gap:8px; padding:7px 14px 7px 18px;
+    font-size:13.5px; color:#3a3936; cursor:pointer; border-left:3px solid transparent;
+    border-radius:0 6px 6px 0; margin-right:8px;
+    transition:background .1s;
+  }
+  .navitem:hover{background:var(--side-hover);}
+  .navitem.on{background:#fff; border-left-color:var(--green); font-weight:700; color:var(--ink);}
+  .navitem .ic{width:16px; text-align:center; opacity:.75; font-size:13px;}
+  .navitem .cnt{margin-left:auto; font-size:11px; color:var(--faint);}
+  .addrow{display:flex; gap:6px; padding:4px 12px 0 18px;}
+  .addrow input{flex:1; border:1px solid var(--line-strong); border-radius:6px; padding:6px 8px; font-size:12.5px; outline:none;}
+  .addrow input:focus{border-color:var(--green);}
+  .miniadd{font-size:12.5px; color:var(--green-d); cursor:pointer; padding:6px 14px 6px 18px; font-weight:600;}
+  .miniadd:hover{text-decoration:underline;}
+
+  .backup-row{display:flex; gap:6px; padding:0 12px 4px;}
+  .backup-btn{
+    flex:1; text-align:center; border:1px solid var(--line-strong); background:#fff; border-radius:7px;
+    padding:7px 6px; font-size:12px; font-weight:600; color:#3a3936; cursor:pointer; margin:0;
+    transition:background .1s, border-color .1s;
+  }
+  .backup-btn:hover{background:var(--green-ll); border-color:var(--green);}
+  .backup-btn.enex{flex:none; width:calc(100% - 24px); margin:0 12px 4px; display:block;}
+  .backup-status{font-size:11px; color:var(--sub); padding:2px 14px 6px; line-height:1.5;}
+  .backup-hint{font-size:10.5px; color:var(--faint); padding:0 14px 12px; line-height:1.5;}
+  .backup-fallback{margin:0 12px 10px; display:none;}
+  .backup-fallback textarea{width:100%; height:70px; font-size:10.5px; border:1px dashed var(--faint); border-radius:6px; padding:6px; resize:vertical; font-family:monospace;}
+  .backup-fallback .hint{font-size:10.5px; color:var(--sub); margin-top:3px;}
+
+  /* ═══ 노트 목록 ═══ */
+  .list{background:#fdfdfc; border-right:1px solid var(--line); display:flex; flex-direction:column; min-height:0;}
+  .list-head{
+    padding:14px 14px 10px; border-bottom:1px solid var(--line); flex-shrink:0;
+    display:flex; align-items:center; gap:8px;
+  }
+  .list-head .lt{font-size:15px; font-weight:800; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .list-head .lc{font-size:12px; color:var(--faint); flex-shrink:0;}
+  .sortsel{
+    margin-left:auto; border:none; background:transparent; font-size:12px; color:var(--sub);
+    cursor:pointer; outline:none; text-align:right;
+  }
+  .sortsel:hover{color:var(--ink);}
+  .list-scroll{overflow-y:auto; flex:1;}
+  .row{
+    padding:12px 14px; border-bottom:1px solid #f1efe9; cursor:pointer; border-left:3px solid transparent;
+    transition:background .1s;
+  }
+  .row:hover{background:#f6f5f1;}
+  .row.sel{background:var(--green-l); border-left-color:var(--green);}
+  .row .t{font-size:14px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .row .s{font-size:12.5px; color:var(--sub); margin-top:3px; line-height:1.45;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .row .m{font-size:11px; color:var(--faint); margin-top:6px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+  .row .tg{background:#eef2ee; color:#4a6b4f; border-radius:8px; padding:0 6px; font-size:10.5px;}
+  .empty{padding:48px 20px; text-align:center; color:var(--faint); font-size:13px; line-height:1.7;}
+
+  /* ═══ 편집기 ═══ */
+  .editor{background:#fff; display:flex; flex-direction:column; min-height:0;}
+  .ed-top{
+    display:flex; align-items:center; gap:10px; padding:10px 20px 0; flex-shrink:0;
+  }
+  .ed-nb{
+    border:none; background:transparent; font-size:12.5px; color:var(--sub); cursor:pointer;
+    padding:4px 6px; border-radius:6px; outline:none; max-width:180px;
+  }
+  .ed-nb:hover{background:var(--side-hover); color:var(--ink);}
+  .ed-updated{font-size:11.5px; color:var(--faint); margin-left:auto;}
+  .del{
+    border:none; color:var(--sub); background:transparent; border-radius:6px; padding:5px 10px;
+    font-size:12.5px; cursor:pointer; font-weight:600; transition:all .12s;
+  }
+  .del:hover{background:#fdecec; color:#c0392b;}
+  .del.arm{background:#c0392b; color:#fff;}
+
+  .ed-toolbar{
+    display:flex; align-items:center; gap:2px; padding:6px 18px; border-bottom:1px solid var(--line);
+    flex-shrink:0; flex-wrap:wrap;
+  }
+  .tb{
+    min-width:29px; height:29px; border:none; background:transparent; border-radius:6px;
+    font-size:13.5px; color:#4a4946; cursor:pointer; padding:0 7px;
+    display:inline-flex; align-items:center; justify-content:center;
+    transition:background .1s;
+  }
+  .tb:hover{background:var(--side-hover);}
+  .tb.on{background:var(--green-l); color:var(--green-d);}
+  .tb b{font-weight:800;} .tb i{font-style:italic;} .tb u{text-decoration:underline;} .tb s{text-decoration:line-through;}
+  .tb-sep{width:1px; height:18px; background:var(--line); margin:0 6px;}
+
+  .ed-body{flex:1; overflow-y:auto; padding:18px 34px 10px; display:flex; flex-direction:column; min-height:0;}
+  .ed-title{
+    border:none; font-size:29px; font-weight:800; color:var(--ink); width:100%;
+    padding:0 0 2px; letter-spacing:-.015em; outline:none; flex-shrink:0;
+  }
+  .ed-title::placeholder{color:#cfcdc6;}
+  .ed-meta{font-size:11.5px; color:var(--faint); padding:2px 0 14px; flex-shrink:0;}
+  .ed-content{
+    flex:1; font-size:15.5px; line-height:1.8; color:#2c2c2e; outline:none;
+    padding-bottom:40px; word-break:break-word;
+  }
+  .ed-content:empty::before{content:attr(data-placeholder); color:#c9c7c0; pointer-events:none;}
+  .ed-content h1{font-size:23px; font-weight:800; margin:16px 0 6px; letter-spacing:-.01em;}
+  .ed-content h2{font-size:18.5px; font-weight:800; margin:14px 0 4px;}
+  .ed-content ul,.ed-content ol{padding-left:26px; margin:4px 0;}
+  .ed-content li{margin:2px 0;}
+  .ed-content hr{border:none; border-top:1px solid var(--line); margin:16px 0;}
+  .ed-content input[type=checkbox]{margin-right:7px; accent-color:var(--green); transform:translateY(1px);}
+  .ed-content b,.ed-content strong{font-weight:750;}
+
+  .ed-foot{
+    display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+    border-top:1px solid var(--line); padding:9px 20px; flex-shrink:0; background:#fdfdfc;
+  }
+  .tag{
+    background:var(--green-l); color:var(--green-d); border-radius:12px; padding:3px 10px; font-size:12px;
+    display:inline-flex; align-items:center; gap:5px;
+  }
+  .tag .x{cursor:pointer; font-weight:700; opacity:.55;}
+  .tag .x:hover{opacity:1;}
+  .tagadd{border:none; font-size:12.5px; padding:4px; min-width:74px; outline:none; background:transparent; color:var(--ink);}
+  .tagadd::placeholder{color:var(--faint);}
+  .ed-save{margin-left:auto; font-size:11.5px; color:var(--faint);}
+  .ed-empty{flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#cfcdc6; gap:10px;}
+  .ed-empty .big{font-size:46px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="persist-strip" id="banner">⚠ 미리보기에선 저장이 유지되지 않습니다 — 파일을 다운로드해 브라우저로 열면 저장됩니다.</div>
+
+  <div class="evernote-bar" id="evernoteBar">
+    <span>🐘➡️ 기존 Evernote 사용자이신가요? 지금까지 쓰던 노트를 전부 가져올 수 있어요.</span>
+    <label class="eb-btn" for="enexFile">Evernote 파일 선택 (.enex)</label>
+    <button class="eb-close" id="enexClose" title="닫기">✕ 나중에</button>
+    <span class="eb-status" id="enexStatus"></span>
+  </div>
+  <input type="file" id="enexFile" accept=".enex,application/xml,text/xml" multiple style="display:none;">
+
+  <div class="main" id="main">
+    <!-- 사이드바 -->
+    <div class="sidebar">
+      <div class="side-logo"><span class="el">🐘</span><span class="word">노트</span></div>
+      <div class="side-pad">
+        <button class="newbtn" id="newBtn"><span style="font-size:17px;">＋</span> <span class="full">새 노트</span></button>
+        <input class="search" id="search" placeholder="검색" autocomplete="off">
+      </div>
+      <div class="sec full" id="secNb"><span class="chev">▾</span>노트북</div>
+      <div id="nbWrap">
+        <div id="nbList"></div>
+        <div class="addrow full" id="nbAddRow" style="display:none;"><input id="nbAddInput" placeholder="새 노트북 이름" autocomplete="off"></div>
+        <div class="miniadd full" id="nbAddBtn">＋ 노트북 추가</div>
+      </div>
+      <div class="sec full" id="secTag"><span class="chev">▾</span>태그</div>
+      <div id="tagWrap"><div id="tagList"></div></div>
+
+      <div class="sec full" style="cursor:default;">가져오기 · 백업</div>
+      <label class="backup-btn enex full" for="enexFile">🐘 Evernote 가져오기 (.enex)</label>
+      <div class="backup-row full">
+        <button class="backup-btn" id="exportBtn">⬇ 내보내기</button>
+        <label class="backup-btn" for="importFile">⬆ 가져오기</label>
+        <input type="file" id="importFile" accept="application/json" style="display:none;">
+      </div>
+      <div class="backup-status full" id="backupStatus">전체 노트를 파일 하나로 저장·복원합니다.</div>
+      <div class="backup-hint full">Evernote에서는 노트북별로 각각 .enex로 내보낸 뒤, 여러 파일을 한번에 선택하세요 (파일명이 노트북 이름이 됩니다). 첨부파일(이미지 등)은 이번 버전에서 텍스트만 가져옵니다.</div>
+      <div class="backup-fallback full" id="backupFallback">
+        <textarea id="backupFallbackText" readonly></textarea>
+        <div class="hint">자동 다운로드가 안 될 때: 위 내용을 복사해 텍스트 파일로 저장하세요.</div>
+      </div>
+      <div style="height:12px;"></div>
+    </div>
+
+    <!-- 노트 목록 -->
+    <div class="list">
+      <div class="list-head">
+        <span class="lt" id="listTitle">전체 노트</span>
+        <span class="lc" id="listCount"></span>
+        <select class="sortsel" id="sortSel" title="정렬">
+          <option value="updated">수정순</option>
+          <option value="created">생성순</option>
+          <option value="title">제목순</option>
+        </select>
+      </div>
+      <div class="list-scroll" id="listScroll"></div>
+    </div>
+
+    <!-- 편집기 -->
+    <div class="editor" id="editor">
+      <div class="ed-empty" id="edEmpty">
+        <div class="big">🐘</div>
+        <div>노트를 선택하거나 <b>새 노트</b>를 만드세요</div>
+      </div>
+      <div id="edPane" style="display:none; flex-direction:column; height:100%; min-height:0;">
+        <div class="ed-top">
+          <select class="ed-nb" id="edNotebook" title="노트북 이동"></select>
+          <span class="ed-updated" id="edUpdated"></span>
+          <button class="del" id="delBtn">삭제</button>
+        </div>
+        <div class="ed-toolbar" id="edToolbar">
+          <button class="tb" data-cmd="undo" title="실행 취소">↺</button>
+          <button class="tb" data-cmd="redo" title="다시 실행">↻</button>
+          <span class="tb-sep"></span>
+          <button class="tb" data-block="h1" id="tbH1" title="제목 1" style="font-weight:800;">H1</button>
+          <button class="tb" data-block="h2" id="tbH2" title="제목 2" style="font-weight:800;">H2</button>
+          <span class="tb-sep"></span>
+          <button class="tb" data-cmd="bold" id="tbB" title="굵게 (Ctrl+B)"><b>B</b></button>
+          <button class="tb" data-cmd="italic" id="tbI" title="기울임 (Ctrl+I)"><i>I</i></button>
+          <button class="tb" data-cmd="underline" id="tbU" title="밑줄 (Ctrl+U)"><u>U</u></button>
+          <button class="tb" data-cmd="strikeThrough" id="tbS" title="취소선"><s>S</s></button>
+          <button class="tb" id="tbHl" title="형광펜" style="background:linear-gradient(transparent 55%, var(--hl) 55%);">가</button>
+          <span class="tb-sep"></span>
+          <button class="tb" data-cmd="insertUnorderedList" title="글머리 목록">•≡</button>
+          <button class="tb" data-cmd="insertOrderedList" title="번호 목록">1.≡</button>
+          <button class="tb" id="tbTodo" title="체크리스트">☑</button>
+          <span class="tb-sep"></span>
+          <button class="tb" data-cmd="insertHorizontalRule" title="구분선">—</button>
+        </div>
+        <div class="ed-body">
+          <input class="ed-title" id="edTitle" placeholder="제목">
+          <div class="ed-meta" id="edMeta"></div>
+          <div class="ed-content" id="edContent" contenteditable="true" data-placeholder="여기에 적으세요…"></div>
+        </div>
+        <div class="ed-foot">
+          <span id="tagbar" style="display:contents;"></span>
+          <span class="ed-save" id="edStatus"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ═══ 저장 계층 (v7.2 데이터 지속성 원칙: 무손실·무정지·정직 고지) ═══ */
+var canPersist = true;
+try{ var _t="__t"; localStorage.setItem(_t,"1"); localStorage.removeItem(_t); }
+catch(e){ canPersist=false; }
+if(!canPersist){ document.getElementById("banner").classList.add("show"); }
+var KEY="notes_app_v1";
+
+function escHtml(s){ var e=document.createElement("div"); e.textContent=s||""; return e.innerHTML; }
+
+/* v1~v3(plain text) → v4(bodyHtml) 무손실 마이그레이션 */
+function migrateState(st){
+  if(!st || !st.notes) return null;
+  st.notes.forEach(function(n){
+    if(n.bodyHtml===undefined || n.bodyHtml===null){
+      n.bodyHtml = escHtml(n.body||"").replace(/\n/g,"<br>");
+    }
+    if(!n.created){ n.created = n.updated || Date.now(); }
+  });
+  if(st.evernoteBannerDismissed===undefined) st.evernoteBannerDismissed=false;
+  st.schema = 4;
+  return st;
+}
+function load(){
+  if(!canPersist) return null;
+  try{ return migrateState(JSON.parse(localStorage.getItem(KEY))); }catch(e){ return null; }
+}
+function persist(){
+  if(!canPersist) return;
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+}
+
+/* ═══ 상태 ═══ */
+var state = load() || migrateState({
+  notebooks:["업무","개인"],
+  notes:[{
+    id:uid(), title:"환영합니다 👋", notebook:"개인", tags:["참고"],
+    body:"이건 당신의 노트 앱입니다.\n\n· 왼쪽 '새 노트'로 노트를 만들고\n· 위 툴바로 굵게·목록·체크리스트 서식을 넣고\n· 노트북과 태그로 정리하고 (태그는 노트 아래쪽!)\n· 'Evernote 가져오기'로 기존 노트를 전부 옮겨오세요.\n\n입력하면 자동 저장됩니다. (파일을 다운로드해 브라우저로 열면 저장이 유지돼요.)",
+    updated: Date.now(), created: Date.now()
+  }]
+});
+var ui = { notebook:"all", tag:null, query:"", sort:"updated", selectedId: state.notes[0] ? state.notes[0].id : null };
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function byId(id){ for(var i=0;i<state.notes.length;i++){ if(state.notes[i].id===id) return state.notes[i]; } return null; }
+
+function refreshEvernoteBar(){
+  var bar = document.getElementById("evernoteBar");
+  if(state.evernoteBannerDismissed){ bar.classList.add("hide"); } else { bar.classList.remove("hide"); }
+}
+
+/* ═══ 필터·정렬 ═══ */
+function visibleNotes(){
+  var q = ui.query.trim().toLowerCase();
+  var arr = state.notes.filter(function(n){
+    if(ui.notebook!=="all" && n.notebook!==ui.notebook) return false;
+    if(ui.tag && (n.tags||[]).indexOf(ui.tag)<0) return false;
+    if(q){
+      var hay = (n.title+" "+n.body).toLowerCase();
+      if(hay.indexOf(q)<0) return false;
+    }
+    return true;
+  });
+  if(ui.sort==="title"){ arr.sort(function(a,b){ return (a.title||"").localeCompare(b.title||"","ko"); }); }
+  else if(ui.sort==="created"){ arr.sort(function(a,b){ return (b.created||0)-(a.created||0); }); }
+  else { arr.sort(function(a,b){ return b.updated-a.updated; }); }
+  return arr;
+}
+
+/* ═══ 렌더 ═══ */
+function fmtDate(ts){
+  var d=Date.now()-ts, min=60000, h=3600000, day=86400000;
+  if(d<min) return "방금";
+  if(d<h) return Math.floor(d/min)+"분 전";
+  if(d<day) return Math.floor(d/h)+"시간 전";
+  if(d<day*2) return "어제";
+  if(d<day*7) return Math.floor(d/day)+"일 전";
+  var dt=new Date(ts); return (dt.getMonth()+1)+"월 "+dt.getDate()+"일";
+}
+function fmtFull(ts){
+  var dt=new Date(ts);
+  return dt.getFullYear()+"."+(dt.getMonth()+1)+"."+dt.getDate();
+}
+var esc = escHtml;
+
+function renderSidebar(){
+  var nb=document.getElementById("nbList"); nb.innerHTML="";
+  var all=document.createElement("div");
+  all.className="navitem full"+(ui.notebook==="all"?" on":"");
+  all.innerHTML='<span class="ic">📔</span><span>전체 노트</span><span class="cnt">'+state.notes.length+'</span>';
+  all.onclick=function(){ ui.notebook="all"; ui.tag=null; render(); };
+  nb.appendChild(all);
+  state.notebooks.forEach(function(name){
+    var c=state.notes.filter(function(n){return n.notebook===name;}).length;
+    var el=document.createElement("div");
+    el.className="navitem full"+(ui.notebook===name?" on":"");
+    el.innerHTML='<span class="ic">📓</span><span>'+esc(name)+'</span><span class="cnt">'+c+'</span>';
+    el.onclick=function(){ ui.notebook=name; ui.tag=null; render(); };
+    nb.appendChild(el);
+  });
+  var tagMap={};
+  state.notes.forEach(function(n){ (n.tags||[]).forEach(function(t){ tagMap[t]=(tagMap[t]||0)+1; }); });
+  var tl=document.getElementById("tagList"); tl.innerHTML="";
+  var keys=Object.keys(tagMap).sort(function(a,b){return a.localeCompare(b,"ko");});
+  if(keys.length===0){ tl.innerHTML='<div style="padding:4px 14px 4px 18px;font-size:12px;color:var(--faint);" class="full">아직 태그 없음</div>'; }
+  keys.forEach(function(t){
+    var el=document.createElement("div");
+    el.className="navitem full"+(ui.tag===t?" on":"");
+    el.innerHTML='<span class="ic">#</span><span>'+esc(t)+'</span><span class="cnt">'+tagMap[t]+'</span>';
+    el.onclick=function(){ ui.tag=(ui.tag===t?null:t); ui.notebook=(ui.tag?"all":ui.notebook); render(); };
+    tl.appendChild(el);
+  });
+}
+
+function renderList(){
+  var box=document.getElementById("listScroll"); box.innerHTML="";
+  var notes=visibleNotes();
+  document.getElementById("listTitle").textContent =
+    ui.query ? '검색: "'+ui.query+'"' : ui.tag ? "# "+ui.tag : ui.notebook==="all" ? "전체 노트" : ui.notebook;
+  document.getElementById("listCount").textContent = notes.length+"개";
+  if(notes.length===0){
+    box.innerHTML='<div class="empty">노트가 없습니다.<br>왼쪽 <b>새 노트</b>로 시작하세요.</div>'; return;
+  }
+  notes.forEach(function(n){
+    var row=document.createElement("div");
+    row.className="row"+(n.id===ui.selectedId?" sel":"");
+    var snip=(n.body||"").replace(/\n/g," ").slice(0,90) || "내용 없음";
+    var tagsHtml=(n.tags||[]).slice(0,3).map(function(t){return '<span class="tg">#'+esc(t)+'</span>';}).join("");
+    row.innerHTML='<div class="t">'+esc(n.title||"제목 없음")+'</div>'+
+                  '<div class="s">'+esc(snip)+'</div>'+
+                  '<div class="m"><span>'+fmtDate(n.updated)+'</span>'+tagsHtml+'</div>';
+    row.onclick=function(){ ui.selectedId=n.id; render(); };
+    box.appendChild(row);
+  });
+}
+
+function updateMeta(note){
+  var el=document.getElementById("edMeta");
+  if(!el||!note) return;
+  var chars=(document.getElementById("edContent").innerText||"").replace(/\s+/g,"").length;
+  el.textContent="생성 "+fmtFull(note.created||note.updated)+" · 수정 "+fmtDate(note.updated)+" · 글자 "+chars;
+  var up=document.getElementById("edUpdated");
+  if(up) up.textContent="";
+}
+
+function renderEditor(){
+  var note=byId(ui.selectedId);
+  var empty=document.getElementById("edEmpty"), pane=document.getElementById("edPane");
+  if(!note){ empty.style.display="flex"; pane.style.display="none"; return; }
+  empty.style.display="none"; pane.style.display="flex";
+  var sel=document.getElementById("edNotebook"); sel.innerHTML="";
+  state.notebooks.forEach(function(nm){
+    var o=document.createElement("option"); o.value=nm; o.textContent="📓 "+nm;
+    if(nm===note.notebook) o.selected=true; sel.appendChild(o);
+  });
+  document.getElementById("edTitle").value=note.title;
+  document.getElementById("edContent").innerHTML=note.bodyHtml||"";
+  updateMeta(note);
+  renderTags(note);
+  updateToolbar();
+}
+
+function renderTags(note){
+  var bar=document.getElementById("tagbar"); bar.innerHTML="";
+  (note.tags||[]).forEach(function(t){
+    var el=document.createElement("span"); el.className="tag";
+    el.innerHTML=esc(t)+' <span class="x">×</span>';
+    el.querySelector(".x").onclick=function(){ note.tags=note.tags.filter(function(x){return x!==t;}); touch(note); renderTags(note); renderSidebar(); renderList(); };
+    bar.appendChild(el);
+  });
+  var input=document.createElement("input");
+  input.className="tagadd"; input.placeholder="＋ 태그 추가"; input.autocomplete="off";
+  input.onkeydown=function(e){
+    if(e.key==="Enter"){
+      var v=input.value.trim().replace(/^#/,"");
+      if(v){ note.tags=note.tags||[]; if(note.tags.indexOf(v)<0) note.tags.push(v); touch(note); renderTags(note); renderSidebar(); renderList(); }
+    }
+  };
+  bar.appendChild(input);
+}
+
+/* ═══ 자동저장 ═══ */
+var saveTimer=null;
+function touch(note){ note.updated=Date.now(); scheduleSave(); }
+function scheduleSave(){
+  var st=document.getElementById("edStatus"); if(st) st.textContent="저장 중…";
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(function(){
+    persist();
+    var s=document.getElementById("edStatus");
+    if(s){ s.textContent = canPersist? "모든 변경 사항 저장됨 ✓" : "미저장(미리보기)"; }
+    renderList(); renderSidebar();
+  },400);
+}
+function render(){ renderSidebar(); renderList(); renderEditor(); refreshEvernoteBar(); }
+
+/* ═══ 편집기: 서식 툴바 ═══ */
+var edContent = document.getElementById("edContent");
+function syncBody(){
+  var n=byId(ui.selectedId); if(!n) return;
+  n.bodyHtml = edContent.innerHTML;
+  n.body = edContent.innerText;
+  touch(n); updateMeta(n);
+}
+function execCmd(cmd,val){
+  edContent.focus();
+  document.execCommand(cmd,false,val||null);
+  syncBody(); updateToolbar();
+}
+document.querySelectorAll(".tb[data-cmd]").forEach(function(btn){
+  btn.addEventListener("mousedown",function(e){ e.preventDefault(); });
+  btn.addEventListener("click",function(){ execCmd(btn.getAttribute("data-cmd")); });
+});
+document.querySelectorAll(".tb[data-block]").forEach(function(btn){
+  btn.addEventListener("mousedown",function(e){ e.preventDefault(); });
+  btn.addEventListener("click",function(){
+    var want=btn.getAttribute("data-block");
+    var cur=(document.queryCommandValue("formatBlock")||"").toLowerCase();
+    execCmd("formatBlock", cur===want ? "<div>" : "<"+want+">");
+  });
+});
+document.getElementById("tbHl").addEventListener("mousedown",function(e){e.preventDefault();});
+document.getElementById("tbHl").addEventListener("click",function(){
+  var cur="";
+  try{ cur=document.queryCommandValue("hiliteColor"); }catch(e){}
+  var isOn = cur && cur!=="transparent" && cur!=="rgba(0, 0, 0, 0)";
+  execCmd("hiliteColor", isOn ? "transparent" : "#fff8b8");
+});
+document.getElementById("tbTodo").addEventListener("mousedown",function(e){e.preventDefault();});
+document.getElementById("tbTodo").addEventListener("click",function(){
+  execCmd("insertHTML",'<div><input type="checkbox">&nbsp;</div>');
+});
+function updateToolbar(){
+  [["bold","tbB"],["italic","tbI"],["underline","tbU"],["strikeThrough","tbS"]].forEach(function(p){
+    var on=false; try{ on=document.queryCommandState(p[0]); }catch(e){}
+    document.getElementById(p[1]).classList.toggle("on",on);
+  });
+  var blk=""; try{ blk=(document.queryCommandValue("formatBlock")||"").toLowerCase(); }catch(e){}
+  document.getElementById("tbH1").classList.toggle("on",blk==="h1");
+  document.getElementById("tbH2").classList.toggle("on",blk==="h2");
+}
+document.addEventListener("selectionchange",function(){
+  var sel=document.getSelection();
+  if(sel && sel.anchorNode && edContent.contains(sel.anchorNode)) updateToolbar();
+});
+edContent.addEventListener("input", syncBody);
+/* 붙여넣기 위생: 외부 서식·스크립트 유입 차단, 순수 텍스트만 */
+edContent.addEventListener("paste",function(e){
+  e.preventDefault();
+  var text=(e.clipboardData||window.clipboardData).getData("text/plain");
+  document.execCommand("insertText",false,text);
+});
+/* 체크박스 토글 직렬화 (innerHTML에 상태 보존) */
+edContent.addEventListener("click",function(e){
+  if(e.target && e.target.type==="checkbox"){
+    if(e.target.checked) e.target.setAttribute("checked","");
+    else e.target.removeAttribute("checked");
+    syncBody();
+  }
+});
+
+/* ═══ 이벤트: 노트 ═══ */
+document.getElementById("newBtn").onclick=function(){
+  var nb = ui.notebook!=="all" ? ui.notebook : (state.notebooks[0]||"개인");
+  if(state.notebooks.length===0){ state.notebooks.push("개인"); nb="개인"; }
+  var now=Date.now();
+  var n={id:uid(),title:"",body:"",bodyHtml:"",notebook:nb,tags: ui.tag?[ui.tag]:[],updated:now,created:now};
+  state.notes.unshift(n); ui.selectedId=n.id; ui.query=""; document.getElementById("search").value="";
+  persist(); render(); document.getElementById("edTitle").focus();
+};
+document.getElementById("edTitle").oninput=function(){ var n=byId(ui.selectedId); if(n){ n.title=this.value; touch(n); } };
+document.getElementById("edNotebook").onchange=function(){ var n=byId(ui.selectedId); if(n){ n.notebook=this.value; touch(n); renderSidebar(); renderList(); } };
+document.getElementById("search").oninput=function(){ ui.query=this.value; renderList(); };
+document.getElementById("sortSel").onchange=function(){ ui.sort=this.value; renderList(); };
+
+document.getElementById("secNb").onclick=function(){
+  this.classList.toggle("closed");
+  document.getElementById("nbWrap").style.display = this.classList.contains("closed")?"none":"";
+};
+document.getElementById("secTag").onclick=function(){
+  this.classList.toggle("closed");
+  document.getElementById("tagWrap").style.display = this.classList.contains("closed")?"none":"";
+};
+
+document.getElementById("nbAddBtn").onclick=function(){
+  var row=document.getElementById("nbAddRow"); row.style.display="flex"; document.getElementById("nbAddInput").focus();
+};
+document.getElementById("nbAddInput").onkeydown=function(e){
+  if(e.key==="Enter"){
+    var v=this.value.trim();
+    if(v && state.notebooks.indexOf(v)<0){ state.notebooks.push(v); persist(); }
+    this.value=""; document.getElementById("nbAddRow").style.display="none"; render();
+  } else if(e.key==="Escape"){ this.value=""; document.getElementById("nbAddRow").style.display="none"; }
+};
+
+var delArm=false, delTimer=null;
+document.getElementById("delBtn").onclick=function(){
+  var btn=this;
+  if(!delArm){
+    delArm=true; btn.classList.add("arm"); btn.textContent="한 번 더 눌러 삭제";
+    delTimer=setTimeout(function(){ delArm=false; btn.classList.remove("arm"); btn.textContent="삭제"; },3000);
+    return;
+  }
+  clearTimeout(delTimer); delArm=false; btn.classList.remove("arm"); btn.textContent="삭제";
+  state.notes=state.notes.filter(function(n){return n.id!==ui.selectedId;});
+  var vis=visibleNotes();
+  ui.selectedId = vis.length? vis[0].id : (state.notes[0] ? state.notes[0].id : null);
+  persist(); render();
+};
+
+/* ═══ 백업(JSON) — v7.2 원칙 ═══ */
+function setBackupStatus(msg){ var s=document.getElementById("backupStatus"); if(s) s.textContent=msg; }
+function showBackupFallback(text){
+  document.getElementById("backupFallback").style.display="block";
+  document.getElementById("backupFallbackText").value=text;
+}
+function hideBackupFallback(){ document.getElementById("backupFallback").style.display="none"; }
+
+document.getElementById("exportBtn").onclick=function(){
+  hideBackupFallback();
+  var json = JSON.stringify(state, null, 2);
+  try{
+    var blob = new Blob([json], {type:"application/json"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "notes_backup.json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    setBackupStatus("내보내기 완료: notes_backup.json 다운로드됨 (노트 "+state.notes.length+"개)");
+  }catch(e){
+    setBackupStatus("자동 다운로드 불가 — 아래 내용을 직접 복사해 저장하세요.");
+    showBackupFallback(json);
+  }
+};
+
+document.getElementById("importFile").onchange=function(e){
+  var file = e.target.files && e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      var data = JSON.parse(ev.target.result);
+      if(!data || !Array.isArray(data.notes)){ throw new Error("형식 아님"); }
+      migrateState(data); /* v2·v3 백업(bodyHtml 없음)도 무손실 수용 */
+      var addedNotes=0, addedNb=0;
+      var existingIds={}; state.notes.forEach(function(n){ existingIds[n.id]=true; });
+      (data.notebooks||[]).forEach(function(nm){
+        if(state.notebooks.indexOf(nm)<0){ state.notebooks.push(nm); addedNb++; }
+      });
+      data.notes.forEach(function(n){
+        if(n && n.id && !existingIds[n.id]){ state.notes.push(n); existingIds[n.id]=true; addedNotes++; }
+      });
+      persist(); render();
+      setBackupStatus("가져오기 완료: 새 노트 "+addedNotes+"개, 새 노트북 "+addedNb+"개 추가(기존 노트는 유지)");
+    }catch(err){
+      setBackupStatus("가져오기 실패 — 올바른 백업 파일(JSON)이 아닙니다. 기존 노트는 그대로입니다.");
+    }
+    e.target.value = "";
+  };
+  reader.onerror = function(){ setBackupStatus("파일을 읽지 못했습니다. 기존 노트는 그대로입니다."); };
+  reader.readAsText(file);
+};
+
+/* ═══ Evernote(.enex) 가져오기 ═══ */
+document.getElementById("enexClose").onclick=function(){
+  state.evernoteBannerDismissed = true; persist(); refreshEvernoteBar();
+};
+function readFileAsText(file){
+  return new Promise(function(resolve,reject){
+    var r = new FileReader();
+    r.onload = function(ev){ resolve(ev.target.result); };
+    r.onerror = function(){ reject(new Error("read fail")); };
+    r.readAsText(file);
+  });
+}
+function extractPlainTextFromNode(node){
+  var out=[];
+  function walk(n){
+    if(!n) return;
+    if(n.nodeType===3){ out.push(n.textContent); return; }
+    if(n.nodeType!==1) return;
+    var tag=(n.tagName||"").toLowerCase();
+    if(tag==="en-todo"){
+      out.push(n.getAttribute && n.getAttribute("checked")==="true" ? "☑ " : "☐ ");
+      return;
+    }
+    if(tag==="br"){ out.push("\n"); return; }
+    var isBlock = ["div","p","li","en-note"].indexOf(tag)>=0;
+    var kids = n.childNodes ? Array.prototype.slice.call(n.childNodes) : [];
+    kids.forEach(walk);
+    if(isBlock) out.push("\n");
+  }
+  walk(node);
+  return out.join("").replace(/\n{3,}/g,"\n\n").trim();
+}
+function parseNoteContent(rawContentString){
+  try{
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(rawContentString, "text/xml");
+    if(doc.querySelector("parsererror")) throw new Error("bad content xml");
+    return extractPlainTextFromNode(doc.documentElement);
+  }catch(e){
+    return rawContentString
+      .replace(/<!\[CDATA\[|\]\]>/g,"")
+      .replace(/<\?xml[\s\S]*?\?>/,"")
+      .replace(/<!DOCTYPE[\s\S]*?>/,"")
+      .replace(/<[^>]+>/g," ")
+      .replace(/[ \t]+/g," ")
+      .trim();
+  }
+}
+function parseEnexDate(s){
+  var m = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})/.exec(s||"");
+  if(!m) return Date.now();
+  return Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]);
+}
+/* 복구 경로: DOMParser가 거부하는 실사용 ENEX(중첩 CDATA 등 — Evernote 10.x가 실제 생성)를
+   정규식으로 노트 단위 구출. 진짜 쓰레기 파일(<note> 없음)은 여전히 거절. */
+function xmlDecode(s){ var e=document.createElement("textarea"); e.innerHTML=s||""; return e.value; }
+function parseEnexLenient(xmlText, notebookName){
+  var chunks = xmlText.split(/<note>/).slice(1).map(function(c){ return c.split(/<\/note>/)[0]; });
+  if(!chunks.length){ throw new Error("no notes found"); }
+  var notes=[], hadAttachments=0;
+  chunks.forEach(function(chunk){
+    function grab(tag){
+      var m = new RegExp("<"+tag+">([\\s\\S]*?)</"+tag+">").exec(chunk);
+      return m? m[1] : "";
+    }
+    var title = xmlDecode(grab("title").trim()) || "제목 없음";
+    var cm = /<content>([\s\S]*?)<\/content>/.exec(chunk);
+    var contentRaw = (cm? cm[1] : "").replace(/<!\[CDATA\[/g,"").replace(/\]\]>/g,"");
+    var body = parseNoteContent(contentRaw);
+    var tags=[]; var tre=/<tag>([\s\S]*?)<\/tag>/g, tm;
+    while((tm=tre.exec(chunk))){ tags.push(xmlDecode(tm[1])); }
+    var createdS = grab("created"), updatedS = grab("updated");
+    var created = createdS? parseEnexDate(createdS) : Date.now();
+    var updated = updatedS? parseEnexDate(updatedS) : created;
+    if(/<resource>/.test(chunk)) hadAttachments++;
+    notes.push({
+      id:"enex_"+uid(), title:title,
+      body:body, bodyHtml:escHtml(body).replace(/\n/g,"<br>"),
+      notebook:notebookName, tags:tags, updated:updated, created:created
+    });
+  });
+  return { notes:notes, hadAttachments:hadAttachments };
+}
+function parseEnex(xmlText, notebookName){
+  var parser = new DOMParser();
+  var doc = parser.parseFromString(xmlText, "text/xml");
+  if(doc.querySelector("parsererror")){ return parseEnexLenient(xmlText, notebookName); }
+  var noteEls = doc.getElementsByTagName("note");
+  if(!noteEls.length){ return parseEnexLenient(xmlText, notebookName); }
+  var notes=[], hadAttachments=0;
+  for(var i=0;i<noteEls.length;i++){
+    var noteEl = noteEls[i];
+    var titleEl = noteEl.getElementsByTagName("title")[0];
+    var title = titleEl ? titleEl.textContent : "제목 없음";
+    var contentEl = noteEl.getElementsByTagName("content")[0];
+    var body = parseNoteContent(contentEl ? contentEl.textContent : "");
+    var tagEls = noteEl.getElementsByTagName("tag");
+    var tags=[]; for(var t=0;t<tagEls.length;t++){ tags.push(tagEls[t].textContent); }
+    var createdEl = noteEl.getElementsByTagName("created")[0];
+    var updatedEl = noteEl.getElementsByTagName("updated")[0];
+    var created = createdEl ? parseEnexDate(createdEl.textContent) : Date.now();
+    var updated = updatedEl ? parseEnexDate(updatedEl.textContent) : created;
+    if(noteEl.getElementsByTagName("resource").length>0) hadAttachments++;
+    notes.push({
+      id:"enex_"+uid(), title:title||"제목 없음",
+      body:body, bodyHtml:escHtml(body).replace(/\n/g,"<br>"),
+      notebook:notebookName, tags:tags, updated:updated, created:created
+    });
+  }
+  return { notes:notes, hadAttachments:hadAttachments };
+}
+document.getElementById("enexFile").onchange = function(e){
+  var files = Array.prototype.slice.call(e.target.files || []);
+  if(!files.length) return;
+  var totalNotes=0, totalAttach=0, okFiles=0, failFiles=0, failNames=[];
+  var idx=0;
+  function next(){
+    if(idx>=files.length){ finish(); return; }
+    var f = files[idx++];
+    var nbName = f.name.replace(/\.enex$/i,"");
+    readFileAsText(f).then(function(text){
+      try{
+        var parsed = parseEnex(text, nbName);
+        if(state.notebooks.indexOf(nbName)<0) state.notebooks.push(nbName);
+        parsed.notes.forEach(function(n){ state.notes.push(n); });
+        totalNotes += parsed.notes.length;
+        totalAttach += parsed.hadAttachments;
+        okFiles++;
+      }catch(err){ failFiles++; failNames.push(nbName); }
+      next();
+    }).catch(function(){ failFiles++; failNames.push(nbName); next(); });
+  }
+  next();
+  function finish(){
+    state.evernoteBannerDismissed = true;
+    persist(); render();
+    var msg = okFiles+"개 파일에서 노트 "+totalNotes+"개 가져옴";
+    if(totalAttach>0) msg += " · 첨부파일 있던 노트 "+totalAttach+"개는 텍스트만 가져옴(첨부는 이번 버전 미지원)";
+    if(failFiles>0) msg += " · 실패 "+failFiles+"개("+failNames.join(", ")+") — .enex 형식을 확인하세요";
+    document.getElementById("enexStatus").textContent = msg;
+    setBackupStatus(msg);
+  }
+  e.target.value = "";
+};
+
+render();
+</script>
+</body>
+</html>

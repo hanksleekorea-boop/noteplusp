@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>노트 앱 · 와이어프레임 v1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", sans-serif;
+    background: #f4f4f5; color: #3f3f46; padding: 24px; line-height: 1.5;
+  }
+  .head { max-width: 1080px; margin: 0 auto 16px; }
+  .head h1 { font-size: 18px; font-weight: 700; color: #18181b; }
+  .head p { font-size: 13px; color: #71717a; margin-top: 4px; }
+  .badge { display:inline-block; font-size:11px; border:1px dashed #a1a1aa; border-radius:4px; padding:1px 6px; color:#71717a; margin-left:6px;}
+
+  .frame {
+    max-width: 1080px; margin: 0 auto; background: #fff;
+    border: 2px solid #d4d4d8; border-radius: 8px; overflow: hidden;
+    display: grid; grid-template-columns: 210px 260px 1fr; height: 560px;
+  }
+  .col { border-right: 2px dashed #e4e4e7; display: flex; flex-direction: column; }
+  .col:last-child { border-right: none; }
+  .col-title {
+    font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    color: #a1a1aa; padding: 8px 12px; border-bottom: 1px dashed #e4e4e7; font-weight:700;
+  }
+  .num {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:16px; height:16px; border-radius:50%; background:#3f3f46; color:#fff;
+    font-size:10px; font-weight:700; margin-right:5px; vertical-align:middle;
+  }
+
+  /* wireframe primitives */
+  .box { border:1.5px dashed #a1a1aa; border-radius:5px; background:#fafafa; }
+  .btn { border:1.5px solid #52525b; border-radius:5px; padding:7px; text-align:center; font-size:12px; font-weight:600; color:#27272a; background:#fff;}
+  .inp { border:1.5px dashed #a1a1aa; border-radius:5px; padding:7px 8px; font-size:12px; color:#a1a1aa; background:#fafafa;}
+  .chip { display:inline-block; border:1.2px dashed #a1a1aa; border-radius:10px; padding:1px 8px; font-size:11px; color:#71717a; margin:2px 3px 2px 0;}
+  .pad { padding: 10px 12px; }
+  .stack > * { margin-bottom: 8px; }
+
+  .listrow { border-bottom:1px dashed #e4e4e7; padding:9px 12px; }
+  .listrow .t { font-size:12px; font-weight:600; color:#3f3f46; }
+  .listrow .s { font-size:11px; color:#a1a1aa; margin-top:2px; }
+  .listrow .m { font-size:10px; color:#c4c4c8; margin-top:3px; }
+  .listrow.sel { background:#f4f4f5; border-left:3px solid #52525b; }
+
+  .line { height:9px; background:#ececee; border-radius:3px; margin-bottom:9px; }
+  .line.w80{width:80%;} .line.w60{width:60%;} .line.w90{width:90%;} .line.w40{width:40%;}
+  .editor-title { height:20px; }
+
+  .navitem{ font-size:12px; color:#52525b; padding:6px 12px; }
+  .navitem.on{ background:#f4f4f5; font-weight:700; color:#27272a;}
+  .sec{ font-size:10px; color:#a1a1aa; padding:10px 12px 4px; font-weight:700; letter-spacing:.05em;}
+
+  .legend{ max-width:1080px; margin:14px auto 0; font-size:12px; color:#52525b; }
+  .legend h3{ font-size:12px; color:#18181b; margin-bottom:6px;}
+  .legend ul{ list-style:none; }
+  .legend li{ padding:3px 0; }
+  .fmap{ display:flex; gap:14px; flex-wrap:wrap; margin-top:8px;}
+  .fmap div{ font-size:11.5px; color:#52525b; }
+  .note{ max-width:1080px; margin:12px auto 0; font-size:11.5px; color:#a1a1aa; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>노트 앱 — 화면 구조 와이어프레임 <span class="badge">v1 · 구조 검토용</span></h1>
+    <p>실제 색·폰트·디테일 아님. <b>배치와 흐름만</b> 확인하는 설계도. 이대로 좋으면 다음 단계에서 실제 HTML로 만든다.</p>
+  </div>
+
+  <div class="frame">
+    <!-- COL 1: 사이드바 -->
+    <div class="col">
+      <div class="col-title">사이드바</div>
+      <div class="pad stack">
+        <div class="btn"><span class="num">1</span>+ 새 노트</div>
+        <div class="inp"><span class="num">4</span>🔍 검색…</div>
+      </div>
+      <div class="sec"><span class="num">3</span>노트북</div>
+      <div class="navitem on">📓 전체 노트</div>
+      <div class="navitem">📓 업무</div>
+      <div class="navitem">📓 개인</div>
+      <div class="navitem" style="color:#c4c4c8;">＋ 노트북 추가</div>
+      <div class="sec"><span class="num">3</span>태그</div>
+      <div class="pad">
+        <span class="chip"># 아이디어</span>
+        <span class="chip"># 할일</span>
+        <span class="chip"># 참고</span>
+      </div>
+    </div>
+
+    <!-- COL 2: 노트 목록 -->
+    <div class="col">
+      <div class="col-title"><span class="num">2</span>노트 목록 · 최근 수정순</div>
+      <div class="listrow sel">
+        <div class="t">회의 메모 — 7월 계획</div>
+        <div class="s">이번 분기 목표는 노트 앱을…</div>
+        <div class="m">방금 · #업무 #할일</div>
+      </div>
+      <div class="listrow">
+        <div class="t">읽은 책 정리</div>
+        <div class="s">3장 핵심: 단조성 게이트…</div>
+        <div class="m">어제 · #참고</div>
+      </div>
+      <div class="listrow">
+        <div class="t">장보기</div>
+        <div class="s">우유, 계란, 커피…</div>
+        <div class="m">2일 전 · #할일</div>
+      </div>
+      <div class="listrow">
+        <div class="t">아이디어 스크랩</div>
+        <div class="s">노트 앱에 다크모드 추가?…</div>
+        <div class="m">3일 전 · #아이디어</div>
+      </div>
+    </div>
+
+    <!-- COL 3: 편집 -->
+    <div class="col">
+      <div class="col-title"><span class="num">1</span>노트 편집 · 자동저장</div>
+      <div class="pad" style="flex:1; display:flex; flex-direction:column;">
+        <div class="line editor-title w60"></div>
+        <div style="font-size:10px;color:#c4c4c8;margin:-4px 0 10px;">↑ 제목</div>
+        <div style="margin-bottom:8px;">
+          <span class="chip"># 업무 ✕</span><span class="chip"># 할일 ✕</span>
+          <span class="chip" style="border-style:solid;">＋ 태그</span>
+        </div>
+        <div class="box" style="flex:1; padding:12px;">
+          <div class="line w90"></div>
+          <div class="line w80"></div>
+          <div class="line w90"></div>
+          <div class="line w40"></div>
+          <div class="line w60"></div>
+          <div style="font-size:10px;color:#c4c4c8;margin-top:6px;">↑ 본문 (입력 즉시 자동저장)</div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+          <div class="btn" style="border-color:#b91c1c; color:#b91c1c; padding:5px 12px;"><span class="num" style="background:#b91c1c;">5</span>삭제</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <h3>기능 매핑 (첫 버전 5개)</h3>
+    <div class="fmap">
+      <div><span class="num">1</span> 노트 작성 — 제목·본문, 자동저장</div>
+      <div><span class="num">2</span> 노트 목록 — 최근순, 클릭해 열기</div>
+      <div><span class="num">3</span> 정리 — 노트북·태그로 필터</div>
+      <div><span class="num">4</span> 검색 — 제목·본문 즉시 필터</div>
+      <div><span class="num">5</span> 삭제</div>
+    </div>
+  </div>
+  <p class="note">흐름: 새 노트(1) → 목록에 뜸(2) → 노트북·태그로 묶고(3) → 검색으로 찾고(4) → 필요없으면 삭제(5). 저장은 브라우저 자체(localStorage), 다운로드해 열면 유지됨.</p>
+</body>
+</html>

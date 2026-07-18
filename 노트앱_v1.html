@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>노트</title>
+<style>
+  :root{
+    --green:#00a82d; --green-d:#008a25; --green-l:#e8f7ec;
+    --ink:#1d1d1f; --sub:#6e6e73; --line:#e5e5e7; --bg:#f7f7f8; --sidebar:#f0f4f0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",sans-serif;
+    color:var(--ink); background:var(--bg); overflow:hidden;
+  }
+  .app{display:grid; grid-template-rows:auto 1fr; height:100vh;}
+
+  /* top bar */
+  .topbar{
+    background:var(--green); color:#fff; display:flex; align-items:center;
+    padding:0 16px; height:48px; gap:10px; flex-shrink:0;
+  }
+  .topbar .logo{font-size:16px; font-weight:800; letter-spacing:-.02em; display:flex; align-items:center; gap:7px;}
+  .topbar .logo .el{font-size:19px;}
+  .topbar .banner{margin-left:auto; font-size:12px; background:rgba(255,255,255,.18); padding:4px 10px; border-radius:6px; display:none;}
+  .topbar .banner.show{display:block;}
+
+  .main{display:grid; grid-template-columns:230px 300px 1fr; height:100%; min-height:0;}
+  @media(max-width:860px){ .main{grid-template-columns:60px 240px 1fr;} .sidebar .full{display:none;} }
+  @media(max-width:620px){ .main{grid-template-columns:1fr;} .list,.sidebar{display:none;} .main.show-list .list{display:flex;} .main.show-list .editor{display:none;} }
+
+  /* sidebar */
+  .sidebar{background:var(--sidebar); border-right:1px solid var(--line); display:flex; flex-direction:column; min-height:0; overflow-y:auto;}
+  .sidebar .pad{padding:12px;}
+  .newbtn{
+    width:100%; background:var(--green); color:#fff; border:none; border-radius:8px;
+    padding:11px; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+    transition:background .12s;
+  }
+  .newbtn:hover{background:var(--green-d);}
+  .search{
+    width:100%; margin-top:10px; border:1px solid var(--line); border-radius:8px; background:#fff;
+    padding:8px 10px 8px 30px; font-size:13px; color:var(--ink);
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%236e6e73' stroke-width='2'><circle cx='11' cy='11' r='7'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>");
+    background-repeat:no-repeat; background-position:9px center;
+  }
+  .search:focus{outline:none; border-color:var(--green);}
+  .sec{font-size:11px; font-weight:800; color:var(--sub); letter-spacing:.06em; text-transform:uppercase; padding:14px 14px 4px;}
+  .navitem{
+    display:flex; align-items:center; gap:8px; padding:8px 14px; font-size:13.5px; color:#333; cursor:pointer; border-left:3px solid transparent;
+  }
+  .navitem:hover{background:#e6ede6;}
+  .navitem.on{background:#fff; border-left-color:var(--green); font-weight:700;}
+  .navitem .ic{width:16px; text-align:center; opacity:.8;}
+  .navitem .cnt{margin-left:auto; font-size:11px; color:var(--sub); background:#fff; border-radius:10px; padding:0 7px;}
+  .navitem.on .cnt{background:var(--green-l);}
+  .addrow{display:flex; gap:6px; padding:4px 12px 0;}
+  .addrow input{flex:1; border:1px solid var(--line); border-radius:6px; padding:6px 8px; font-size:12.5px;}
+  .addrow input:focus{outline:none;border-color:var(--green);}
+  .miniadd{font-size:12.5px; color:var(--green-d); cursor:pointer; padding:7px 14px; font-weight:600;}
+  .miniadd:hover{text-decoration:underline;}
+
+  /* list */
+  .list{background:#fff; border-right:1px solid var(--line); display:flex; flex-direction:column; min-height:0;}
+  .list-head{padding:12px 14px; border-bottom:1px solid var(--line); font-size:12px; color:var(--sub); font-weight:700; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;}
+  .list-scroll{overflow-y:auto; flex:1;}
+  .row{padding:12px 14px; border-bottom:1px solid var(--line); cursor:pointer; border-left:3px solid transparent;}
+  .row:hover{background:#fafafa;}
+  .row.sel{background:var(--green-l); border-left-color:var(--green);}
+  .row .t{font-size:14px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .row .s{font-size:12.5px; color:var(--sub); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .row .m{font-size:11px; color:#a1a1a6; margin-top:5px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+  .row .tg{background:#eef2ee; color:#4a6b4f; border-radius:8px; padding:0 6px; font-size:10.5px;}
+  .empty{padding:40px 20px; text-align:center; color:#a1a1a6; font-size:13px; line-height:1.7;}
+
+  /* editor */
+  .editor{background:#fff; display:flex; flex-direction:column; min-height:0;}
+  .ed-bar{display:flex; align-items:center; gap:10px; padding:10px 18px; border-bottom:1px solid var(--line); flex-shrink:0;}
+  .ed-nb{border:1px solid var(--line); border-radius:6px; padding:6px 8px; font-size:12.5px; color:#333; background:#fff;}
+  .ed-nb:focus{outline:none;border-color:var(--green);}
+  .ed-status{font-size:11.5px; color:var(--sub); margin-left:auto; transition:opacity .3s;}
+  .del{border:1px solid #e0c0c0; color:#c0392b; background:#fff; border-radius:6px; padding:6px 12px; font-size:12.5px; cursor:pointer; font-weight:600;}
+  .del:hover{background:#fdecec;}
+  .del.arm{background:#c0392b; color:#fff; border-color:#c0392b;}
+  .ed-body{flex:1; overflow-y:auto; padding:22px 26px; display:flex; flex-direction:column; min-height:0;}
+  .ed-title{border:none; font-size:26px; font-weight:800; color:var(--ink); width:100%; padding:0 0 6px; letter-spacing:-.01em;}
+  .ed-title:focus{outline:none;}
+  .tagbar{display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:8px 0 14px; border-bottom:1px solid var(--line); margin-bottom:14px;}
+  .tag{background:var(--green-l); color:var(--green-d); border-radius:12px; padding:2px 9px; font-size:12px; display:flex; align-items:center; gap:5px;}
+  .tag .x{cursor:pointer; font-weight:700; opacity:.6;}
+  .tag .x:hover{opacity:1;}
+  .tagadd{border:none; font-size:12.5px; padding:3px 4px; min-width:70px;}
+  .tagadd:focus{outline:none;}
+  .ed-content{flex:1; border:none; font-size:15.5px; line-height:1.75; color:#2c2c2e; width:100%; resize:none; font-family:inherit;}
+  .ed-content:focus{outline:none;}
+  .ed-empty{flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#c1c1c6; gap:10px;}
+  .ed-empty .big{font-size:44px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="logo"><span class="el">🐘</span> 노트</div>
+    <div class="banner" id="banner">⚠ 미리보기에선 저장이 유지 안 됨 — 파일을 다운로드해 브라우저로 열면 저장됩니다</div>
+  </div>
+  <div class="main" id="main">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="pad">
+        <button class="newbtn" id="newBtn"><span style="font-size:16px;">＋</span> <span class="full">새 노트</span></button>
+        <input class="search" id="search" placeholder="검색" autocomplete="off">
+      </div>
+      <div class="sec full">노트북</div>
+      <div id="nbList"></div>
+      <div class="addrow full" id="nbAddRow" style="display:none;"><input id="nbAddInput" placeholder="새 노트북 이름" autocomplete="off"></div>
+      <div class="miniadd full" id="nbAddBtn">＋ 노트북 추가</div>
+      <div class="sec full">태그</div>
+      <div id="tagList"></div>
+      <div class="pad"></div>
+    </div>
+    <!-- LIST -->
+    <div class="list">
+      <div class="list-head"><span id="listTitle">전체 노트</span><span id="listCount"></span></div>
+      <div class="list-scroll" id="listScroll"></div>
+    </div>
+    <!-- EDITOR -->
+    <div class="editor" id="editor">
+      <div class="ed-empty" id="edEmpty">
+        <div class="big">🐘</div>
+        <div>노트를 선택하거나 <b>새 노트</b>를 만드세요</div>
+      </div>
+      <div id="edPane" style="display:none; flex-direction:column; height:100%; min-height:0;">
+        <div class="ed-bar">
+          <select class="ed-nb" id="edNotebook"></select>
+          <span class="ed-status" id="edStatus"></span>
+          <button class="del" id="delBtn">삭제</button>
+        </div>
+        <div class="ed-body">
+          <input class="ed-title" id="edTitle" placeholder="제목">
+          <div class="tagbar" id="tagbar"></div>
+          <textarea class="ed-content" id="edContent" placeholder="여기에 적으세요…"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- 저장 (실패해도 안 죽게) ---------- */
+var canPersist = true;
+try{ var _t="__t"; localStorage.setItem(_t,"1"); localStorage.removeItem(_t); }
+catch(e){ canPersist=false; }
+if(!canPersist){ document.getElementById("banner").classList.add("show"); }
+var KEY="notes_app_v1";
+function load(){
+  if(!canPersist) return null;
+  try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; }
+}
+function persist(){
+  if(!canPersist) return;
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+}
+
+/* ---------- 상태 ---------- */
+var state = load() || {
+  notebooks:["업무","개인"],
+  notes:[{
+    id:uid(), title:"환영합니다 👋", notebook:"개인", tags:["참고"],
+    body:"이건 당신의 노트 앱입니다.\n\n· 왼쪽 '새 노트'로 노트를 만들고\n· 노트북과 태그로 정리하고\n· 위 검색으로 찾고\n· 필요없으면 '삭제'.\n\n입력하면 자동 저장됩니다. (파일을 다운로드해 브라우저로 열면 저장이 유지돼요.)",
+    updated: Date.now()
+  }]
+};
+var ui = { notebook:"all", tag:null, query:"", selectedId: state.notes[0] ? state.notes[0].id : null };
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function byId(id){ for(var i=0;i<state.notes.length;i++){ if(state.notes[i].id===id) return state.notes[i]; } return null; }
+
+/* ---------- 필터 ---------- */
+function visibleNotes(){
+  var q = ui.query.trim().toLowerCase();
+  return state.notes.filter(function(n){
+    if(ui.notebook!=="all" && n.notebook!==ui.notebook) return false;
+    if(ui.tag && (n.tags||[]).indexOf(ui.tag)<0) return false;
+    if(q){
+      var hay = (n.title+" "+n.body).toLowerCase();
+      if(hay.indexOf(q)<0) return false;
+    }
+    return true;
+  }).sort(function(a,b){ return b.updated-a.updated; });
+}
+
+/* ---------- 렌더 ---------- */
+function fmtDate(ts){
+  var d=Date.now()-ts, min=60000, h=3600000, day=86400000;
+  if(d<min) return "방금";
+  if(d<h) return Math.floor(d/min)+"분 전";
+  if(d<day) return Math.floor(d/h)+"시간 전";
+  if(d<day*2) return "어제";
+  if(d<day*7) return Math.floor(d/day)+"일 전";
+  var dt=new Date(ts); return (dt.getMonth()+1)+"월 "+dt.getDate()+"일";
+}
+function esc(s){ var e=document.createElement("div"); e.textContent=s||""; return e.innerHTML; }
+
+function renderSidebar(){
+  // notebooks
+  var nb=document.getElementById("nbList"); nb.innerHTML="";
+  var all=document.createElement("div");
+  all.className="navitem full"+(ui.notebook==="all"?" on":"");
+  all.innerHTML='<span class="ic">📔</span><span>전체 노트</span><span class="cnt">'+state.notes.length+'</span>';
+  all.onclick=function(){ ui.notebook="all"; ui.tag=null; render(); };
+  nb.appendChild(all);
+  state.notebooks.forEach(function(name){
+    var c=state.notes.filter(function(n){return n.notebook===name;}).length;
+    var el=document.createElement("div");
+    el.className="navitem full"+(ui.notebook===name?" on":"");
+    el.innerHTML='<span class="ic">📓</span><span>'+esc(name)+'</span><span class="cnt">'+c+'</span>';
+    el.onclick=function(){ ui.notebook=name; ui.tag=null; render(); };
+    nb.appendChild(el);
+  });
+  // tags
+  var tagMap={};
+  state.notes.forEach(function(n){ (n.tags||[]).forEach(function(t){ tagMap[t]=(tagMap[t]||0)+1; }); });
+  var tl=document.getElementById("tagList"); tl.innerHTML="";
+  var keys=Object.keys(tagMap);
+  if(keys.length===0){ tl.innerHTML='<div style="padding:4px 14px;font-size:12px;color:#a1a1a6;" class="full">아직 태그 없음</div>'; }
+  keys.forEach(function(t){
+    var el=document.createElement("div");
+    el.className="navitem full"+(ui.tag===t?" on":"");
+    el.innerHTML='<span class="ic">#</span><span>'+esc(t)+'</span><span class="cnt">'+tagMap[t]+'</span>';
+    el.onclick=function(){ ui.tag=(ui.tag===t?null:t); ui.notebook=(ui.tag?"all":ui.notebook); render(); };
+    tl.appendChild(el);
+  });
+}
+
+function renderList(){
+  var box=document.getElementById("listScroll"); box.innerHTML="";
+  var notes=visibleNotes();
+  document.getElementById("listTitle").textContent =
+    ui.query ? '검색: "'+ui.query+'"' : ui.tag ? "# "+ui.tag : ui.notebook==="all" ? "전체 노트" : ui.notebook;
+  document.getElementById("listCount").textContent = notes.length+"개";
+  if(notes.length===0){
+    box.innerHTML='<div class="empty">노트가 없습니다.<br>왼쪽 <b>새 노트</b>로 시작하세요.</div>'; return;
+  }
+  notes.forEach(function(n){
+    var row=document.createElement("div");
+    row.className="row"+(n.id===ui.selectedId?" sel":"");
+    var snip=(n.body||"").replace(/\n/g," ").slice(0,60) || "내용 없음";
+    var tagsHtml=(n.tags||[]).slice(0,3).map(function(t){return '<span class="tg">#'+esc(t)+'</span>';}).join("");
+    row.innerHTML='<div class="t">'+esc(n.title||"제목 없음")+'</div>'+
+                  '<div class="s">'+esc(snip)+'</div>'+
+                  '<div class="m"><span>'+fmtDate(n.updated)+'</span>'+tagsHtml+'</div>';
+    row.onclick=function(){ ui.selectedId=n.id; render(); };
+    box.appendChild(row);
+  });
+}
+
+function renderEditor(){
+  var note=byId(ui.selectedId);
+  var empty=document.getElementById("edEmpty"), pane=document.getElementById("edPane");
+  if(!note){ empty.style.display="flex"; pane.style.display="none"; return; }
+  empty.style.display="none"; pane.style.display="flex";
+  // notebook select
+  var sel=document.getElementById("edNotebook"); sel.innerHTML="";
+  state.notebooks.forEach(function(nm){
+    var o=document.createElement("option"); o.value=nm; o.textContent=nm;
+    if(nm===note.notebook) o.selected=true; sel.appendChild(o);
+  });
+  // title/body (avoid clobbering while typing handled by not re-rendering editor on autosave)
+  document.getElementById("edTitle").value=note.title;
+  document.getElementById("edContent").value=note.body;
+  renderTags(note);
+}
+
+function renderTags(note){
+  var bar=document.getElementById("tagbar"); bar.innerHTML="";
+  (note.tags||[]).forEach(function(t){
+    var el=document.createElement("span"); el.className="tag";
+    el.innerHTML=esc(t)+' <span class="x">×</span>';
+    el.querySelector(".x").onclick=function(){ note.tags=note.tags.filter(function(x){return x!==t;}); touch(note); renderTags(note); renderSidebar(); renderList(); };
+    bar.appendChild(el);
+  });
+  var input=document.createElement("input");
+  input.className="tagadd"; input.placeholder="＋ 태그"; input.autocomplete="off";
+  input.onkeydown=function(e){
+    if(e.key==="Enter"){
+      var v=input.value.trim().replace(/^#/,"");
+      if(v){ note.tags=note.tags||[]; if(note.tags.indexOf(v)<0) note.tags.push(v); touch(note); renderTags(note); renderSidebar(); renderList(); }
+    }
+  };
+  bar.appendChild(input);
+}
+
+/* ---------- 편집/자동저장 ---------- */
+var saveTimer=null;
+function touch(note){ note.updated=Date.now(); scheduleSave(); }
+function scheduleSave(){
+  var st=document.getElementById("edStatus"); if(st) st.textContent="저장 중…";
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(function(){
+    persist();
+    var s=document.getElementById("edStatus");
+    if(s){ s.textContent = canPersist? "저장됨 ✓" : "미저장(미리보기)"; }
+    renderList(); renderSidebar();
+  },400);
+}
+function render(){ renderSidebar(); renderList(); renderEditor(); }
+
+/* ---------- 이벤트 ---------- */
+document.getElementById("newBtn").onclick=function(){
+  var nb = ui.notebook!=="all" ? ui.notebook : (state.notebooks[0]||"개인");
+  if(state.notebooks.length===0){ state.notebooks.push("개인"); nb="개인"; }
+  var n={id:uid(),title:"",body:"",notebook:nb,tags: ui.tag?[ui.tag]:[],updated:Date.now()};
+  state.notes.unshift(n); ui.selectedId=n.id; ui.query=""; document.getElementById("search").value="";
+  persist(); render(); document.getElementById("edTitle").focus();
+};
+document.getElementById("edTitle").oninput=function(){ var n=byId(ui.selectedId); if(n){ n.title=this.value; touch(n); } };
+document.getElementById("edContent").oninput=function(){ var n=byId(ui.selectedId); if(n){ n.body=this.value; touch(n); } };
+document.getElementById("edNotebook").onchange=function(){ var n=byId(ui.selectedId); if(n){ n.notebook=this.value; touch(n); renderSidebar(); renderList(); } };
+document.getElementById("search").oninput=function(){ ui.query=this.value; renderList(); document.getElementById("listTitle").textContent = ui.query?'검색: "'+ui.query+'"':"전체 노트"; };
+
+// notebook add
+document.getElementById("nbAddBtn").onclick=function(){
+  var row=document.getElementById("nbAddRow"); row.style.display="flex"; document.getElementById("nbAddInput").focus();
+};
+document.getElementById("nbAddInput").onkeydown=function(e){
+  if(e.key==="Enter"){
+    var v=this.value.trim();
+    if(v && state.notebooks.indexOf(v)<0){ state.notebooks.push(v); persist(); }
+    this.value=""; document.getElementById("nbAddRow").style.display="none"; render();
+  } else if(e.key==="Escape"){ this.value=""; document.getElementById("nbAddRow").style.display="none"; }
+};
+
+// delete (2-click, no native dialog)
+var delArm=false, delTimer=null;
+document.getElementById("delBtn").onclick=function(){
+  var btn=this;
+  if(!delArm){
+    delArm=true; btn.classList.add("arm"); btn.textContent="한 번 더 눌러 삭제";
+    delTimer=setTimeout(function(){ delArm=false; btn.classList.remove("arm"); btn.textContent="삭제"; },3000);
+    return;
+  }
+  clearTimeout(delTimer); delArm=false; btn.classList.remove("arm"); btn.textContent="삭제";
+  state.notes=state.notes.filter(function(n){return n.id!==ui.selectedId;});
+  ui.selectedId = state.notes.length? visibleNotes()[0] && visibleNotes()[0].id : null;
+  if(!ui.selectedId && state.notes.length) ui.selectedId=state.notes[0].id;
+  persist(); render();
+};
+
+render();
+</script>
+</body>
+</html>

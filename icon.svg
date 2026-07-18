@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="노트플러스P">
+  <rect width="512" height="512" rx="112" fill="#00a82d"/>
+  <path fill="#fff" d="M144 104h188c20 0 36 16 36 36v232c0 20-16 36-36 36H180c-20 0-36-16-36-36V140c0-20 16-36 36-36Zm28 72v32h168v-32H172Zm0 72v32h168v-32H172Zm0 72v32h118v-32H172Z"/>
+</svg>

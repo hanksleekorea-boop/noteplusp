@@ -1,0 +1,289 @@
+# 노트플러스P — 개발 인수인계 문서 (HANDOVER)
+
+> **이 문서 하나로 100% 이어받기.** 새 개발 환경(PC Codex, ChatGPT, Claude, 사람 개발자 누구든)이 이 문서만 읽으면 프로젝트를 그대로 이어서 개발할 수 있도록 작성됨. 아래 "0. 30초 요약"부터 읽고, 이어받을 땐 "12. 이어받기 절차"를 따를 것.
+>
+> 최종 갱신: 2026-07-16 · 현재 정본 버전: **노트앱_v5.html** · 프레임워크: **v7.2**
+
+---
+
+## 0. 30초 요약 (먼저 읽기)
+- **무엇**: Evernote를 비롯한 노트앱 데이터를 하나로 통합하는 **웹 노트 앱**. 백엔드 없는 **단일 HTML 파일**(오프라인 동작, 브라우저 localStorage 저장).
+- **지금 상태**: v5까지 완성. 기본 노트(작성·노트북·태그·검색·삭제) + 리치텍스트 편집기 + JSON 백업 + **Evernote(.enex) 가져오기(서식·링크·표·체크박스·웹클립주소 보존)** + XSS 새니타이저. 실행코드 준비도 **약 97%**.
+- **실증**: 실제 Evernote 내보내기 파일 121개(노트 160개)로 가져오기 100% 검증 완료. XSS 공격 6종 무력화 검증 완료.
+- **다음 큰 조각**: 첨부파일(이미지·PDF) 가져오기 → **저장소를 localStorage→IndexedDB로 전환해야 함**(구조 변경). 그 외 다크모드·타 브라우저 검증은 폴리시.
+- **이어받는 법**: 최신 `노트앱_v5.html`을 열어 그대로 편집. 테스트는 Playwright(헤드리스 Chromium). 아래 12장 참고.
+
+---
+
+## 1. 프로젝트 정체 & 목표
+- 프로젝트명: **노트플러스P** (claude.ai 프로젝트)
+- 한 줄 목표: "에버노트를 비롯한 모든 사용중인 노트앱의 데이터를 하나의 앱으로 통합하는 앱"
+- 성격: **자기용/학습**(사업 아님). 초기 "사업용"으로 시작했으나 사용자가 "일단 내가 만들어 굴려보기"를 택해 자기용으로 재확정됨 → 시장·수익 고려 제거. 성공 기준 = "내가 실제로 쓰게 되는가".
+- 벤치마크: Evernote 10.x의 실제 UX(3분할 레이아웃, 초록 톤, 서식 툴바, 태그 하단 배치).
+
+## 2. 현재 상태
+| 축 | 값 | 근거 |
+|---|---|---|
+| 설계·데이터 준비도 | 100% | 씨앗·경로·MVP·와이어프레임·기능 전부 확정 |
+| 실행코드 준비도 | ~97% | 자동테스트(합성+실파일121+보안+회귀) 통과. 미완: 첨부파일, 한국어 실계정 파일, 타 브라우저 |
+| 검증 | 자동화 광범위 | Playwright 헤드리스. 사람 손 실사용은 사용자 몫으로 남음 |
+
+## 3. 파일 인벤토리 (★ = 정본/최신)
+| 파일 | 역할 | 상태 |
+|---|---|---|
+| **노트앱_v5.html** ★ | 현재 정본 앱. 이걸 편집해서 이어감 | 최신 |
+| 노트앱_v4.html | v5 직전(리치편집기·UX). 롤백 참고용 | 보존 |
+| 노트앱_v3.html | Evernote 평문 가져오기 도입판 | 보존 |
+| 노트앱_v2.html | JSON 백업(내보내기/가져오기) 도입판 | 보존 |
+| 노트앱_v1.html | 최초 MVP(5기능) | 보존 |
+| 노트앱_와이어프레임_v1.html | 5막 화면구조 설계도 | 참고 |
+| 살아있는_앱창작_프레임워크_v7.2.md ★ | 이 프로젝트를 굴리는 메타 프레임워크 정본 | 최신 |
+| 살아있는_앱창작_프레임워크_v7.1.md | v7.2 직전 스냅샷(롤백용) | 보존 |
+| 진행문서_앱창작.md ★ | 세션 로그·판정·버그로그·큐가 누적된 살아있는 문서 | 최신 |
+| HANDOVER_인수인계.md (이 문서) | 인수인계 종합 | 이 파일 |
+| NEXT_PRIORITIES.md | 다음 작업 큐(짧은 액션 리스트) | 동반 |
+
+> **버전 관리 방식**: 파괴적 덮어쓰기 대신 v1→v5로 파일을 늘려왔다. 각 구버전은 스냅샷으로 보존(롤백 가능). 이어받을 땐 최신 vN만 편집하되, 필요 시 vN+1로 올려도 됨(팀 관례에 맞게 선택).
+
+## 4. 아키텍처
+- **단일 HTML 파일**. 외부 의존성 0, 빌드 과정 0, 서버 0. 파일을 브라우저로 열면 바로 동작.
+- 3분할 레이아웃: 사이드바(노트북·태그·가져오기/백업) | 노트 목록 | 편집기.
+- **저장**: 브라우저 `localStorage` 키 `notes_app_v1`. 접근 실패(미리보기 샌드박스 등) 시 try/catch로 감싸 **인메모리로 계속 동작 + 상단 배너로 정직 고지**(프레임워크 v7.2 "데이터 지속성 원칙").
+- **자동저장**: 편집 입력 400ms 디바운스 후 저장. 상태표시 "모든 변경 사항 저장됨 ✓".
+- 편집기는 `contenteditable` 리치텍스트. 서식은 `document.execCommand`(굵게·기울임·밑줄·취소선·H1/H2/H3·목록·체크리스트·형광펜·구분선). 붙여넣기는 평문만 허용(위생).
+
+## 5. 데이터 스키마 (localStorage JSON, schema 4)
+```
+{
+  "schema": 4,
+  "notebooks": ["업무","개인", ...],           // 문자열 배열
+  "notes": [
+    {
+      "id": "enex_abc123",                      // 고유 id
+      "title": "제목",
+      "body": "검색·목록용 평문 (bodyHtml에서 파생)",
+      "bodyHtml": "<div>서식 포함 HTML</div>",   // 편집기 렌더 소스 (v4부터)
+      "notebook": "업무",
+      "tags": ["태그1","태그2"],
+      "created": 1750000000000,                 // epoch ms
+      "updated": 1750000000000
+    }
+  ],
+  "evernoteBannerDismissed": false
+}
+```
+- **마이그레이션**: 로드 시 `migrateState()`가 구버전(v1~v3, bodyHtml 없음) 데이터를 자동 변환 — `body`(평문)를 이스케이프+`<br>`로 `bodyHtml` 생성, `created` 없으면 `updated`로 채움. XSS 안전(이스케이프) 확인됨. JSON 백업 가져오기에도 동일 적용(구버전 백업 무손실 수용).
+
+## 6. 기능 매트릭스
+| 기능 | 도입 | 비고 |
+|---|---|---|
+| 노트 작성/목록/삭제 | v1 | |
+| 노트북 + 태그 정리, 필터 | v1 | |
+| 검색(제목+본문) | v1 | |
+| JSON 내보내기/가져오기(병합·무손실) | v2 | 다운로드 실패 시 수동복사 폴백 |
+| Evernote(.enex) 가져오기 — 평문 | v3 | 다중파일, 파일명=노트북명 |
+| 리치텍스트 편집기 + 서식 툴바 | v4 | 태그 하단 배치, 정렬, 노트 메타(생성/수정/글자수) |
+| 데이터 무손실 마이그레이션 | v4 | 구버전→schema4 |
+| **.enex 서식·링크·표·체크박스·웹클립주소 보존** | **v5** | 화이트리스트 새니타이저 |
+
+## 7. Evernote 가져오기 상세 (핵심 기능)
+- 입력: Evernote 공식 내보내기 **.enex**(ENML=XHTML 기반). 여러 파일 동시 선택 → 파일명이 노트북명.
+- **왜 API 아님**: Evernote 계정에서 자동으로 "긁어오는" 건 불가(개발자 토큰 승인·서버 필요, 브라우저 직접호출 차단). .enex 가져오기가 백엔드 없는 앱에서 유일하게 작동하는 정직한 경로.
+- 파서 2단:
+  1. `parseEnex()` — 표준 `DOMParser(text/xml)`.
+  2. `parseEnexLenient()` — 표준 실패 시(예: **Evernote 10.19+가 만드는 중첩 CDATA**) 정규식으로 `<note>` 단위 구출. `<note>` 없는 진짜 쓰레기 파일만 거절.
+- 노트 콘텐츠(ENML) → 리치 HTML 변환: `enmlToRich()`.
+  - self-closing 커스텀 태그(`<en-todo/>`,`<en-media/>`)를 사전 정규식으로 `<input>`·placeholder 치환 후 `text/html` 파싱(엔티티·messy 마크업 관대 처리).
+  - `appendSafe()`가 **화이트리스트**로 재구성(8장).
+- **보존**: 제목·본문·태그·생성/수정일·서식(굵게/기울임/밑줄/취소선/색/형광펜)·링크(URL)·표·체크박스·제목(h1~h3)·목록·인용·코드·웹클립 원본주소(하단 링크).
+- **유실(고지됨)**: 첨부파일(이미지·PDF·녹음)은 `en-media`를 "📎 첨부(미지원)" 자리표시로 대체, 실데이터 버림. 노트북 구조는 ENEX에 정보 없어 파일명 추정. 암호화 노트는 "🔒" 표시.
+
+## 8. 보안 모델 (새니타이저 — 절대 약화 금지)
+외부 ENML을 편집기에 주입 = XSS 표면. 방어:
+- 원문은 `DOMParser`로 **비활성 파싱**(스크립트 미실행, 리소스 미로드).
+- 재구성은 **화이트리스트 태그만** `createElement`로 다시 지음: `ENML_ALLOW`(div,p,br,strong,em,u,s,h1-3,ul,ol,li,table/tr/td/th,a,span,hr,blockquote,code,pre,sup,sub,input).
+- 속성: `a[href]`는 `http/https/mailto`만 통과(그 외 href 제거→클릭 무력), `td/th[colspan/rowspan]` 숫자만, `style`은 `STYLE_OK`(color,background-color,font-weight,font-style,text-decoration,text-align)만 + `url()/expression/javascript:/@import/<>` 값 차단. `on*` 핸들러·`script/style/iframe/object/embed/img/link/meta`는 전부 드롭.
+- 검증됨: `javascript:` 링크 / `img onerror` / `onclick` / `<script>` / `style url()` / 등 6종 공격 픽스처 → dialog 0회, href 제거 확인.
+- ⚠️ **이어받는 이가 지켜야 할 것**: 가져오기·붙여넣기에서 나온 HTML을 `innerHTML`에 넣기 전 반드시 이 화이트리스트를 통과시킬 것. 태그/속성 추가 시 화이트리스트도 같이 갱신.
+
+## 9. 테스트 하네스
+- 도구: **Playwright + 헤드리스 Chromium**(`/opt/pw-browsers/chromium`). Node ESM 스크립트.
+- 실행 예: `node test_v5.mjs` (보안+서식+실파일), `node test_v5_regress.mjs`(편집기·마이그레이션·백업 회귀), `node test_real_enex.mjs`(실파일 카운트 무결성).
+- 실파일 픽스처 출처(무료·공개): GitHub `akosbalasko/yarle`(test/data), `wormi4ok/evernote2md`(encoding/enex/testdata). 합계 121개 .enex / 160 노트. 웹클립·이미지·PDF첨부·암호화·표·중첩CDATA·1.4MB 대형 포함.
+- 표준 절차(권장): 산출 후 ① `new Function(scriptText)`로 **정적 구문검사** ② 헤드리스로 기능·보안 테스트 ③ 스크린샷으로 시각 확인. (버그 #8이 정적 구문검사로 잡혔음.)
+
+## 10. 버그 로그 & 교훈 (누적, 삭제 금지)
+1. 미리보기 샌드박스 localStorage 차단 → try/catch+인메모리+배너(v7.2 원칙화의 근거).
+2. `SendUserFile`→`device_commit_files` UUID 타이밍 실수(반복) → 반드시 순차 실행.
+3. 사이드바 flex-shrink로 텍스트 겹침 → `.sidebar > *{flex-shrink:0}`.
+4. 데스크톱 브리지 세션 중 끊김 → 이중 저장으로 무손실.
+5. `.backup-btn` flex:1 상속으로 버튼 세로 늘어남 → flex:none.
+6. 브리지 도구가 턴 중간 사라졌다 복귀 → 재시도로 흡수.
+7. **중첩 CDATA(Evernote 10.19+)를 표준 XML 파서가 거부 → 노트 유실.** 실파일로만 발견됨. → lenient 파서 추가. 교훈: **합성 테스트 통과 ≠ 실물 무결성**.
+8. **삽입 주석에 `*/` 포함 → 블록주석 조기종료 → 스크립트 전체 SyntaxError → 앱 먹통.** 정적 구문검사로 포착. 교훈: 주석에 `*/` 금지, `new Function` 검사 표준화.
+9. `text/html` 파서가 커스텀 self-closing 태그의 형제노드를 자식으로 삼킴 → 사전 정규식 치환으로 회피.
+
+## 11. 알려진 갭 & 다음 우선순위
+- **A(완료·v5)**: 서식·링크·표·웹클립주소 보존.
+- **B(다음 큰 조각)**: 첨부파일(이미지·PDF·녹음) 가져오기. **localStorage 5MB 한계 → IndexedDB 전환 필수**(구조 변경, 착수 전 설계 권장). en-media의 base64 리소스를 IndexedDB에 저장하고 편집기엔 참조로 렌더.
+- **C**: 대용량 파일 가드(크기 경고·진행률).
+- **D**: 다크모드(Evernote 다크테마).
+- **E**: 타 브라우저(Firefox/Edge) contenteditable 산출 차이 검증.
+- **F**: 클라우드 동기화(Drive/백엔드).
+- **G**: 사용자 본인 한국어 실계정 .enex 최종 확인.
+
+## 12. 이어받기 절차 (Codex / 새 AI / 개발자)
+1. 이 문서 + `진행문서_앱창작.md` + `살아있는_앱창작_프레임워크_v7.2.md` + 최신 `노트앱_v5.html`을 확보(같은 폴더/드라이브에 있음).
+2. `노트앱_v5.html`을 브라우저로 열어 현재 동작 확인(구버전 데이터 있으면 자동 이전됨).
+3. 개발은 v5 HTML을 직접 편집(단일 파일). 서버/빌드 불필요.
+4. 변경 후: 위 9장 "표준 절차"(정적 구문검사 → 헤드리스 테스트 → 스크린샷)로 검증.
+5. 다음 작업은 11장 우선순위 또는 `NEXT_PRIORITIES.md` 참고. **B(첨부/IndexedDB)** 착수 전 설계안 먼저.
+6. 보안 새니타이저(8장)는 절대 우회/약화 금지.
+7. 진행 상황은 `진행문서_앱창작.md`에 이어서 기록(세션 로그·버그로그는 삭제 금지, 추가만).
+
+## 13. "살아있는 프레임워크" 메타 규칙 (v7.2 요약)
+이 프로젝트는 개발과 동시에 **프레임워크 자체도 진화**시킨다(원하면 승계, 아니면 무시 가능).
+- 매 응답 말미 `[프롬프트 개선: 있음/없음]` 표시. 실측 마찰 있을 때만 "있음".
+- 사용자가 `+` 입력 → 대기 중 개정 제안을 새 버전 파일로 산출(Z 삼중판정 통과분).
+- 큐 신호: 사용자가 `0`/`ㅋ`/`ㅇ`/`j` 입력 → 우선순위 0 큐의 다음 항목(0-1부터) 즉시 실행. 사용자 실행 필요 항목은 S-1, S-2…
+- 골든 세트 14케이스(회귀 기준, 수정 불가·확장만), 단조성 게이트(개정이 통과 수 낮추면 거부), 개정 원장 불변. 상세는 v7.2 정본 참고.
+
+## 14. 저장소 지도 (3중, 개발 지속성 보장)
+- **로컬 폴더**(PC): `C:\Users\User\Desktop\클로드프로젝트들\에버노트&앱개발프롬프트` — v1~v5 + 프레임워크 + 문서. PC Codex가 여기서 직접 읽고 씀.
+- **claude.ai 프로젝트 지식**("노트플러스P"): 같은 파일 세트. 웹·모바일 어디서든, 기기 전원 무관 접근.
+- **Google Drive**: 이 인수인계 번들 폴더(이 문서 상단/전달 메시지의 링크). 클라우드 백업 + 링크 공유용.
+- 셋 중 하나가 끊겨도 나머지로 무손실(실제로 세션 중 로컬 브리지 끊김을 이 이중화가 방어함 — 버그 #4).
+
+---
+*이 문서는 프로젝트가 진행되면 갱신됨. 최신본은 위 저장소 3곳에 동기화.*
+
+## 15. 2026-07-17 · 0-1 완료 갱신 (앞선 첨부 미지원 상태를 대체)
+- 정본 파일명은 계속 **`노트앱_v5.html`**이며 앱 schema는 **5**로 상승했다. SHA-256: `09510607204C0E955F70C5FE85E0BED37D81671EBCD6EB1BFAFB2BA46B235D36`.
+- 저장은 IndexedDB `noteplusp_schema5`를 주 저장소로 사용한다. `app_state`, `attachment_meta`, `attachment_blob`, `migration_meta`를 분리했다.
+- 기존 localStorage `notes_app_v1`은 무손실·멱등 이전 후 검증 기록을 남기며 자동 삭제하거나 덮어쓰지 않는다. IDB 실패 시 `notes_app_v1_schema5_fallback` 또는 세션 메모리로 계속 동작하고 화면에 저장 한계를 고지한다.
+- Evernote ENEX의 이미지·PDF·녹음을 base64에서 Blob으로 변환해 저장한다. 외부 HTML은 기존 화이트리스트를 통과하고, 본문에는 실행 가능한 원문 미디어를 넣지 않는다. 렌더는 노트 소유 관계가 검증된 attachment ID와 Blob URL로 코드가 직접 만든 DOM만 사용하며 화면 전환·삭제 시 URL을 해제한다.
+- JSON 백업/복원에도 첨부를 base64로 포함한다. 지원하지 않거나 손상된 첨부와 100MB 초과 단일 첨부는 제외하고 개수를 고지한다.
+- 재구성 테스트: `tests/test_noteplus_regress.mjs`. 정적 구문, 기본 편집, schema 4→5 이전·재실행, localStorage 원본 보존, ENML/JSON XSS, 중첩 CDATA, 이미지·PDF·오디오 저장·렌더·백업·삭제, Object URL 해제, IDB/localStorage 실패 폴백을 검증한다.
+- 시각 검증 캡처: `artifacts/noteplus_schema5_attachments.png`. 다음 큐는 0-2 다크모드다.
+
+## 16. 2026-07-17 · 0-2 다크모드 완료 갱신
+- 정본은 계속 `노트앱_v5.html`, schema 5다. 현재 SHA-256: `387DDA3F69B229B267AD8B9BECB9DDD1A500B0488A64375F12B6C49855695C49`.
+- 밝은 테마를 기존 기본값으로 유지하면서 사이드바 하단의 `다크 모드` 토글을 추가했다. 어두운 배경·패널·목록 선택·툴바·편집기·첨부 카드·상태 배너를 Evernote 계열의 차분한 검정/초록 톤으로 맞췄다.
+- 선택은 `state.theme`(`light`/`dark`)으로 schema 5 `app_state`에 함께 저장된다. 재실행 시 복원되고 언제든 라이트 모드로 되돌릴 수 있으며 토글은 `aria-pressed` 상태를 제공한다.
+- 회귀 하네스에 토글, IDB 저장, 재실행 복원, 라이트 롤백, 실제 계산 색상 검사를 추가했다. 다크 화면 캡처는 `artifacts/noteplus_dark_mode.png`다.
+- 다음 큐는 0-3 Firefox/Edge contenteditable 산출 차이 자동 검증이다.
+
+## 17. 2026-07-17 · 0-2 시각 QA 최종 보정
+- 다크모드 시각 캡처에서 제목 입력칸에 남은 브라우저 기본 입력 배경을 발견해 투명 배경으로 통일했다. 기능·데이터 변경은 없다.
+- 전체 정적·브라우저·보안·마이그레이션·첨부·테마 회귀를 다시 실행해 전부 통과하고 `artifacts/noteplus_dark_mode.png`를 재생성·확인했다.
+- 최종 SHA-256은 `6479A15AF42D3DFA1403A1528392248C49A6BE317EE233AC0FB2A6206A38975F`이며, 이 값이 16장의 구현 직후 해시보다 최신이다.
+
+## 18. 2026-07-17 · 0-3 Edge/Firefox contenteditable 검증 완료
+- 앱 정본 코드는 변경하지 않았다. SHA-256은 계속 `6479A15AF42D3DFA1403A1528392248C49A6BE317EE233AC0FB2A6206A38975F`다.
+- `tests/test_contenteditable_browsers.mjs`를 추가해 실제 Microsoft Edge와 Playwright Firefox에서 굵게·기울임·H1·글머리 목록·체크리스트·Enter 줄바꿈을 생성하고 schema 5 저장·페이지 재로드까지 검증한다.
+- `tests/check_contenteditable_reports.mjs`가 두 브라우저 보고서의 텍스트·strong/em/h1/ul/li/checkbox·위험 태그 수와 재로드 결과를 자동 비교한다.
+- 원시 HTML 차이는 2건이다: 목록에서 Edge는 `<div><ul>…`, Firefox는 `<ul>…`; Enter에서 Edge는 `첫째 줄<div>둘째 줄</div>`, Firefox는 `<div>첫째 줄</div><div>둘째 줄</div>`. 저장 평문과 렌더 텍스트, 서식 의미는 동일하므로 앱 정규화 변경은 하지 않았다.
+- 산출물: `artifacts/contenteditable_edge_report.json`, `contenteditable_firefox_report.json`, `contenteditable_comparison.json`, Edge/Firefox 화면 PNG.
+- Firefox 실행 파일은 Playwright Firefox 151.0(v1532)으로 설치했다. 관리 샌드박스에서는 SWGL 프레임버퍼 제한으로 시작이 막혔으나 실제 Firefox 프로세스로 실행하면 전 항목 통과했다. 제품 실패가 아닌 검증 환경 제한이다.
+- 기존 `tests/test_noteplus_regress.mjs` 전체도 다시 통과했다. 다음 큐는 0-4 대용량 ENEX 가드다.
+
+## 19. 2026-07-17 · 0-4 대용량 ENEX 가드 완료
+- 정본 `노트앱_v5.html` SHA-256: `35732AD7ECD637B0735817415C9D4B064894D3D9D36F6479AD18E8064E9D859C`.
+- 파일 하나가 50MB를 초과하거나 처리 대상 합계가 150MB를 초과하면 선택 용량과 함께 큰 파일 경고를 표시하되 자동으로 계속 처리한다.
+- 단일 파일이 250MB를 초과하면 해당 파일만 읽지 않고 제외하며, 한 번에 선택한 합계가 500MB를 초과하면 전체를 읽기 전에 중단하고 여러 번으로 나눠 가져오도록 안내한다. 어떤 경우에도 기존 노트는 변경하지 않는다.
+- 다중 파일 읽기 진행량, 현재 파일명, 읽기/분석/처리 완료 단계, 성공 파일 수를 상단 진행 막대와 `aria-live` 상태로 표시한다. 파일 읽기에 파일별 90%, 분석 완료에 나머지 10%를 배정해 분석 중 100%로 보이는 오해를 막았다.
+- 성공 결과는 2.5초 동안 완료율 100%와 함께 보인 뒤 기존 동작대로 Evernote 안내를 접는다. 손상 파일만 선택한 경우 성공 0건과 기존 노트 보존을 명시한다.
+- 자동검증: `tests/test_enex_progress.mjs`. 경고/차단 경계값, 다중파일 2개 실제 가져오기, 진행률 100%, 손상 ENEX 무손실을 검증한다. 화면 캡처: `artifacts/enex_progress_complete.png`.
+- 기존 정적·schema 5·첨부·보안·마이그레이션·저장 실패 전체 회귀도 다시 통과했다. 우선순위 0은 모두 완료됐으며 다음은 사용자 본인 ENEX가 필요한 S-1이다.
+
+## 20. 2026-07-17 · Evernote ENEX 추출 튜토리얼 완료
+- 정본 `노트앱_v5.html` SHA-256: `1D4E5AB46A5F3A6E3490B9F0691B0E25ED49725CA219C53E554CEAC9FCFF77E8`.
+- 상단 Evernote 안내와 사이드바에 `ENEX 추출 방법` 진입 버튼을 추가하고 6단계 앱 내 튜토리얼을 구현했다.
+- 공식 Evernote 도움말(2025-03-12 갱신) 기준으로 Windows/Mac 데스크톱 앱에서 노트북 또는 노트를 선택→우클릭→Export…→ENEX→속성 선택→저장하는 절차를 안내한다. Evernote 웹에서는 내보내기가 불가능하다는 점, 개별 노트 최대 100개 또는 노트북 전체 내보내기가 가능하다는 점을 포함했다.
+- 노트플러스P의 250MB 단일 파일 한도와 연결해 큰 파일은 노트 선택 범위를 줄여 여러 ENEX로 나누도록 설명한다. 공식 원문 링크: `https://help.evernote.com/hc/en-us/articles/209005557-Export-Notes-and-Notebooks-as-ENEX-or-HTML`.
+- 튜토리얼은 라이트/다크 테마, 모바일 하단 시트형 레이아웃, `role=dialog`, `aria-modal`, 포커스 순환, Escape 닫기, 호출 버튼으로 포커스 복귀, 파일 선택 연결을 지원한다.
+- 재열 때 이전 스크롤 위치가 남아 첫 단계가 가려지는 시각 QA 문제를 발견해 매번 최상단으로 초기화했다.
+- 자동검증: `tests/test_enex_tutorial.mjs`. 콘텐츠·공식 링크·포커스·파일 선택·다크모드·모바일 통과. 캡처: `artifacts/enex_tutorial_dark.png`, `enex_tutorial_mobile.png`.
+- 기존 `test_noteplus_regress.mjs`와 `test_enex_progress.mjs`도 다시 통과했다. 후속 개발 우선순위 10개를 `NEXT_PRIORITIES.md`에 정본화했다.
+
+## 21. 2026-07-17 · ENEX 가져오기 선택 미리보기 완료
+- 정본 `노트앱_v5.html` SHA-256: `48ECE88CCC8678679451606C71C09FBD6AE1E6896D465ABBD5004121A01C995B`.
+- ENEX 파일 분석 결과를 즉시 `state`에 넣지 않고 메모리의 대기 묶음으로 보관한다. 미리보기에서 제목·노트북·태그·본문 요약·첨부 이름/크기를 확인하고 전체 선택·전체 해제·개별 선택할 수 있다.
+- 확인 전에는 노트·노트북·첨부 Blob·IndexedDB가 변경되지 않는다. 확인 시 선택 노트와 그 노트에 속한 첨부만 추려 schema 5 상태/메타/Blob 단일 트랜잭션으로 저장하며, 선택하지 않은 첨부 Blob은 저장하지 않는다.
+- 닫기·취소·Escape·바깥 영역 클릭은 모두 대기 묶음을 폐기하고 기존 노트와 첨부가 그대로임을 고지한다. 저장 실패 시 기존 IDB→전용 localStorage→세션 메모리 폴백과 정직 고지를 그대로 사용한다.
+- 미리보기는 외부 HTML을 삽입하지 않고 `textContent`와 코드 통제 DOM만 사용한다. ENEX 본문은 기존 화이트리스트 새니타이저 결과의 평문 요약만 보여준다.
+- 접근성/화면: modal dialog, 제목·설명 연결, 포커스 순환, Esc 취소, 선택 수 `aria-live`, 0개 선택 시 확인 비활성, 다크 테마와 390px 모바일 레이아웃을 지원한다.
+- 자동검증: `tests/test_enex_preview.mjs`에서 확인 전 상태 불변, 2개 중 1개 선택 저장, 제외 노트의 PDF Blob 미저장, 전체 해제 시 확인 비활성, Esc 취소 상태 동일성, 다크·모바일, page error 0을 통과했다. `test_enex_progress.mjs`, `test_enex_tutorial.mjs`, `test_noteplus_regress.mjs`도 재통과했다.
+- 캡처: `artifacts/enex_import_preview.png`, `artifacts/enex_import_preview_dark_mobile.png`, 갱신된 `artifacts/enex_progress_complete.png`.
+- 다음 자동 개발 항목은 가져오기 진행 중 중단과 완료 묶음 되돌리기다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
+
+## 22. 2026-07-17 · ENEX 가져오기 중단 및 최신 묶음 되돌리기 완료
+- 정본 `노트앱_v5.html` SHA-256: `277629B831754049B450D22F2F53E13A16645E30E5D32DACD573C5A7B177C771`.
+- 파일을 읽는 동안 상단 진행 영역의 `가져오기 중단`으로 활성 FileReader를 `abort()`한다. 중단 시 분석 대기 노트·첨부 Blob을 버리고 상태·IndexedDB·기존 노트를 건드리지 않으며, 변경 없음 상태를 명시한다.
+- 확인 저장된 최신 ENEX 묶음은 state의 `lastImportUndo` 메타(노트 ID·첨부 ID·새 노트북·원래 배너 상태·노트 수정 시각)로 기록한다. 앱 재시작 뒤에도 `방금 가져온 묶음 되돌리기`가 유지된다.
+- 되돌리기는 실수 방지를 위해 3초 안에 두 번 눌러야 실행한다. 해당 노트·첨부 메타·Blob을 함께 삭제하고, 그 묶음이 새로 만든 빈 노트북만 제거한다. IndexedDB 실패 시 기존 localStorage/메모리 폴백과 저장 한계 고지를 사용한다.
+- 가져온 뒤 노트를 수정한 경우 수정 시각을 대조해 일괄 삭제를 거부한다. 사용자의 후속 편집을 보존하기 위한 안전 장치다.
+- 자동검증: `tests/test_enex_cancel_undo.mjs`에서 실제 FileReader abort, 상태 불변, 저장 후 재시작·일괄 되돌리기, PDF Blob 삭제, 수정 노트 보호, page error 0을 통과했다. 기존 `test_noteplus_regress.mjs`, `test_enex_preview.mjs`, `test_enex_progress.mjs`, `test_enex_tutorial.mjs`도 재통과했다.
+- 캡처: `artifacts/enex_import_cancelled.png`, `artifacts/enex_import_undo.png`.
+- 다음 자동 개발 항목은 중복 노트 판별과 선택적 병합이다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
+
+## 23. 2026-07-17 · ENEX 중복 판별 및 선택 병합 완료
+- 정본 `노트앱_v5.html` SHA-256: `A705331056EE2DC7C9508A5B17EAD2027A824FC57ABBE505126105465CC251C1`.
+- 가져오기 미리보기에서 제목과 정규화된 본문이 같은 기존 노트, 같은 ENEX 안의 후속 중복 후보를 표시한다. 외부 HTML은 표시하지 않으며 기존 `textContent` 기반 미리보기만 사용한다.
+- 기존 노트와의 중복은 기본 `건너뛰기`이며, 사용자가 `기존 노트에 태그·첨부 병합` 또는 `별도 노트로 추가`를 고를 수 있다. 병합은 원래 제목/본문을 덮어쓰지 않고 태그 합집합과 검증된 첨부 Blob만 대상 노트에 더한다.
+- 같은 ENEX 안의 중복은 자동 병합하지 않는다. 기본 건너뛰기 또는 별도 추가만 제공해 어느 원본이 기준이 될지 사용자가 모르는 상태에서 데이터가 합쳐지는 일을 막는다.
+- 최신 가져오기 되돌리기 메타에 병합 대상의 원래 태그·첨부 ID·수정 시각과 병합 직후 수정 시각을 추가했다. 되돌리면 새 Blob을 삭제하고 기존 태그·첨부 참조를 복구한다. 대상 노트가 이후 수정되면 전체 되돌리기를 중단한다.
+- 자동검증: `tests/test_enex_duplicates.mjs`에서 기본 건너뛰기, 기존 노트 병합, PDF Blob 소유권 변경, 병합 되돌리기, 별도 추가, 파일 내부 중복 표시, 수정 대상 보호를 통과했다. `test_noteplus_regress.mjs`, `test_enex_preview.mjs`, `test_enex_progress.mjs`, `test_enex_cancel_undo.mjs`, `test_enex_tutorial.mjs`도 재통과했다.
+- 캡처: `artifacts/enex_duplicate_merge.png`.
+- 다음 자동 개발 항목은 이미지·PDF·녹음의 직접 추가·삭제·이름 변경이다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
+
+## 24. 2026-07-17 · 이미지·PDF·녹음 직접 관리 완료
+- 정본 `노트앱_v5.html` SHA-256: `CA2560E46EF7B1F6B3F0DC4354A05DA39914151E305AC9EF3CB33CFEDB46E5F9`.
+- 편집기 첨부 영역에 `파일 추가`를 넣어 이미지(PNG/JPEG/GIF/WebP/BMP/AVIF/HEIC), PDF, 녹음 형식 파일을 여러 개 직접 추가할 수 있다. 단일 100MB 초과 또는 지원하지 않는 MIME은 기존 노트를 바꾸지 않고 제외 사실을 고지한다.
+- 첨부 카드에서 이미지 미리보기, 오디오 컨트롤, PDF/원본 저장 링크를 기존 검증된 Blob URL 렌더 경계 안에서 제공한다. 파일명은 안전한 문자로 정규화한 뒤 메타만 변경하며 HTML 본문을 신뢰하지 않는다.
+- 삭제는 3초 내 두 번 클릭으로 확정하며 노트의 attachment ID, IndexedDB 메타·Blob, 세션 첨부, Object URL을 함께 정리한다. 이름 변경·추가·삭제 모두 노트 수정 시각을 갱신해 최신 가져오기 되돌리기가 사용자의 후속 편집을 보호하도록 한다.
+- IndexedDB 실패 시 파일은 세션 메모리에서 계속 열리고 상태를 전용 localStorage에 보조 저장하되, 재시작 뒤 첨부가 유지되지 않을 수 있음을 화면에 고지한다.
+- 자동검증: `tests/test_manual_attachments.mjs`에서 이미지·PDF·오디오 추가, PDF 이름 변경, 두 번 클릭 삭제, IDB Blob 삭제, 비지원 형식 무변경, IndexedDB 실패 세션 유지·정직 고지를 통과했다. 기존 `test_noteplus_regress.mjs` 전체도 재통과했다.
+- 캡처: `artifacts/manual_attachments.png`.
+- 다음 자동 개발 항목은 휴지통과 삭제 노트 복원이다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
+
+## 25. 2026-07-17 · 휴지통 및 삭제 노트 복원 완료
+- 정본 `노트앱_v5.html` SHA-256: `1C028A281BD7997CACDBB216535ABECB5854CD4BECA5910CC71ED599F1ED170F`.
+- schema 5 상태에 `trash`를 추가해 일반 삭제는 노트와 attachment ID를 휴지통으로 옮긴다. 첨부 메타·Blob·세션 객체를 보존하므로 이미지·PDF·녹음을 온전히 복원할 수 있다.
+- 사이드바 `휴지통`에서 삭제 노트를 읽기 전용으로 열며, 복원 또는 영구 삭제만 제공한다. 복원은 원래 노트북과 첨부 참조를 유지하며, 없는 노트북은 다시 만든다.
+- 영구 삭제는 3초 내 두 번 클릭으로 확정하고 그때만 attachment_meta, attachment_blob, 세션 첨부, Object URL을 함께 정리한다. 일반 삭제 뒤 최신 ENEX 묶음 되돌리기는 무효화해 참조가 엇갈리지 않게 했다.
+- JSON 내보내기에는 휴지통도 포함되고, 가져오기 시 ID 충돌이 없는 휴지통 노트와 첨부를 복원한다. localStorage/메모리 폴백에서도 상태는 계속 유지되고 한계를 고지한다.
+- 자동검증: `tests/test_trash_restore.mjs`에서 휴지통 이동, IDB Blob 보존, 재시작 후 유지, 읽기 전용, 복원, 영구 삭제 Blob 정리를 통과했다. `test_noteplus_regress.mjs` 전체도 새 휴지통 보존 의미로 재통과했다.
+- 캡처: `artifacts/trash_restore.png`.
+- 다음 자동 개발 항목은 노트북·태그 이름 변경·병합·삭제다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
+
+## 26. 2026-07-17 · 노트북·태그 이름 변경·병합·삭제 완료
+- 정본 `노트앱_v5.html` SHA-256: `1A4AD63C384EB81B5141046609C021D369DAA28F1830D3B84EFB15BF2DF9CCC8`.
+- 사이드바 사용자 노트북과 태그에 이름 변경(✎), 병합(⇄), 삭제(×) 제어를 추가했다. 이름은 제어 문자를 제거하고 80자 이내로 정규화하며, 이미 존재하는 이름으로 바꾸는 일은 막는다.
+- 노트북 변경·병합·삭제는 활성·휴지통 노트 모두에 적용한다. 삭제는 두 번 눌러 확정하며 노트·첨부 Blob을 지우지 않고 남은 첫 노트북으로 옮긴다. 마지막 노트북은 삭제할 수 없다.
+- 태그 변경·병합·삭제도 활성·휴지통 노트 전체에 적용한다. 병합은 중복 태그를 하나로 정리하고, 삭제는 두 번 눌러 확정해 노트 내용·첨부·다른 태그를 보존한다.
+- 자동검증: 새 `tests/test_notebook_tag_management.mjs`가 이름 변경, 병합, 2단계 삭제, 휴지통 포함 무손실 보존, page error 0을 통과했다. 기존 `tests/test_noteplus_regress.mjs` 전체도 재통과했다.
+- 화면 검증: `artifacts/notebook_tag_management.png`를 직접 확인했다.
+- 다음 자동 개발 항목은 모바일 화면 탐색 구조 개선이다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
+
+## 29. 2026-07-18 · 심화 생산성·검증 묶음
+- `test_productivity_mobile.mjs`가 암호화 백업 복호화, PWA 등록·오프라인 재시작, 모바일 회전, 1,000노트 검색, 표 행 조작, 이력 비교, 역링크, 템플릿, 저장 검색, 색인 재구축과 고아 첨부 안전 정리까지 커버한다.
+- 구현 보완: PWA 개발용 신뢰 origin에 `127.0.0.1`도 포함했다. 서비스 워커가 제어하는 뒤에만 오프라인 회귀를 실행한다.
+- 복구 지점은 상태 메타데이터만 복사하며 첨부 Blob은 같은 IndexedDB 보존본을 참조한다. 고아 첨부 정리는 활성·휴지통의 attachment id를 전부 모은 뒤에만 실행하며, 실패 시 삭제하지 않는다.
+- 공유는 Markdown, 텍스트, 새니타이즈된 HTML 내보내기를 지원한다. 암호화 백업 비밀번호·평문은 저장하지 않는다.
+
+## 28. 2026-07-18 · 즉시 실행 가능 20개 일괄 구현
+- 사용자 지시에 따라 즉시 실행 가능 목록 20개를 묶어 구현했다. 정본 SHA-256: `A5E9E3798457425A714811BE86ED379D8DCE552C129853BAD496A9EA07E28AAA`.
+- 모바일 탐색, IME·단축키, 복구 지점, 조건 검색·저장 검색·전문 캐시, 즐겨찾기, 내부 링크, Markdown·표, 인쇄, PWA, 암호화 백업/복호화 가져오기, 저장소 사용량, sync 메타, 템플릿, 외부 링크 확인, 변경 이력, Markdown 공유를 추가했다.
+- 저장은 schema 5 IndexedDB·기존 localStorage 폴백을 유지한다. 새 상태 필드(preferences, snapshots, history, favorite, sync)는 마이그레이션에서 정규화하며 기존 저장을 삭제하지 않는다.
+- 자동검증: `tests/test_noteplus_regress.mjs` 전체 통과, 새 `tests/test_productivity_mobile.mjs` 통과, 정적 `new Function` 통과. 생성 캡처: `artifacts/productivity_desktop.png`, `artifacts/productivity_mobile.png`.
+- PWA는 HTTPS 또는 localhost에서 service worker를 등록한다. 파일 직접 열기 환경에서는 앱을 그대로 사용하고 PWA 설치만 지원하지 않는다는 브라우저 제약이 있다.
+- 다음 자동 개발 항목은 새 심화 검증 목록의 1번이며, 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
+
+## 27. 2026-07-18 · 구버전 ZIP 분석 및 UX 회귀 반영
+- 사용자 제공 구버전 `노트플러스P_인수인계.zip`을 읽기 전용으로 대조했다. UX 미리보기의 3단 구조, Evernote 안내, 노트북 선택기, 태그, 글자 수 메타는 현재 정본에 이미 존재한다.
+- 구버전의 localStorage 단일 저장을 현재로 되돌리지 않았다. 현재의 schema 5 IndexedDB 상태/메타/Blob 분리, 저장 실패 폴백·정직 고지, 휴지통, 새니타이저가 안전성 면에서 우선한다.
+- 구버전에서 유효했던 편집기 노트북 이동 UX를 회귀로 보존했다. `tests/test_notebook_tag_management.mjs`는 선택기의 표시와 프로젝트→보관→프로젝트 이동, 이름 변경·병합·2단계 삭제, 휴지통 포함 보존을 검증한다.
+- 검증: 새 브라우저 회귀와 `new Function` 정적 검사를 통과했다. 정본 앱 코드는 변경되지 않았으며 SHA-256은 `1A4AD63C384EB81B5141046609C021D369DAA28F1830D3B84EFB15BF2DF9CCC8`이다.
+- 참고 캡처: `artifacts/old_ux_preview_reference.png`, `artifacts/current_editor_reference.png`.
+- 다음 자동 개발 항목은 모바일 화면 탐색 구조 개선이다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
