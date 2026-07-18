@@ -603,6 +603,7 @@
         <h3>완료 기준</h3>
         <ul>
           <li>백업 폴더에 모든 노트북의 ENEX가 있으며 파일 크기가 0KB가 아닙니다.</li>
+          <li>전체 선택 용량이 500MB를 넘으면 노트플러스P가 안전한 묶음으로 자동 분할해 순서대로 미리보기를 보여줍니다.</li>
           <li>미리보기의 발견 노트 수가 기대한 수와 맞거나, 차이 원인을 확인했습니다.</li>
           <li>가져오기 완료 뒤 노트북·태그·이미지·PDF·녹음 표본을 열어 확인했습니다.</li>
           <li>확인이 끝날 때까지 Evernote 원본과 ENEX 백업 폴더를 삭제하지 않습니다.</li>
@@ -1026,7 +1027,11 @@ function migrationCoverageText(payload){
 }
 function showImportPreview(payload){
   payload.duplicateCount=markImportDuplicates(payload.notes);
-  payload.coverageMessage=migrationCoverageText(payload);
+  if(enexBatchSession){
+    enexBatchSession.foundNotes+=payload.notes.length;
+    payload.notes.forEach(function(note){enexBatchSession.notebooks[note.notebook||"기본 노트북"]=true;});
+    payload.coverageMessage=payload.batchNumber===payload.batchTotal?enexBatchCoverageText():"자동 묶음 "+payload.batchNumber+" / "+payload.batchTotal;
+  }else payload.coverageMessage=migrationCoverageText(payload);
   pendingEnexImport=payload; importPreviewLastFocus=document.activeElement;
   var preview=document.getElementById("importPreview");
   var failureText=payload.failFiles?" · 실패·제외 "+payload.failFiles+"개":"";
@@ -1045,7 +1050,8 @@ function hideImportPreview(returnFocus){
 function cancelPendingEnexImport(){
   if(!pendingEnexImport){hideImportPreview(true);return;}
   pendingEnexImport=null; hideImportPreview(true);
-  var msg="가져오기를 취소했습니다. 기존 노트와 첨부파일은 그대로입니다.";
+  var remaining=enexBatchSession?enexBatchSession.queue.length:0;clearEnexBatchSession();
+  var msg="가져오기를 취소했습니다. 기존 노트와 첨부파일은 그대로입니다."+(remaining?" 남은 자동 묶음 "+remaining+"개도 중단했습니다.":"");
   document.getElementById("enexStatus").textContent=msg; setBackupStatus(msg);
   setEnexProgress(0,"취소됨 · 변경 없음",true);
 }
@@ -1118,6 +1124,16 @@ function confirmPendingEnexImport(){
     if(payload.totalAttachmentErrors>0) msg+=" · 지원하지 않거나 손상된 첨부 "+payload.totalAttachmentErrors+"개 제외";
     if(!saved) msg+=" · 첨부는 현재 세션에만 유지됨";
     if(payload.failFiles>0) msg+=" · 실패·제외 "+payload.failFiles+"개("+payload.failNames.join(", ")+")";
+    if(enexBatchSession){
+      enexBatchSession.importedNotes+=selectedCount;enexBatchSession.importedFiles+=payload.okFiles;
+      if(!saved)enexBatchSession.persistenceLimited=true;
+      if(enexBatchSession.queue.length){
+        msg+=" · 다음 자동 묶음을 준비합니다.";document.getElementById("enexStatus").textContent=msg;setBackupStatus(msg);startNextEnexBatch();return;
+      }
+      var finalCoverage=enexBatchCoverageText();
+      msg="전체 자동 분할 가져오기 완료 · 파일 "+enexBatchSession.importedFiles+"개 · 노트 "+enexBatchSession.importedNotes+"개"+(enexBatchSession.rejected.length?" · 250MB 초과 제외 "+enexBatchSession.rejected.length+"개":"")+(enexBatchSession.persistenceLimited?" · 일부 첨부는 현재 세션에만 유지됨":"")+(finalCoverage?" · "+finalCoverage:"");
+      clearEnexBatchSession();
+    }
     document.getElementById("enexStatus").textContent=msg; setBackupStatus(msg);
     setEnexProgress(100,"완료 · 선택 "+selectedCount+"개",true);
     setTimeout(refreshEvernoteBar,2500);
@@ -2019,12 +2035,44 @@ var ENEX_WARN_FILE_BYTES=50*1024*1024;
 var ENEX_WARN_TOTAL_BYTES=150*1024*1024;
 var ENEX_MAX_FILE_BYTES=250*1024*1024;
 var ENEX_MAX_TOTAL_BYTES=500*1024*1024;
+var enexBatchSession=null;
+function splitEnexIntoBatches(inputFiles){
+  var files=Array.prototype.slice.call(inputFiles||[]),batches=[],batch=[],batchBytes=0,rejected=[];
+  files.forEach(function(file){
+    var size=Number(file.size)||0;
+    if(size>ENEX_MAX_FILE_BYTES){rejected.push(file);return;}
+    if(batch.length&&batchBytes+size>ENEX_MAX_TOTAL_BYTES){batches.push(batch);batch=[];batchBytes=0;}
+    batch.push(file);batchBytes+=size;
+  });
+  if(batch.length)batches.push(batch);
+  return {batches:batches,rejected:rejected,totalFiles:files.length,totalBytes:files.reduce(function(sum,file){return sum+(Number(file.size)||0);},0)};
+}
+function clearEnexBatchSession(){enexBatchSession=null;}
+function enexBatchCoverageText(){
+  if(!enexBatchSession)return "";
+  var foundNotes=enexBatchSession.foundNotes,foundNotebooks=Object.keys(enexBatchSession.notebooks).length,parts=[];
+  if(enexExpectedNotes)parts.push(foundNotes===enexExpectedNotes?"✓ 전체 노트 수 일치":"⚠ 기대 노트 "+enexExpectedNotes+"개와 "+Math.abs(enexExpectedNotes-foundNotes)+"개 차이");
+  if(enexExpectedNotebooks)parts.push(foundNotebooks>=enexExpectedNotebooks?"✓ 노트북 수 확인":"⚠ 기대 노트북 "+enexExpectedNotebooks+"개, 발견 "+foundNotebooks+"개");
+  return parts.join(" · ");
+}
+function startNextEnexBatch(){
+  if(!enexBatchSession||!enexBatchSession.queue.length)return false;
+  var next=enexBatchSession.queue.shift();enexBatchSession.current++;
+  setEnexProgress(0,"자동 묶음 "+enexBatchSession.current+" / "+enexBatchSession.total+" 준비 중",true);
+  setTimeout(function(){document.getElementById("enexFile").onchange({target:{files:next,value:""},_enexBatch:true});},250);
+  return true;
+}
+function finishEnexBatchWithoutPreview(reason){
+  if(!enexBatchSession)return false;
+  if(enexBatchSession.queue.length){
+    var msg=reason+" 다음 자동 묶음을 계속 처리합니다.";document.getElementById("enexStatus").textContent=msg;setBackupStatus(msg);startNextEnexBatch();return true;
+  }
+  var coverage=enexBatchCoverageText(),done="자동 분할 가져오기 종료 · 파일 "+enexBatchSession.importedFiles+"개 · 노트 "+enexBatchSession.importedNotes+"개"+(reason?" · "+reason:"")+(enexBatchSession.persistenceLimited?" · 일부 첨부는 현재 세션에만 유지됨":"")+(coverage?" · "+coverage:"");
+  clearEnexBatchSession();document.getElementById("enexStatus").textContent=done;setBackupStatus(done);setEnexProgress(100,"자동 분할 처리 종료",true);return true;
+}
 function planEnexFiles(inputFiles){
   var files=Array.prototype.slice.call(inputFiles||[]);
   var totalBytes=files.reduce(function(sum,file){return sum+(Number(file.size)||0);},0);
-  if(totalBytes>ENEX_MAX_TOTAL_BYTES){
-    return {accepted:[],rejected:files,warnings:[],totalBytes:totalBytes,acceptedBytes:0,blockedReason:"한 번에 선택한 파일이 500MB를 초과합니다. 여러 번으로 나눠 가져오세요."};
-  }
   var accepted=[],rejected=[],warnings=[];
   files.forEach(function(file){
     var size=Number(file.size)||0;
@@ -2035,6 +2083,9 @@ function planEnexFiles(inputFiles){
     }
   });
   var acceptedBytes=accepted.reduce(function(sum,file){return sum+(Number(file.size)||0);},0);
+  if(acceptedBytes>ENEX_MAX_TOTAL_BYTES){
+    return {accepted:[],rejected:rejected,warnings:warnings,totalBytes:totalBytes,acceptedBytes:acceptedBytes,blockedReason:"이 묶음이 500MB를 초과합니다. 자동 분할을 다시 시도하세요."};
+  }
   var warningReason="";
   if(warnings.length||acceptedBytes>ENEX_WARN_TOTAL_BYTES) warningReason="큰 ENEX 파일입니다. 가져오는 동안 이 탭을 닫지 마세요.";
   return {accepted:accepted,rejected:rejected,warnings:warnings,totalBytes:totalBytes,acceptedBytes:acceptedBytes,warningReason:warningReason,blockedReason:""};
@@ -2049,10 +2100,12 @@ function setEnexCancelVisible(show){ document.getElementById("enexCancel").hidde
 function cancelActiveEnexJob(){
   var job=activeEnexJob;
   if(!job||job.cancelled) return;
+  var remaining=enexBatchSession?enexBatchSession.queue.length:0;
   job.cancelled=true; activeEnexJob=null;
   (job.readers||[]).slice().forEach(function(reader){try{reader.abort();}catch(ignore){}});
   setEnexCancelVisible(false);
-  var msg="가져오기를 중단했습니다. 분석 중인 내용은 저장하지 않았고 기존 노트와 첨부파일은 그대로입니다.";
+  clearEnexBatchSession();
+  var msg="가져오기를 중단했습니다. 분석 중인 내용은 저장하지 않았고 기존 노트와 첨부파일은 그대로입니다."+(remaining?" 남은 자동 묶음 "+remaining+"개도 중단했습니다.":"");
   document.getElementById("enexStatus").textContent=msg; setBackupStatus(msg);
   setEnexProgress(0,"중단됨 · 변경 없음",true);
 }
@@ -2331,6 +2384,16 @@ document.getElementById("enexFile").onchange = function(e){
   var selectedFiles=Array.prototype.slice.call(e.target.files||[]);
   if(!selectedFiles.length) return;
   if(activeEnexJob) cancelActiveEnexJob();
+  if(!e._enexBatch){
+    var split=splitEnexIntoBatches(selectedFiles);
+    if(split.batches.length>1){
+      enexBatchSession={queue:split.batches.slice(1),total:split.batches.length,current:1,foundNotes:0,notebooks:{},importedNotes:0,importedFiles:0,persistenceLimited:false,rejected:split.rejected.map(function(file){return file.name;})};
+      var batchMsg="전체 "+selectedFiles.length+"개 ENEX를 안전한 크기의 "+split.batches.length+"개 묶음으로 자동 처리합니다."+(split.rejected.length?" 250MB 초과 "+split.rejected.length+"개는 제외합니다.":"");
+      document.getElementById("enexStatus").textContent=batchMsg;setBackupStatus(batchMsg);
+      document.getElementById("enexFile").onchange({target:{files:split.batches[0],value:""},_enexBatch:true});e.target.value="";return;
+    }
+    clearEnexBatchSession();
+  }
   var plan=planEnexFiles(selectedFiles);
   if(plan.blockedReason){
     document.getElementById("enexStatus").textContent="가져오기 중단 — "+plan.blockedReason;
@@ -2396,18 +2459,21 @@ document.getElementById("enexFile").onchange = function(e){
     setEnexCancelVisible(false);
     if(okFiles===0){
       var noSuccess="가져오기 실패 — "+failNames.join(", ")+". 기존 노트는 그대로입니다.";
+      if(finishEnexBatchWithoutPreview(noSuccess))return;
       document.getElementById("enexStatus").textContent=noSuccess; setBackupStatus(noSuccess);
       setEnexProgress(100,"완료 · 성공 0 / "+selectedFiles.length,true); return;
     }
     if(!stagedNotes.length){
       var emptyMsg="분석은 완료했지만 가져올 노트가 없습니다. 기존 노트는 그대로입니다.";
+      if(finishEnexBatchWithoutPreview(emptyMsg))return;
       document.getElementById("enexStatus").textContent=emptyMsg; setBackupStatus(emptyMsg);
       setEnexProgress(100,"완료 · 노트 0개",true); return;
     }
     showImportPreview({
       notes:stagedNotes,attachments:importedAttachments,okFiles:okFiles,
       totalAttachNotes:totalAttachNotes,totalAttachmentErrors:totalAttachmentErrors,
-      failFiles:failFiles,failNames:failNames.slice(),selectedFilesCount:selectedFiles.length
+      failFiles:failFiles,failNames:failNames.slice(),selectedFilesCount:selectedFiles.length,
+      batchNumber:enexBatchSession?enexBatchSession.current:0,batchTotal:enexBatchSession?enexBatchSession.total:0
     });
   }
   e.target.value = "";
