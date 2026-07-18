@@ -325,6 +325,14 @@
 - `test_productivity_mobile.mjs`는 다섯 판정 상태, 부족 상태의 사전 차단·무변경, 자동 분할 보고서 기록을 검증한다. `test_enex_progress.mjs`는 기존 510MB 선택 기대를 현재 정책인 `[2,1]` 자동 분할로 고쳐 진행률 회귀를 유지한다.
 - 서비스 워커 캐시는 `noteplusp-v5-shell-8`, 정본 SHA-256은 `4F34A32E5E61CCDD77D33D134574CC6151BDDB7F847FCA88D7F5CD06F5437BAC`이다.
 
+## 37. 2026-07-18 · 손상 ENEX·첨부 상세 제외 보고서
+- `parseResourceElements()`는 `{attachments, mediaMap, failed, issues}`를 반환한다. `issues`는 sourceFile, notebook, noteTitle, attachmentName, mime, reason만 포함하며 base64·해시·본문은 포함하지 않는다.
+- 사유는 `attachmentIssueReason()`의 제한된 한국어 메시지로만 정규화한다: 데이터 없음, 해시 형식 오류, 비지원 형식, resource XML 오류, base64 인코딩 오류, 100MB 초과, 기타 읽기 오류.
+- `parseEnex()`과 `parseEnexLenient()`는 `sourceFileName`을 선택적으로 받고 attachmentIssues를 누적한다. 기존 두 인자 호출은 계속 호환된다. UI 파일 처리 경로는 실제 `f.name`을 세 번째 인자로 넘긴다.
+- `normalizeImportReport()`는 attachmentIssues를 최대 1,000개, 각 필드 120~300자로 제어문자 제거·중복 제거한다. `recordEnexReportResult()`가 배치별 issues를 누적하며 HTML 보고서는 표로 출력한다.
+- 미리보기의 `importPreviewIssues`는 `textContent`로 최대 30개만 표시한다. 데이터형 앱 저장 전 취소 때 `enexPreflightPreviousBanner`를 복원해 사전 점검 안내가 상태 불변 검사를 훼손하지 않게 했다.
+- 서비스 워커 캐시는 `noteplusp-v5-shell-9`, 정본 SHA-256은 `692A5F16A205585691CD34D40FEAFE0B2EA30165745C9743A5A2C7729443ECB7`이다.
+
 ## 28. 2026-07-18 · 즉시 실행 가능 20개 일괄 구현
 - 사용자 지시에 따라 즉시 실행 가능 목록 20개를 묶어 구현했다. 정본 SHA-256: `A5E9E3798457425A714811BE86ED379D8DCE552C129853BAD496A9EA07E28AAA`.
 - 모바일 탐색, IME·단축키, 복구 지점, 조건 검색·저장 검색·전문 캐시, 즐겨찾기, 내부 링크, Markdown·표, 인쇄, PWA, 암호화 백업/복호화 가져오기, 저장소 사용량, sync 메타, 템플릿, 외부 링크 확인, 변경 이력, Markdown 공유를 추가했다.

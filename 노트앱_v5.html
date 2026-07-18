@@ -59,6 +59,10 @@
   .enex-job-action.undo.show{display:inline-block;}
   .enex-job-action.report{display:none;}
   .enex-job-action.report.show{display:inline-block;}
+  .import-preview-issues{display:none; margin:0 16px 12px; padding:10px 12px; border:1px solid #d8b45f; border-radius:8px; background:#fff8e8; color:#70520a; font-size:12px; line-height:1.45; max-height:118px; overflow:auto;}
+  .import-preview-issues.show{display:block;}
+  .import-preview-issue-title{font-weight:800; margin-bottom:4px;}
+  .import-preview-issue{display:block;}
 
   .main{flex:1; display:grid; grid-template-columns:236px 320px 1fr; min-height:0;}
   @media(max-width:900px){ .main{grid-template-columns:64px 260px 1fr;} .sidebar .full{display:none;} .side-logo span.word{display:none;} }
@@ -386,6 +390,7 @@
   :root[data-theme="dark"] .enex-progress-label{color:#b9aa79;}
   :root[data-theme="dark"] .enex-job-action{background:#302a1a; color:#e5ce80; border-color:#75622d;}
   :root[data-theme="dark"] .enex-job-action:hover{background:#413720;}
+  :root[data-theme="dark"] .import-preview-issues{background:#3a301c; border-color:#75622d; color:#e5ce80;}
   :root[data-theme="dark"] .side-logo{color:var(--ink);}
   :root[data-theme="dark"] .search:focus,
   :root[data-theme="dark"] .navitem.on,
@@ -645,6 +650,7 @@
       <button type="button" id="importPreviewSelectNone">선택 해제</button>
       <span class="import-preview-selected" id="importPreviewSelected" aria-live="polite"></span>
     </div>
+    <div class="import-preview-issues" id="importPreviewIssues" role="status" aria-live="polite"></div>
     <div class="import-preview-list" id="importPreviewList"></div>
     <div class="import-preview-foot">
       <button class="import-preview-action" id="importPreviewCancel" type="button">취소</button>
@@ -732,12 +738,13 @@ function normalizeImportReport(raw){
   var outcomes={"in-progress":1,completed:1,partial:1,failed:1,undone:1};
   function count(value){return Math.max(0,Math.min(10000000,Math.floor(Number(value)||0)));}
   function names(values){var seen={};return (Array.isArray(values)?values:[]).map(function(value){return cleanReportText(value,300);}).filter(function(value){if(!value||seen[value])return false;seen[value]=true;return true;}).slice(0,10000);}
+  function issues(values){var seen={};return (Array.isArray(values)?values:[]).map(function(item){if(!item||typeof item!=="object")return null;var normalized={sourceFile:cleanReportText(item.sourceFile,300),notebook:cleanReportText(item.notebook,300),noteTitle:cleanReportText(item.noteTitle,300),attachmentName:cleanReportText(item.attachmentName,300),mime:cleanReportText(item.mime,120),reason:cleanReportText(item.reason,300)};var key=[normalized.sourceFile,normalized.notebook,normalized.noteTitle,normalized.attachmentName,normalized.mime,normalized.reason].join("\u0001");if(!normalized.reason||seen[key])return null;seen[key]=true;return normalized;}).filter(Boolean).slice(0,1000);}
   var sourceFiles=(Array.isArray(raw.sourceFiles)?raw.sourceFiles:[]).map(function(file){return file&&typeof file==="object"?{name:cleanReportText(file.name,300),size:count(file.size)}:null;}).filter(function(file){return file&&file.name;}).slice(0,10000);
   var preflightRaw=raw.storagePreflight&&typeof raw.storagePreflight==="object"?raw.storagePreflight:null;
   var report={format:"noteplusp-import-report-v1",id:cleanReportText(raw.id,100)||("report_"+Date.now().toString(36)),startedAt:Number(raw.startedAt)||Date.now(),completedAt:Number(raw.completedAt)||0,undoneAt:Number(raw.undoneAt)||0,
     outcome:outcomes[raw.outcome]?raw.outcome:"in-progress",automaticBatch:!!raw.automaticBatch,plannedBatchCount:count(raw.plannedBatchCount),completedBatchCount:count(raw.completedBatchCount),selectedFileCount:count(raw.selectedFileCount),processedFileCount:count(raw.processedFileCount),importedFileCount:count(raw.importedFileCount),
     sourceFiles:sourceFiles,rejectedFiles:names(raw.rejectedFiles),failedFiles:names(raw.failedFiles),foundNoteCount:count(raw.foundNoteCount),importedNoteCount:count(raw.importedNoteCount),newNoteCount:count(raw.newNoteCount),mergedNoteCount:count(raw.mergedNoteCount),skippedNoteCount:count(raw.skippedNoteCount),attachmentCount:count(raw.attachmentCount),attachmentErrorCount:count(raw.attachmentErrorCount),
-    expectedNoteCount:count(raw.expectedNoteCount),expectedNotebookCount:count(raw.expectedNotebookCount),notebookNames:names(raw.notebookNames),persistenceLimited:!!raw.persistenceLimited,coverageMessage:cleanReportText(raw.coverageMessage,1000),
+    expectedNoteCount:count(raw.expectedNoteCount),expectedNotebookCount:count(raw.expectedNotebookCount),notebookNames:names(raw.notebookNames),attachmentIssues:issues(raw.attachmentIssues),persistenceLimited:!!raw.persistenceLimited,coverageMessage:cleanReportText(raw.coverageMessage,1000),
     storagePreflight:preflightRaw?{checkedAt:Number(preflightRaw.checkedAt)||0,status:["ok","warning","blocked","unavailable","session-only"].indexOf(preflightRaw.status)>=0?preflightRaw.status:"unavailable",usage:count(preflightRaw.usage),quota:count(preflightRaw.quota),incomingBytes:count(preflightRaw.incomingBytes),reserveBytes:count(preflightRaw.reserveBytes),remainingBytes:count(preflightRaw.remainingBytes),message:cleanReportText(preflightRaw.message,1000)}:null};
   if(!report.selectedFileCount)report.selectedFileCount=sourceFiles.length;
   return report;
@@ -1064,6 +1071,14 @@ function renderImportPreview(){
   });
   updateImportPreviewSelection();
 }
+function renderImportPreviewIssues(issues){
+  var box=document.getElementById("importPreviewIssues");while(box.firstChild)box.removeChild(box.firstChild);
+  issues=normalizeImportReport({attachmentIssues:issues||[]});issues=issues?issues.attachmentIssues:[];
+  box.classList.toggle("show",!!issues.length);if(!issues.length)return;
+  var title=document.createElement("div");title.className="import-preview-issue-title";title.textContent="제외된 첨부 "+issues.length+"개 — 노트 본문과 첨부 내용은 읽거나 저장하지 않았습니다.";box.appendChild(title);
+  issues.slice(0,30).forEach(function(issue){var row=document.createElement("span");row.className="import-preview-issue";row.textContent=[issue.sourceFile||"ENEX 파일",issue.noteTitle||"제목 없음",issue.attachmentName||"첨부파일",issue.mime||"형식 미상",issue.reason].filter(Boolean).join(" · ");box.appendChild(row);});
+  if(issues.length>30){var more=document.createElement("span");more.className="import-preview-issue";more.textContent="추가 "+(issues.length-30)+"개는 결과 보고서에서 확인할 수 있습니다.";box.appendChild(more);}
+}
 function migrationCoverageText(payload){
   var notebookNames={};(payload.notes||[]).forEach(function(note){notebookNames[note.notebook||"기본 노트북"]=true;});
   var foundNotes=(payload.notes||[]).length,foundNotebooks=Object.keys(notebookNames).length,parts=[];
@@ -1081,7 +1096,9 @@ function showImportPreview(payload){
   pendingEnexImport=payload; importPreviewLastFocus=document.activeElement;
   var preview=document.getElementById("importPreview");
   var failureText=payload.failFiles?" · 실패·제외 "+payload.failFiles+"개":"";
-  document.getElementById("importPreviewSummary").textContent=payload.okFiles+"개 파일에서 노트 "+payload.notes.length+"개와 첨부 "+payload.attachments.length+"개를 찾았습니다"+(payload.duplicateCount?" · 중복 후보 "+payload.duplicateCount+"개":"")+failureText+(payload.coverageMessage?" · "+payload.coverageMessage:"")+". 확인 전에는 기존 데이터가 바뀌지 않습니다.";
+  var issueText=(payload.attachmentIssues||[]).length?" · 제외 첨부 "+payload.attachmentIssues.length+"개":"";
+  document.getElementById("importPreviewSummary").textContent=payload.okFiles+"개 파일에서 노트 "+payload.notes.length+"개와 첨부 "+payload.attachments.length+"개를 찾았습니다"+(payload.duplicateCount?" · 중복 후보 "+payload.duplicateCount+"개":"")+failureText+issueText+(payload.coverageMessage?" · "+payload.coverageMessage:"")+". 확인 전에는 기존 데이터가 바뀌지 않습니다.";
+  renderImportPreviewIssues(payload.attachmentIssues);
   renderImportPreview();
   preview.classList.add("show"); preview.setAttribute("aria-hidden","false");
   document.getElementById("importPreviewList").scrollTop=0;
@@ -1097,6 +1114,7 @@ function cancelPendingEnexImport(){
   if(!pendingEnexImport){hideImportPreview(true);return;}
   pendingEnexImport=null; hideImportPreview(true);
   var remaining=enexBatchSession?enexBatchSession.queue.length:0;clearEnexBatchSession();
+  restoreEnexBannerAfterNoChange();
   var msg="가져오기를 취소했습니다. 기존 노트와 첨부파일은 그대로입니다."+(remaining?" 남은 자동 묶음 "+remaining+"개도 중단했습니다.":"");
   document.getElementById("enexStatus").textContent=msg; setBackupStatus(msg);
   setEnexProgress(0,"취소됨 · 변경 없음",true);
@@ -1118,6 +1136,7 @@ function confirmPendingEnexImport(){
   });
   if(!newNotes.length&&!mergePlans.length){
     var skippedPayload=pendingEnexImport;recordEnexReportResult(skippedPayload,[],[],[]);persist();pendingEnexImport=null;hideImportPreview(false);
+    restoreEnexBannerAfterNoChange();
     var skippedMsg="이 묶음에서 추가하거나 병합할 노트가 없어 기존 데이터를 변경하지 않았습니다.";
     if(finishEnexBatchWithoutPreview(skippedMsg))return;
     document.getElementById("enexStatus").textContent=skippedMsg;setBackupStatus(skippedMsg);setEnexProgress(100,"선택한 변화 없음",true);return;
@@ -1157,7 +1176,7 @@ function confirmPendingEnexImport(){
     snapshot.undoUpdated=Number(target&&target.updated)||0; return snapshot;
   });
   var payload=pendingEnexImport; pendingEnexImport=null; hideImportPreview(false);
-  state.evernoteBannerDismissed=true;
+  state.evernoteBannerDismissed=true;enexPreflightPreviousBanner=null;
   var importReport=recordEnexReportResult(payload,newNotes,mergePlans,selectedAttachments);
   var currentImportUndo={
     noteIds:newNotes.map(function(note){return note.id;}),
@@ -1279,8 +1298,9 @@ function importReportHtml(report){
   function fileRows(files){return files.length?files.map(function(file){return "<tr><td>"+escHtml(file.name)+"</td><td>"+escHtml(formatBytes(file.size))+"</td></tr>";}).join(""):"<tr><td colspan=\"2\">없음</td></tr>";}
   function list(values){return values.length?"<ul>"+values.map(function(value){return "<li>"+escHtml(value)+"</li>";}).join("")+"</ul>":"없음";}
   var preflight=report.storagePreflight,preflightText=!preflight?"확인 기록 없음":preflight.message+(preflight.quota?" · 사용량 "+formatBytes(preflight.usage)+" / 한도 "+formatBytes(preflight.quota)+" · 예상 필요 "+formatBytes(preflight.reserveBytes):"");
-  var summary=row("결과",importReportOutcomeLabel(report.outcome))+row("시작",new Date(report.startedAt).toLocaleString("ko-KR"))+row("완료",report.completedAt?new Date(report.completedAt).toLocaleString("ko-KR"):"-")+row("자동 분할",report.automaticBatch?"예 · 계획 "+report.plannedBatchCount+"묶음":"아니요")+row("처리 묶음",report.completedBatchCount)+row("선택 파일",report.selectedFileCount)+row("처리/가져온 파일",report.processedFileCount+" / "+report.importedFileCount)+row("발견/가져온 노트",report.foundNoteCount+" / "+report.importedNoteCount)+row("새 노트/병합/건너뜀",report.newNoteCount+" / "+report.mergedNoteCount+" / "+report.skippedNoteCount)+row("가져온 첨부/첨부 경고",report.attachmentCount+" / "+report.attachmentErrorCount)+row("발견 노트북",report.notebookNames.length)+row("기대 노트/노트북",report.expectedNoteCount+" / "+report.expectedNotebookCount)+row("저장공간 사전 점검",preflightText)+row("저장 제한",report.persistenceLimited?"일부 첨부는 보고서 생성 당시 세션에만 유지됨":"감지되지 않음")+row("수량 대조",report.coverageMessage||"기대 수량 미입력");
-  return "<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>노트플러스P 가져오기 결과 보고서</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:32px auto;padding:0 18px;color:#20211f}h1{color:#0b6b2b}table{border-collapse:collapse;width:100%;margin:12px 0 28px}th,td{border:1px solid #d7d8d2;padding:9px;text-align:left;vertical-align:top}th{width:210px;background:#f4f5f0}small{color:#666}ul{margin:0;padding-left:20px}.notice{padding:12px;background:#fff8dc;border:1px solid #e4cc72}</style></head><body><h1>노트플러스P 가져오기 결과 보고서</h1><p class=\"notice\">이 보고서는 노트 본문과 첨부 내용은 포함하지 않습니다. 파일명과 수량 등 이전 확인 정보만 담습니다.</p><table>"+summary+"</table><h2>선택한 ENEX 파일</h2><table><tr><th>파일명</th><th>크기</th></tr>"+fileRows(report.sourceFiles)+"</table><h2>제외 파일</h2>"+list(report.rejectedFiles)+"<h2>실패 파일</h2>"+list(report.failedFiles)+"<h2>발견한 노트북</h2>"+list(report.notebookNames)+"<p><small>보고서 형식 "+escHtml(report.format)+" · ID "+escHtml(report.id)+"</small></p></body></html>";
+  var issueRows=report.attachmentIssues.length?report.attachmentIssues.map(function(issue){return "<tr><td>"+escHtml(issue.sourceFile||"-")+"</td><td>"+escHtml(issue.notebook||"-")+"</td><td>"+escHtml(issue.noteTitle||"제목 없음")+"</td><td>"+escHtml(issue.attachmentName||"첨부파일")+"</td><td>"+escHtml(issue.mime||"-")+"</td><td>"+escHtml(issue.reason)+"</td></tr>";}).join(""):"<tr><td colspan=\"6\">없음</td></tr>";
+  var summary=row("결과",importReportOutcomeLabel(report.outcome))+row("시작",new Date(report.startedAt).toLocaleString("ko-KR"))+row("완료",report.completedAt?new Date(report.completedAt).toLocaleString("ko-KR"):"-")+row("자동 분할",report.automaticBatch?"예 · 계획 "+report.plannedBatchCount+"묶음":"아니요")+row("처리 묶음",report.completedBatchCount)+row("선택 파일",report.selectedFileCount)+row("처리/가져온 파일",report.processedFileCount+" / "+report.importedFileCount)+row("발견/가져온 노트",report.foundNoteCount+" / "+report.importedNoteCount)+row("새 노트/병합/건너뜀",report.newNoteCount+" / "+report.mergedNoteCount+" / "+report.skippedNoteCount)+row("가져온 첨부/첨부 경고",report.attachmentCount+" / "+report.attachmentErrorCount)+row("상세 제외 첨부",report.attachmentIssues.length)+row("발견 노트북",report.notebookNames.length)+row("기대 노트/노트북",report.expectedNoteCount+" / "+report.expectedNotebookCount)+row("저장공간 사전 점검",preflightText)+row("저장 제한",report.persistenceLimited?"일부 첨부는 보고서 생성 당시 세션에만 유지됨":"감지되지 않음")+row("수량 대조",report.coverageMessage||"기대 수량 미입력");
+  return "<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>노트플러스P 가져오기 결과 보고서</title><style>body{font-family:system-ui,sans-serif;max-width:1100px;margin:32px auto;padding:0 18px;color:#20211f}h1{color:#0b6b2b}table{border-collapse:collapse;width:100%;margin:12px 0 28px}th,td{border:1px solid #d7d8d2;padding:9px;text-align:left;vertical-align:top;word-break:break-word}th{width:210px;background:#f4f5f0}small{color:#666}ul{margin:0;padding-left:20px}.notice{padding:12px;background:#fff8dc;border:1px solid #e4cc72}.wide th{width:auto}</style></head><body><h1>노트플러스P 가져오기 결과 보고서</h1><p class=\"notice\">이 보고서는 노트 본문과 첨부 내용·원문 데이터·해시를 포함하지 않습니다. 제외된 첨부가 있을 때만 문제 확인을 위해 해당 노트 제목과 첨부 이름을 기록합니다.</p><table>"+summary+"</table><h2>선택한 ENEX 파일</h2><table><tr><th>파일명</th><th>크기</th></tr>"+fileRows(report.sourceFiles)+"</table><h2>제외 파일</h2>"+list(report.rejectedFiles)+"<h2>실패 파일</h2>"+list(report.failedFiles)+"<h2>상세 제외 첨부</h2><table class=\"wide\"><tr><th>ENEX 파일</th><th>노트북</th><th>노트 제목</th><th>첨부 이름</th><th>형식</th><th>사유</th></tr>"+issueRows+"</table><h2>발견한 노트북</h2>"+list(report.notebookNames)+"<p><small>보고서 형식 "+escHtml(report.format)+" · ID "+escHtml(report.id)+"</small></p></body></html>";
 }
 function downloadImportReport(format){
   var report=normalizeImportReport(state.lastImportReport);if(!report){setBackupStatus("내려받을 가져오기 보고서가 없습니다.");return;}
@@ -2122,7 +2142,11 @@ var ENEX_STORAGE_RESERVE_RATIO=1.25;
 var ENEX_STORAGE_MIN_RESERVE_BYTES=16*1024*1024;
 var enexBatchSession=null;
 var activeEnexReport=null;
-var activeEnexPreflight=null,enexPreflightToken=0;
+var activeEnexPreflight=null,enexPreflightToken=0,enexPreflightPreviousBanner=null;
+function restoreEnexBannerAfterNoChange(){
+  if(enexPreflightPreviousBanner===null)return;
+  state.evernoteBannerDismissed=enexPreflightPreviousBanner;enexPreflightPreviousBanner=null;refreshEvernoteBar();
+}
 function assessEnexStoragePreflight(inputFiles,estimate,mode){
   var files=Array.prototype.slice.call(inputFiles||[]),incomingBytes=files.reduce(function(sum,file){return sum+(Number(file.size)||0);},0);
   var reserveBytes=Math.ceil(incomingBytes*ENEX_STORAGE_RESERVE_RATIO)+ENEX_STORAGE_MIN_RESERVE_BYTES;
@@ -2156,6 +2180,7 @@ function recordEnexReportResult(payload,newNotes,mergePlans,selectedAttachments)
   report.foundNoteCount+=(payload.notes||[]).length;report.importedNoteCount+=newNotes.length+mergePlans.length;report.newNoteCount+=newNotes.length;report.mergedNoteCount+=mergePlans.length;report.skippedNoteCount+=Math.max(0,(payload.notes||[]).length-newNotes.length-mergePlans.length);
   report.attachmentCount+=selectedAttachments.length;report.attachmentErrorCount+=Math.max(0,Number(payload.totalAttachmentErrors)||0);
   (payload.failNames||[]).forEach(function(name){report.failedFiles.push(name);});
+  (payload.attachmentIssues||[]).forEach(function(issue){report.attachmentIssues.push(issue);});
   var notebookSeen={};report.notebookNames.forEach(function(name){notebookSeen[name]=true;});(payload.notes||[]).forEach(function(note){var name=cleanReportText(note.notebook||"기본 노트북",300);if(name&&!notebookSeen[name]){notebookSeen[name]=true;report.notebookNames.push(name);}});
   report.coverageMessage=cleanReportText(payload.coverageMessage||enexBatchCoverageText()||migrationCoverageText(payload),1000);
   var hasMore=!!(enexBatchSession&&enexBatchSession.queue.length);
@@ -2231,6 +2256,7 @@ function cancelActiveEnexJob(){
   (job.readers||[]).slice().forEach(function(reader){try{reader.abort();}catch(ignore){}});
   setEnexCancelVisible(false);
   clearEnexBatchSession();
+  restoreEnexBannerAfterNoChange();
   var msg="가져오기를 중단했습니다. 분석 중인 내용은 저장하지 않았고 기존 노트와 첨부파일은 그대로입니다."+(remaining?" 남은 자동 묶음 "+remaining+"개도 중단했습니다.":"");
   document.getElementById("enexStatus").textContent=msg; setBackupStatus(msg);
   setEnexProgress(0,"중단됨 · 변경 없음",true);
@@ -2415,37 +2441,57 @@ function xmlDecode(s){
     return String(s||"").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,"&");
   }
 }
-function parseResourceElements(resourceEls,noteId){
-  var attachments=[], mediaMap={}, failed=0;
+function attachmentIssueReason(error){
+  var message=String(error&&error.message||"");
+  if(message==="missing-data")return "첨부 데이터가 없습니다";
+  if(message==="invalid-hash")return "첨부 해시 형식이 올바르지 않습니다";
+  if(message==="unsupported-mime")return "지원하지 않는 첨부 형식입니다";
+  if(message==="malformed-resource")return "첨부 XML 형식이 올바르지 않습니다";
+  if(message.indexOf("잘못된 base64")>=0)return "첨부 데이터 인코딩이 올바르지 않습니다";
+  if(message.indexOf("100MB")>=0)return "첨부가 100MB 제한을 초과합니다";
+  return "첨부 데이터를 읽을 수 없습니다";
+}
+function makeAttachmentIssue(context,index,name,mime,error){
+  context=context||{};return {sourceFile:cleanReportText(context.sourceFile||"",300),notebook:cleanReportText(context.notebook||"",300),noteTitle:cleanReportText(context.noteTitle||"제목 없음",300),attachmentName:cleanReportText(name||("첨부 "+(index+1)),300),mime:cleanReportText(mime||"",120),reason:attachmentIssueReason(error)};
+}
+function parseResourceElements(resourceEls,noteId,context){
+  var attachments=[], mediaMap={}, failed=0,issues=[];
   Array.prototype.slice.call(resourceEls||[]).forEach(function(resourceEl,index){
+    var mime="",name="첨부 "+(index+1);
     try{
       var dataEl=resourceEl.getElementsByTagName("data")[0];
       var mimeEl=resourceEl.getElementsByTagName("mime")[0];
-      var mime=(mimeEl?mimeEl.textContent:"").trim().toLowerCase();
+      mime=(mimeEl?mimeEl.textContent:"").trim().toLowerCase();
       var hash=((dataEl&&dataEl.getAttribute("hash"))||"").trim().toLowerCase();
-      if(!dataEl||!/^[a-f0-9]{32,64}$/.test(hash)||!supportedAttachmentMime(mime)) throw new Error("지원하지 않는 첨부");
       var fileNameEl=resourceEl.getElementsByTagName("file-name")[0];
+      name=cleanReportText(fileNameEl?fileNameEl.textContent:"",300)||name;
+      if(!dataEl)throw new Error("missing-data");
+      if(!/^[a-f0-9]{32,64}$/.test(hash))throw new Error("invalid-hash");
+      if(!supportedAttachmentMime(mime))throw new Error("unsupported-mime");
       var blob=base64ToBlob(dataEl.textContent,mime), id="att_"+uid();
       var item={meta:{id:id,noteId:noteId,name:safeAttachmentName(fileNameEl?fileNameEl.textContent:"",mime,index),mime:mime,size:blob.size,created:Date.now()},blob:blob};
       attachments.push(item); mediaMap[hash]=item;
-    }catch(e){ failed++; }
+    }catch(e){ failed++;issues.push(makeAttachmentIssue(context,index,name,mime,e)); }
   });
-  return {attachments:attachments,mediaMap:mediaMap,failed:failed};
+  return {attachments:attachments,mediaMap:mediaMap,failed:failed,issues:issues};
 }
-function parseResourcesLenient(chunk,noteId){
+function parseResourcesLenient(chunk,noteId,context){
   var els=[], re=/<resource>([\s\S]*?)<\/resource>/gi, m;
+  var issues=[],resourceIndex=0;
   while((m=re.exec(chunk))){
     try{
       var doc=new DOMParser().parseFromString("<resource>"+m[1]+"</resource>","text/xml");
-      if(!doc.querySelector("parsererror")&&doc.documentElement) els.push(doc.documentElement);
-    }catch(e){}
+      if(!doc.querySelector("parsererror")&&doc.documentElement)els.push(doc.documentElement);
+      else issues.push(makeAttachmentIssue(context,resourceIndex,"","",new Error("malformed-resource")));
+    }catch(e){issues.push(makeAttachmentIssue(context,resourceIndex,"","",new Error("malformed-resource")));}
+    resourceIndex++;
   }
-  return parseResourceElements(els,noteId);
+  var parsed=parseResourceElements(els,noteId,context);parsed.failed+=issues.length;parsed.issues=issues.concat(parsed.issues);return parsed;
 }
-function parseEnexLenient(xmlText, notebookName){
+function parseEnexLenient(xmlText, notebookName,sourceFileName){
   var chunks = xmlText.split(/<note>/).slice(1).map(function(c){ return c.split(/<\/note>/)[0]; });
   if(!chunks.length){ throw new Error("no notes found"); }
-  var notes=[], attachments=[], hadAttachments=0, attachmentErrors=0;
+  var notes=[], attachments=[], hadAttachments=0, attachmentErrors=0,attachmentIssues=[];
   chunks.forEach(function(chunk){
     function grab(tag){
       var m = new RegExp("<"+tag+">([\\s\\S]*?)</"+tag+">").exec(chunk);
@@ -2453,7 +2499,7 @@ function parseEnexLenient(xmlText, notebookName){
     }
     var title = xmlDecode(grab("title").trim()) || "제목 없음";
     var noteId="enex_"+uid();
-    var resources=parseResourcesLenient(chunk,noteId);
+    var resources=parseResourcesLenient(chunk,noteId,{sourceFile:sourceFileName||notebookName,notebook:notebookName,noteTitle:title});
     var cm = /<content>([\s\S]*?)<\/content>/.exec(chunk);
     var contentRaw = (cm? cm[1] : "").replace(/<!\[CDATA\[/g,"").replace(/\]\]>/g,"");
     var sourceUrl = grab("source-url").trim();
@@ -2464,29 +2510,29 @@ function parseEnexLenient(xmlText, notebookName){
     var created = createdS? parseEnexDate(createdS) : Date.now();
     var updated = updatedS? parseEnexDate(updatedS) : created;
     if(/<resource>/.test(chunk)) hadAttachments++;
-    attachments=attachments.concat(resources.attachments); attachmentErrors+=resources.failed;
+    attachments=attachments.concat(resources.attachments); attachmentErrors+=resources.failed;attachmentIssues=attachmentIssues.concat(resources.issues||[]);
     notes.push({
       id:noteId, title:title,
       body:rich.text, bodyHtml:rich.html,
       notebook:notebookName, tags:tags, attachmentIds:resources.attachments.map(function(a){return a.meta.id;}), updated:updated, created:created
     });
   });
-  return {notes:notes,attachments:attachments,hadAttachments:hadAttachments,attachmentErrors:attachmentErrors};
+  return {notes:notes,attachments:attachments,hadAttachments:hadAttachments,attachmentErrors:attachmentErrors,attachmentIssues:attachmentIssues};
 }
-function parseEnex(xmlText, notebookName){
+function parseEnex(xmlText, notebookName,sourceFileName){
   var parser = new DOMParser();
   var doc = parser.parseFromString(xmlText, "text/xml");
-  if(doc.querySelector("parsererror")){ return parseEnexLenient(xmlText, notebookName); }
+  if(doc.querySelector("parsererror")){ return parseEnexLenient(xmlText, notebookName,sourceFileName); }
   var noteEls = doc.getElementsByTagName("note");
-  if(!noteEls.length){ return parseEnexLenient(xmlText, notebookName); }
-  var notes=[], attachments=[], hadAttachments=0, attachmentErrors=0;
+  if(!noteEls.length){ return parseEnexLenient(xmlText, notebookName,sourceFileName); }
+  var notes=[], attachments=[], hadAttachments=0, attachmentErrors=0,attachmentIssues=[];
   for(var i=0;i<noteEls.length;i++){
     var noteEl = noteEls[i];
     var noteId="enex_"+uid();
     var resourceEls=noteEl.getElementsByTagName("resource");
-    var resources=parseResourceElements(resourceEls,noteId);
     var titleEl = noteEl.getElementsByTagName("title")[0];
     var title = titleEl ? titleEl.textContent : "제목 없음";
+    var resources=parseResourceElements(resourceEls,noteId,{sourceFile:sourceFileName||notebookName,notebook:notebookName,noteTitle:title});
     var contentEl = noteEl.getElementsByTagName("content")[0];
     var srcEl = noteEl.getElementsByTagName("source-url")[0];
     var rich = enmlToRich(contentEl ? contentEl.textContent : "", srcEl ? srcEl.textContent : "",resources.mediaMap);
@@ -2497,14 +2543,14 @@ function parseEnex(xmlText, notebookName){
     var created = createdEl ? parseEnexDate(createdEl.textContent) : Date.now();
     var updated = updatedEl ? parseEnexDate(updatedEl.textContent) : created;
     if(resourceEls.length>0) hadAttachments++;
-    attachments=attachments.concat(resources.attachments); attachmentErrors+=resources.failed;
+    attachments=attachments.concat(resources.attachments); attachmentErrors+=resources.failed;attachmentIssues=attachmentIssues.concat(resources.issues||[]);
     notes.push({
       id:noteId, title:title||"제목 없음",
       body:rich.text, bodyHtml:rich.html,
       notebook:notebookName, tags:tags, attachmentIds:resources.attachments.map(function(a){return a.meta.id;}), updated:updated, created:created
     });
   }
-  return {notes:notes,attachments:attachments,hadAttachments:hadAttachments,attachmentErrors:attachmentErrors};
+  return {notes:notes,attachments:attachments,hadAttachments:hadAttachments,attachmentErrors:attachmentErrors,attachmentIssues:attachmentIssues};
 }
 document.getElementById("enexFile").onchange = function(e){
   var selectedFiles=Array.prototype.slice.call(e.target.files||[]);
@@ -2512,13 +2558,14 @@ document.getElementById("enexFile").onchange = function(e){
   if(!e._enexBatch&&!e._enexPreflight){
     if(activeEnexJob) cancelActiveEnexJob();
     var preflightToken=++enexPreflightToken;
+    enexPreflightPreviousBanner=state.evernoteBannerDismissed;
     state.evernoteBannerDismissed=false;refreshEvernoteBar();
     document.getElementById("enexStatus").textContent="저장공간을 확인하고 있습니다…";setBackupStatus("ENEX 가져오기 전 브라우저 저장공간을 확인하고 있습니다.");setEnexProgress(0,"저장공간 확인 중",true);
     checkEnexStoragePreflight(selectedFiles).then(function(preflight){
       if(preflightToken!==enexPreflightToken)return;
       activeEnexPreflight=preflight;
       if(preflight.status==="blocked"){
-        var blockedMsg="가져오기 시작 전 중단 — "+preflight.message;document.getElementById("enexStatus").textContent=blockedMsg;setBackupStatus(blockedMsg);setEnexProgress(0,"저장공간 부족 · 변경 없음",true);return;
+        var blockedMsg="가져오기 시작 전 중단 — "+preflight.message;document.getElementById("enexStatus").textContent=blockedMsg;setBackupStatus(blockedMsg);setEnexProgress(0,"저장공간 부족 · 변경 없음",true);restoreEnexBannerAfterNoChange();return;
       }
       var notice=(preflight.status==="warning"||preflight.status==="session-only"||preflight.status==="unavailable")?"⚠ "+preflight.message:preflight.message;
       document.getElementById("enexStatus").textContent=notice;setBackupStatus(notice);
@@ -2546,13 +2593,13 @@ document.getElementById("enexFile").onchange = function(e){
     e.target.value=""; return;
   }
   var files=plan.accepted;
-  var totalNotes=0,totalAttachNotes=0,totalAttachmentErrors=0,stagedNotes=[],importedAttachments=[],okFiles=0;
+  var totalNotes=0,totalAttachNotes=0,totalAttachmentErrors=0,totalAttachmentIssues=[],stagedNotes=[],importedAttachments=[],okFiles=0;
   var failFiles=plan.rejected.length;
   var failNames=plan.rejected.map(function(file){return file.name+"(250MB 초과)";});
   if(!files.length){
     var noneMsg="가져올 수 있는 파일이 없습니다 — "+failNames.join(", ")+". 큰 ENEX는 250MB보다 작게 나눠 내보내세요.";
     recordEnexReportResult({notes:[],okFiles:0,failFiles:failFiles,failNames:failNames,totalAttachmentErrors:0},[],[],[]);persist();
-    document.getElementById("enexStatus").textContent=noneMsg; setBackupStatus(noneMsg+" 기존 노트는 그대로입니다.");
+    restoreEnexBannerAfterNoChange();document.getElementById("enexStatus").textContent=noneMsg; setBackupStatus(noneMsg+" 기존 노트는 그대로입니다.");
     setEnexProgress(0,"가져오기 없음",true); e.target.value=""; return;
   }
   if(plan.warningReason){
@@ -2579,11 +2626,11 @@ document.getElementById("enexFile").onchange = function(e){
     }).then(function(text){
       if(job.cancelled||text===null) return;
       try{
-        var parsed = parseEnex(text, nbName);
+        var parsed = parseEnex(text, nbName, f.name);
         stagedNotes=stagedNotes.concat(parsed.notes);
         totalNotes += parsed.notes.length;
         totalAttachNotes += parsed.hadAttachments;
-        totalAttachmentErrors += parsed.attachmentErrors||0;
+        totalAttachmentErrors += parsed.attachmentErrors||0;totalAttachmentIssues=totalAttachmentIssues.concat(parsed.attachmentIssues||[]);
         importedAttachments=importedAttachments.concat(parsed.attachments||[]);
         okFiles++;
       }catch(err){ failFiles++; failNames.push(nbName); }
@@ -2605,20 +2652,20 @@ document.getElementById("enexFile").onchange = function(e){
     if(okFiles===0){
       var noSuccess="가져오기 실패 — "+failNames.join(", ")+". 기존 노트는 그대로입니다.";
       recordEnexReportResult({notes:[],okFiles:okFiles,failFiles:failFiles,failNames:failNames,totalAttachmentErrors:totalAttachmentErrors},[],[],[]);persist();
-      if(finishEnexBatchWithoutPreview(noSuccess))return;
+      restoreEnexBannerAfterNoChange();if(finishEnexBatchWithoutPreview(noSuccess))return;
       document.getElementById("enexStatus").textContent=noSuccess; setBackupStatus(noSuccess);
       setEnexProgress(100,"완료 · 성공 0 / "+selectedFiles.length,true); return;
     }
     if(!stagedNotes.length){
       var emptyMsg="분석은 완료했지만 가져올 노트가 없습니다. 기존 노트는 그대로입니다.";
       recordEnexReportResult({notes:[],okFiles:okFiles,failFiles:failFiles,failNames:failNames,totalAttachmentErrors:totalAttachmentErrors},[],[],[]);persist();
-      if(finishEnexBatchWithoutPreview(emptyMsg))return;
+      restoreEnexBannerAfterNoChange();if(finishEnexBatchWithoutPreview(emptyMsg))return;
       document.getElementById("enexStatus").textContent=emptyMsg; setBackupStatus(emptyMsg);
       setEnexProgress(100,"완료 · 노트 0개",true); return;
     }
     showImportPreview({
       notes:stagedNotes,attachments:importedAttachments,okFiles:okFiles,
-      totalAttachNotes:totalAttachNotes,totalAttachmentErrors:totalAttachmentErrors,
+      totalAttachNotes:totalAttachNotes,totalAttachmentErrors:totalAttachmentErrors,attachmentIssues:totalAttachmentIssues,
       failFiles:failFiles,failNames:failNames.slice(),selectedFilesCount:selectedFiles.length,
       batchNumber:enexBatchSession?enexBatchSession.current:0,batchTotal:enexBatchSession?enexBatchSession.total:0
     });
