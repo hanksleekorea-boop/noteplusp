@@ -285,6 +285,14 @@
 - 사용자가 기대 노트 수와 노트북 수를 입력하면 미리보기와 완료 상태에서 발견 수를 비교한다. 수량 차이는 누락 가능성으로만 경고하며 자동으로 데이터를 삭제하거나 가져오기를 막지 않는다.
 - 서비스 워커 캐시는 `noteplusp-v5-shell-3`으로 올려 기존 설치형 앱도 새 온보딩을 받는다.
 
+## 32. 2026-07-18 · Windows PC 전체 자동 백업 도우미
+- 앱의 `PC 전체 자동 백업(고급)`은 `노트플러스P_Evernote_전체백업_PC.zip`을 다운로드한다. 구성은 `START_EVERNOTE_BACKUP.cmd`, `evernote_full_backup.ps1`, `먼저읽기.txt`다.
+- 도우미는 `evernote-backup` 1.13.1 Windows x64 portable ZIP만 사용하며 SHA-256 `2C1DAA36FADF5720419826B0809617029D14941E4EADFFA31049457D413B81B5` 일치 후에만 압축을 푼다.
+- 실행 순서: 사용자 명시 동의 → 도구 무결성 확인 → 최초 OAuth/DB 초기화 → 증분 sync → `export --include-trash` → 결과 보고서 → ENEX 폴더와 공개 노트플러스P 열기.
+- 저장 위치는 `%USERPROFILE%\Documents\NotePlusP-Evernote-Backup`이며 DB·ENEX를 자동 삭제하지 않는다. 중단된 sync는 재실행으로 이어갈 수 있다.
+- 작업·알림은 Evernote 공개 API가 제공하지 않아 완전하지 않을 수 있다. 토큰 추출이나 비밀번호 수집 방식은 구현하지 않았다.
+- PWA 캐시는 `noteplusp-v5-shell-4`; ZIP도 오프라인 셸 자산에 포함된다.
+
 ## 28. 2026-07-18 · 즉시 실행 가능 20개 일괄 구현
 - 사용자 지시에 따라 즉시 실행 가능 목록 20개를 묶어 구현했다. 정본 SHA-256: `A5E9E3798457425A714811BE86ED379D8DCE552C129853BAD496A9EA07E28AAA`.
 - 모바일 탐색, IME·단축키, 복구 지점, 조건 검색·저장 검색·전문 캐시, 즐겨찾기, 내부 링크, Markdown·표, 인쇄, PWA, 암호화 백업/복호화 가져오기, 저장소 사용량, sync 메타, 템플릿, 외부 링크 확인, 변경 이력, Markdown 공유를 추가했다.

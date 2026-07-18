@@ -1,0 +1,14 @@
+노트플러스P · Evernote 전체 자동 백업 도우미
+
+1. 압축을 푼 뒤 “START_EVERNOTE_BACKUP.cmd”를 두 번 클릭합니다.
+2. 안내를 읽고 “전체백업”을 입력합니다.
+3. 처음 한 번 브라우저에서 Evernote OAuth 로그인을 완료합니다.
+4. 동기화와 ENEX 생성이 끝나면 결과 폴더와 노트플러스P가 자동으로 열립니다.
+5. 노트플러스P에서 “전체 이전 시작 → 백업 폴더 전체 선택”을 누릅니다.
+
+중요
+- Evernote 비밀번호를 명령창에 입력하지 마세요. 로그인은 Evernote 브라우저 화면에서만 합니다.
+- 이 고급 기능은 오픈소스 evernote-backup을 사용하며 Evernote 공식 도구가 아닙니다.
+- 표준 노트·노트북·태그·첨부는 일괄 백업하지만 작업·알림은 공개 API 제한으로 완전하지 않을 수 있습니다.
+- 확인이 끝날 때까지 Evernote 원본, Documents\NotePlusP-Evernote-Backup\en_backup.db, ENEX 폴더를 삭제하지 마세요.
+- 소스 및 설명: https://github.com/vzhd1701/evernote-backup

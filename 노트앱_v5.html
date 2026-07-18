@@ -469,6 +469,7 @@
       <div class="sec full" style="cursor:default;">가져오기 · 백업</div>
       <button class="backup-btn enex full" id="enexGuideSide" type="button">🐘 Evernote 전체 이전 도우미</button>
       <label class="backup-btn enex-guide full" for="enexFile">준비된 ENEX 모두 선택</label>
+      <a class="backup-btn enex-guide full" href="./노트플러스P_Evernote_전체백업_PC.zip" download style="text-decoration:none;text-align:center;">⬇ PC 전체 자동 백업(고급)</a>
       <div class="backup-row full">
         <button class="backup-btn" id="exportBtn">⬇ 내보내기</button>
         <label class="backup-btn" for="importFile">⬆ 가져오기</label>
@@ -607,9 +608,18 @@
           <li>확인이 끝날 때까지 Evernote 원본과 ENEX 백업 폴더를 삭제하지 않습니다.</li>
         </ul>
       </div>
+      <div class="guide-help">
+        <h3>고급 선택: PC에서 모든 노트북 자동 백업</h3>
+        <ul>
+          <li>노트북이 많다면 Windows용 도우미가 오픈소스 <b>evernote-backup</b>을 검증된 SHA-256으로 내려받아 표준 노트·태그·첨부를 노트북별 ENEX로 일괄 생성합니다.</li>
+          <li>Evernote 비밀번호는 도우미에 입력하지 않으며 브라우저 OAuth로만 로그인합니다. 백업 DB와 ENEX는 내 PC의 문서 폴더에 남습니다.</li>
+          <li><b>Evernote 공식 도구가 아닙니다.</b> 작업·알림은 공개 API 제한으로 완전하지 않을 수 있으므로 중요한 항목은 Evernote 앱에서 별도 확인하세요. 공식 방식이 기본 권장 경로입니다.</li>
+        </ul>
+      </div>
       <div class="guide-actions">
         <button class="guide-action primary" type="button" id="enexGuideChooseFolder">백업 폴더 전체 선택</button>
         <button class="guide-action" type="button" id="enexGuideChoose">ENEX 파일 여러 개 선택</button>
+        <a class="guide-action" href="./노트플러스P_Evernote_전체백업_PC.zip" download>PC 전체 자동 백업 도우미 받기</a>
         <a class="guide-action" href="https://help.evernote.com/hc/en-us/articles/209005557-Export-Notes-and-Notebooks-as-ENEX-or-HTML" target="_blank" rel="noopener noreferrer">Evernote 공식 안내 열기</a>
         <a class="guide-action" href="https://help.evernote.com/hc/en-us/articles/47135452927251-How-to-check-your-current-usage" target="_blank" rel="noopener noreferrer">전체 노트 수 확인 방법</a>
       </div>
