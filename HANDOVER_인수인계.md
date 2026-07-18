@@ -317,6 +317,14 @@
 - undo 메타에는 `reportId`를 연결한다. 이후 실패 시도가 새 보고서를 만든 상태에서 이전 가져오기를 되돌려도 잘못된 보고서를 `undone`으로 표시하지 않는다.
 - 서비스 워커 캐시는 `noteplusp-v5-shell-7`, 정본 SHA-256은 `556D8121EEF3822B93E6319585128D627F6B6CA5B429FE92E52F8F48FFED81A8`이다.
 
+## 36. 2026-07-18 · ENEX 저장공간 사전 점검
+- `assessEnexStoragePreflight(inputFiles, estimate, mode)`는 순수 판정 함수다. 선택 총용량 × 1.25 + 16MB를 예상 필요 공간으로 삼아 `ok`, `warning`, `blocked`, `unavailable`, `session-only` 중 하나를 반환한다.
+- quota가 확인되고 IndexedDB를 쓰는 환경에서만 `reserveBytes > quota - usage`를 `blocked`로 판정한다. 이 경우 `enexFile.onchange`는 FileReader·parseEnex·state 변경 전에 종료한다. 85% 이상 예상은 `warning`이며 기능을 막지 않는다.
+- top-level ENEX 선택은 먼저 비동기 `navigator.storage.estimate()`를 실행한다. 토큰으로 뒤늦은 이전 선택 결과를 무시하고, 자동 분할의 다음 묶음은 처음 측정한 결과를 재사용한다.
+- `lastImportReport.storagePreflight`는 시각·상태·usage/quota/incoming/reserve/remaining/message만 보관한다. HTML 보고서는 이 값을 수량 행으로 보여주며, 노트 제목·본문·첨부 내용은 계속 내보내지 않는다.
+- `test_productivity_mobile.mjs`는 다섯 판정 상태, 부족 상태의 사전 차단·무변경, 자동 분할 보고서 기록을 검증한다. `test_enex_progress.mjs`는 기존 510MB 선택 기대를 현재 정책인 `[2,1]` 자동 분할로 고쳐 진행률 회귀를 유지한다.
+- 서비스 워커 캐시는 `noteplusp-v5-shell-8`, 정본 SHA-256은 `4F34A32E5E61CCDD77D33D134574CC6151BDDB7F847FCA88D7F5CD06F5437BAC`이다.
+
 ## 28. 2026-07-18 · 즉시 실행 가능 20개 일괄 구현
 - 사용자 지시에 따라 즉시 실행 가능 목록 20개를 묶어 구현했다. 정본 SHA-256: `A5E9E3798457425A714811BE86ED379D8DCE552C129853BAD496A9EA07E28AAA`.
 - 모바일 탐색, IME·단축키, 복구 지점, 조건 검색·저장 검색·전문 캐시, 즐겨찾기, 내부 링크, Markdown·표, 인쇄, PWA, 암호화 백업/복호화 가져오기, 저장소 사용량, sync 메타, 템플릿, 외부 링크 확인, 변경 이력, Markdown 공유를 추가했다.

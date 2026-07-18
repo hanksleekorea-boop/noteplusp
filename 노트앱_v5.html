@@ -607,6 +607,7 @@
         <h3>완료 기준</h3>
         <ul>
           <li>백업 폴더에 모든 노트북의 ENEX가 있으며 파일 크기가 0KB가 아닙니다.</li>
+          <li>ENEX를 선택하면 노트플러스P가 읽기 전에 브라우저 저장공간을 점검합니다. 한도가 확실히 부족하면 기존 데이터를 바꾸지 않고 시작을 멈춥니다.</li>
           <li>전체 선택 용량이 500MB를 넘으면 노트플러스P가 안전한 묶음으로 자동 분할해 순서대로 미리보기를 보여줍니다.</li>
           <li>미리보기의 발견 노트 수가 기대한 수와 맞거나, 차이 원인을 확인했습니다.</li>
           <li>가져오기 완료 뒤 노트북·태그·이미지·PDF·녹음 표본을 열어 확인했습니다.</li>
@@ -732,10 +733,12 @@ function normalizeImportReport(raw){
   function count(value){return Math.max(0,Math.min(10000000,Math.floor(Number(value)||0)));}
   function names(values){var seen={};return (Array.isArray(values)?values:[]).map(function(value){return cleanReportText(value,300);}).filter(function(value){if(!value||seen[value])return false;seen[value]=true;return true;}).slice(0,10000);}
   var sourceFiles=(Array.isArray(raw.sourceFiles)?raw.sourceFiles:[]).map(function(file){return file&&typeof file==="object"?{name:cleanReportText(file.name,300),size:count(file.size)}:null;}).filter(function(file){return file&&file.name;}).slice(0,10000);
+  var preflightRaw=raw.storagePreflight&&typeof raw.storagePreflight==="object"?raw.storagePreflight:null;
   var report={format:"noteplusp-import-report-v1",id:cleanReportText(raw.id,100)||("report_"+Date.now().toString(36)),startedAt:Number(raw.startedAt)||Date.now(),completedAt:Number(raw.completedAt)||0,undoneAt:Number(raw.undoneAt)||0,
     outcome:outcomes[raw.outcome]?raw.outcome:"in-progress",automaticBatch:!!raw.automaticBatch,plannedBatchCount:count(raw.plannedBatchCount),completedBatchCount:count(raw.completedBatchCount),selectedFileCount:count(raw.selectedFileCount),processedFileCount:count(raw.processedFileCount),importedFileCount:count(raw.importedFileCount),
     sourceFiles:sourceFiles,rejectedFiles:names(raw.rejectedFiles),failedFiles:names(raw.failedFiles),foundNoteCount:count(raw.foundNoteCount),importedNoteCount:count(raw.importedNoteCount),newNoteCount:count(raw.newNoteCount),mergedNoteCount:count(raw.mergedNoteCount),skippedNoteCount:count(raw.skippedNoteCount),attachmentCount:count(raw.attachmentCount),attachmentErrorCount:count(raw.attachmentErrorCount),
-    expectedNoteCount:count(raw.expectedNoteCount),expectedNotebookCount:count(raw.expectedNotebookCount),notebookNames:names(raw.notebookNames),persistenceLimited:!!raw.persistenceLimited,coverageMessage:cleanReportText(raw.coverageMessage,1000)};
+    expectedNoteCount:count(raw.expectedNoteCount),expectedNotebookCount:count(raw.expectedNotebookCount),notebookNames:names(raw.notebookNames),persistenceLimited:!!raw.persistenceLimited,coverageMessage:cleanReportText(raw.coverageMessage,1000),
+    storagePreflight:preflightRaw?{checkedAt:Number(preflightRaw.checkedAt)||0,status:["ok","warning","blocked","unavailable","session-only"].indexOf(preflightRaw.status)>=0?preflightRaw.status:"unavailable",usage:count(preflightRaw.usage),quota:count(preflightRaw.quota),incomingBytes:count(preflightRaw.incomingBytes),reserveBytes:count(preflightRaw.reserveBytes),remainingBytes:count(preflightRaw.remainingBytes),message:cleanReportText(preflightRaw.message,1000)}:null};
   if(!report.selectedFileCount)report.selectedFileCount=sourceFiles.length;
   return report;
 }
@@ -1275,7 +1278,8 @@ function importReportHtml(report){
   function row(label,value){return "<tr><th>"+escHtml(label)+"</th><td>"+escHtml(String(value))+"</td></tr>";}
   function fileRows(files){return files.length?files.map(function(file){return "<tr><td>"+escHtml(file.name)+"</td><td>"+escHtml(formatBytes(file.size))+"</td></tr>";}).join(""):"<tr><td colspan=\"2\">없음</td></tr>";}
   function list(values){return values.length?"<ul>"+values.map(function(value){return "<li>"+escHtml(value)+"</li>";}).join("")+"</ul>":"없음";}
-  var summary=row("결과",importReportOutcomeLabel(report.outcome))+row("시작",new Date(report.startedAt).toLocaleString("ko-KR"))+row("완료",report.completedAt?new Date(report.completedAt).toLocaleString("ko-KR"):"-")+row("자동 분할",report.automaticBatch?"예 · 계획 "+report.plannedBatchCount+"묶음":"아니요")+row("처리 묶음",report.completedBatchCount)+row("선택 파일",report.selectedFileCount)+row("처리/가져온 파일",report.processedFileCount+" / "+report.importedFileCount)+row("발견/가져온 노트",report.foundNoteCount+" / "+report.importedNoteCount)+row("새 노트/병합/건너뜀",report.newNoteCount+" / "+report.mergedNoteCount+" / "+report.skippedNoteCount)+row("가져온 첨부/첨부 경고",report.attachmentCount+" / "+report.attachmentErrorCount)+row("발견 노트북",report.notebookNames.length)+row("기대 노트/노트북",report.expectedNoteCount+" / "+report.expectedNotebookCount)+row("저장 제한",report.persistenceLimited?"일부 첨부는 보고서 생성 당시 세션에만 유지됨":"감지되지 않음")+row("수량 대조",report.coverageMessage||"기대 수량 미입력");
+  var preflight=report.storagePreflight,preflightText=!preflight?"확인 기록 없음":preflight.message+(preflight.quota?" · 사용량 "+formatBytes(preflight.usage)+" / 한도 "+formatBytes(preflight.quota)+" · 예상 필요 "+formatBytes(preflight.reserveBytes):"");
+  var summary=row("결과",importReportOutcomeLabel(report.outcome))+row("시작",new Date(report.startedAt).toLocaleString("ko-KR"))+row("완료",report.completedAt?new Date(report.completedAt).toLocaleString("ko-KR"):"-")+row("자동 분할",report.automaticBatch?"예 · 계획 "+report.plannedBatchCount+"묶음":"아니요")+row("처리 묶음",report.completedBatchCount)+row("선택 파일",report.selectedFileCount)+row("처리/가져온 파일",report.processedFileCount+" / "+report.importedFileCount)+row("발견/가져온 노트",report.foundNoteCount+" / "+report.importedNoteCount)+row("새 노트/병합/건너뜀",report.newNoteCount+" / "+report.mergedNoteCount+" / "+report.skippedNoteCount)+row("가져온 첨부/첨부 경고",report.attachmentCount+" / "+report.attachmentErrorCount)+row("발견 노트북",report.notebookNames.length)+row("기대 노트/노트북",report.expectedNoteCount+" / "+report.expectedNotebookCount)+row("저장공간 사전 점검",preflightText)+row("저장 제한",report.persistenceLimited?"일부 첨부는 보고서 생성 당시 세션에만 유지됨":"감지되지 않음")+row("수량 대조",report.coverageMessage||"기대 수량 미입력");
   return "<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'\"><title>노트플러스P 가져오기 결과 보고서</title><style>body{font-family:system-ui,sans-serif;max-width:900px;margin:32px auto;padding:0 18px;color:#20211f}h1{color:#0b6b2b}table{border-collapse:collapse;width:100%;margin:12px 0 28px}th,td{border:1px solid #d7d8d2;padding:9px;text-align:left;vertical-align:top}th{width:210px;background:#f4f5f0}small{color:#666}ul{margin:0;padding-left:20px}.notice{padding:12px;background:#fff8dc;border:1px solid #e4cc72}</style></head><body><h1>노트플러스P 가져오기 결과 보고서</h1><p class=\"notice\">이 보고서는 노트 본문과 첨부 내용은 포함하지 않습니다. 파일명과 수량 등 이전 확인 정보만 담습니다.</p><table>"+summary+"</table><h2>선택한 ENEX 파일</h2><table><tr><th>파일명</th><th>크기</th></tr>"+fileRows(report.sourceFiles)+"</table><h2>제외 파일</h2>"+list(report.rejectedFiles)+"<h2>실패 파일</h2>"+list(report.failedFiles)+"<h2>발견한 노트북</h2>"+list(report.notebookNames)+"<p><small>보고서 형식 "+escHtml(report.format)+" · ID "+escHtml(report.id)+"</small></p></body></html>";
 }
 function downloadImportReport(format){
@@ -2114,12 +2118,30 @@ var ENEX_WARN_FILE_BYTES=50*1024*1024;
 var ENEX_WARN_TOTAL_BYTES=150*1024*1024;
 var ENEX_MAX_FILE_BYTES=250*1024*1024;
 var ENEX_MAX_TOTAL_BYTES=500*1024*1024;
+var ENEX_STORAGE_RESERVE_RATIO=1.25;
+var ENEX_STORAGE_MIN_RESERVE_BYTES=16*1024*1024;
 var enexBatchSession=null;
 var activeEnexReport=null;
-function createEnexImportReport(files,split){
+var activeEnexPreflight=null,enexPreflightToken=0;
+function assessEnexStoragePreflight(inputFiles,estimate,mode){
+  var files=Array.prototype.slice.call(inputFiles||[]),incomingBytes=files.reduce(function(sum,file){return sum+(Number(file.size)||0);},0);
+  var reserveBytes=Math.ceil(incomingBytes*ENEX_STORAGE_RESERVE_RATIO)+ENEX_STORAGE_MIN_RESERVE_BYTES;
+  var usage=Math.max(0,Number(estimate&&estimate.usage)||0),quota=Math.max(0,Number(estimate&&estimate.quota)||0),remainingBytes=Math.max(0,quota-usage);
+  var result={checkedAt:Date.now(),status:"ok",usage:usage,quota:quota,incomingBytes:incomingBytes,reserveBytes:reserveBytes,remainingBytes:remainingBytes,message:"저장공간 확인 완료"};
+  if(!quota){result.status="unavailable";result.message="이 브라우저는 저장공간 한도를 알려주지 않아 여유 공간을 확정할 수 없습니다. 가져오기 뒤 저장 상태를 확인하세요.";return result;}
+  if(mode!=="idb"){result.status="session-only";result.message="현재 IndexedDB 영속 저장을 사용할 수 없어 첨부가 이번 세션에만 유지될 수 있습니다. 저장공간 한도는 참고값입니다.";return result;}
+  if(reserveBytes>remainingBytes){result.status="blocked";result.message="예상 필요 공간 "+formatBytes(reserveBytes)+"이(가) 남은 브라우저 공간 "+formatBytes(remainingBytes)+"보다 큽니다. 기존 백업을 만든 뒤 저장소를 정리하거나 ENEX를 더 작게 나눠 다시 선택하세요.";return result;}
+  if((usage+reserveBytes)/quota>=0.85){result.status="warning";result.message="가져오기 뒤 브라우저 저장소가 85% 이상 찰 수 있습니다. 암호화 백업을 만든 뒤 진행하고, 완료 후 저장 상태를 확인하세요.";return result;}
+  result.message="저장공간 확인 완료 · 예상 필요 "+formatBytes(reserveBytes)+" · 남은 공간 "+formatBytes(remainingBytes);return result;
+}
+function checkEnexStoragePreflight(inputFiles){
+  if(!(navigator.storage&&navigator.storage.estimate))return Promise.resolve(assessEnexStoragePreflight(inputFiles,null,persistenceMode));
+  return navigator.storage.estimate().then(function(estimate){return assessEnexStoragePreflight(inputFiles,estimate,persistenceMode);}).catch(function(){return assessEnexStoragePreflight(inputFiles,null,persistenceMode);});
+}
+function createEnexImportReport(files,split,preflight){
   files=Array.prototype.slice.call(files||[]);split=split||{batches:[files],rejected:[]};
   return normalizeImportReport({id:"report_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8),startedAt:Date.now(),outcome:"in-progress",automaticBatch:split.batches.length>1,plannedBatchCount:Math.max(1,split.batches.length),selectedFileCount:files.length,
-    sourceFiles:files.map(function(file){return {name:file.name,size:Number(file.size)||0};}),rejectedFiles:(split.rejected||[]).map(function(file){return file.name+" (250MB 초과)";}),expectedNoteCount:enexExpectedNotes,expectedNotebookCount:enexExpectedNotebooks});
+    sourceFiles:files.map(function(file){return {name:file.name,size:Number(file.size)||0};}),rejectedFiles:(split.rejected||[]).map(function(file){return file.name+" (250MB 초과)";}),expectedNoteCount:enexExpectedNotes,expectedNotebookCount:enexExpectedNotebooks,storagePreflight:preflight||null});
 }
 function currentEnexReport(){return enexBatchSession&&enexBatchSession.report?enexBatchSession.report:activeEnexReport;}
 function saveCurrentEnexReport(report){
@@ -2487,10 +2509,27 @@ function parseEnex(xmlText, notebookName){
 document.getElementById("enexFile").onchange = function(e){
   var selectedFiles=Array.prototype.slice.call(e.target.files||[]);
   if(!selectedFiles.length) return;
+  if(!e._enexBatch&&!e._enexPreflight){
+    if(activeEnexJob) cancelActiveEnexJob();
+    var preflightToken=++enexPreflightToken;
+    state.evernoteBannerDismissed=false;refreshEvernoteBar();
+    document.getElementById("enexStatus").textContent="저장공간을 확인하고 있습니다…";setBackupStatus("ENEX 가져오기 전 브라우저 저장공간을 확인하고 있습니다.");setEnexProgress(0,"저장공간 확인 중",true);
+    checkEnexStoragePreflight(selectedFiles).then(function(preflight){
+      if(preflightToken!==enexPreflightToken)return;
+      activeEnexPreflight=preflight;
+      if(preflight.status==="blocked"){
+        var blockedMsg="가져오기 시작 전 중단 — "+preflight.message;document.getElementById("enexStatus").textContent=blockedMsg;setBackupStatus(blockedMsg);setEnexProgress(0,"저장공간 부족 · 변경 없음",true);return;
+      }
+      var notice=(preflight.status==="warning"||preflight.status==="session-only"||preflight.status==="unavailable")?"⚠ "+preflight.message:preflight.message;
+      document.getElementById("enexStatus").textContent=notice;setBackupStatus(notice);
+      document.getElementById("enexFile").onchange({target:{files:selectedFiles,value:""},_enexPreflight:true});
+    });
+    e.target.value="";return;
+  }
   if(activeEnexJob) cancelActiveEnexJob();
   if(!e._enexBatch){
     var split=splitEnexIntoBatches(selectedFiles);
-    activeEnexReport=createEnexImportReport(selectedFiles,split);
+    activeEnexReport=createEnexImportReport(selectedFiles,split,activeEnexPreflight);
     if(split.batches.length>1){
       enexBatchSession={queue:split.batches.slice(1),total:split.batches.length,current:1,foundNotes:0,notebooks:{},importedNotes:0,importedFiles:0,persistenceLimited:false,undoBatch:null,report:activeEnexReport,rejected:split.rejected.map(function(file){return file.name;})};
       var batchMsg="전체 "+selectedFiles.length+"개 ENEX를 안전한 크기의 "+split.batches.length+"개 묶음으로 자동 처리합니다."+(split.rejected.length?" 250MB 초과 "+split.rejected.length+"개는 제외합니다.":"");
