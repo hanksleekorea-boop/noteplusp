@@ -695,7 +695,30 @@ function normalizeImportUndo(raw){
   }).filter(Boolean);
   if(!noteIds.length&&!mergedNotes.length) return null;
   return {noteIds:noteIds,noteUpdated:noteUpdated,attachmentIds:attachmentIds,createdNotebooks:createdNotebooks,mergedNotes:mergedNotes,
-    previousBannerDismissed:!!raw.previousBannerDismissed,committedAt:Number(raw.committedAt)||0};
+    previousBannerDismissed:!!raw.previousBannerDismissed,committedAt:Number(raw.committedAt)||0,
+    batchCount:Math.max(1,Math.min(10000,Math.floor(Number(raw.batchCount)||1))),importedFileCount:Math.max(0,Math.floor(Number(raw.importedFileCount)||0))};
+}
+function mergeImportUndoBatches(baseRaw,addedRaw){
+  var base=normalizeImportUndo(baseRaw),added=normalizeImportUndo(addedRaw);
+  if(!base)return added;
+  if(!added)return base;
+  var result=cloneState(base),noteSeen={},attachmentSeen={},notebookSeen={},mergedById={};
+  result.noteIds.forEach(function(id){noteSeen[id]=true;});
+  added.noteIds.forEach(function(id){if(!noteSeen[id]){noteSeen[id]=true;result.noteIds.push(id);}if(Object.prototype.hasOwnProperty.call(added.noteUpdated,id))result.noteUpdated[id]=added.noteUpdated[id];});
+  result.attachmentIds.forEach(function(id){attachmentSeen[id]=true;});
+  added.attachmentIds.forEach(function(id){if(!attachmentSeen[id]){attachmentSeen[id]=true;result.attachmentIds.push(id);}});
+  result.createdNotebooks.forEach(function(name){notebookSeen[name]=true;});
+  added.createdNotebooks.forEach(function(name){if(!notebookSeen[name]){notebookSeen[name]=true;result.createdNotebooks.push(name);}});
+  result.mergedNotes.forEach(function(item){mergedById[item.id]=item;});
+  added.mergedNotes.forEach(function(item){
+    if(noteSeen[item.id]){result.noteUpdated[item.id]=item.undoUpdated;return;}
+    if(mergedById[item.id])mergedById[item.id].undoUpdated=item.undoUpdated;
+    else{var copy=cloneState(item);result.mergedNotes.push(copy);mergedById[item.id]=copy;}
+  });
+  result.committedAt=Math.max(base.committedAt,added.committedAt);
+  result.batchCount=base.batchCount+added.batchCount;
+  result.importedFileCount=base.importedFileCount+added.importedFileCount;
+  return normalizeImportUndo(result);
 }
 
 /* v1~v4 → v5. 첨부 참조만 상태에 두고 실제 Blob은 별도 object store에 둔다. */
@@ -1070,7 +1093,12 @@ function confirmPendingEnexImport(){
       var target=byId(duplicate.targetId); if(target) mergePlans.push({source:note,target:target});
     }
   });
-  if(!newNotes.length&&!mergePlans.length) return;
+  if(!newNotes.length&&!mergePlans.length){
+    pendingEnexImport=null;hideImportPreview(false);
+    var skippedMsg="이 묶음에서 추가하거나 병합할 노트가 없어 기존 데이터를 변경하지 않았습니다.";
+    if(finishEnexBatchWithoutPreview(skippedMsg))return;
+    document.getElementById("enexStatus").textContent=skippedMsg;setBackupStatus(skippedMsg);setEnexProgress(100,"선택한 변화 없음",true);return;
+  }
   var destinationBySource={},mergeSnapshotById={};
   newNotes.forEach(function(note){destinationBySource[note.id]=note.id;});
   mergePlans.forEach(function(plan){
@@ -1107,12 +1135,16 @@ function confirmPendingEnexImport(){
   });
   var payload=pendingEnexImport; pendingEnexImport=null; hideImportPreview(false);
   state.evernoteBannerDismissed=true;
-  state.lastImportUndo={
+  var currentImportUndo={
     noteIds:newNotes.map(function(note){return note.id;}),
     noteUpdated:newNotes.reduce(function(map,note){map[note.id]=Number(note.updated)||0;return map;},{}),
     attachmentIds:selectedAttachments.map(function(item){return item.meta.id;}),
-    createdNotebooks:createdNotebooks,mergedNotes:mergedNotes,previousBannerDismissed:previousBannerDismissed,committedAt:Date.now()
+    createdNotebooks:createdNotebooks,mergedNotes:mergedNotes,previousBannerDismissed:previousBannerDismissed,committedAt:Date.now(),batchCount:1,importedFileCount:payload.okFiles
   };
+  if(enexBatchSession){
+    enexBatchSession.undoBatch=mergeImportUndoBatches(enexBatchSession.undoBatch,currentImportUndo);
+    state.lastImportUndo=enexBatchSession.undoBatch;
+  }else state.lastImportUndo=currentImportUndo;
   var selectedCount=newNotes.length+mergePlans.length;
   setEnexProgress(100,"저장 중 · 선택 "+selectedCount+"개",true);
   saveImportedBundle(selectedAttachments).then(function(saved){
@@ -1159,11 +1191,13 @@ document.addEventListener("keydown",function(e){
 });
 
 var enexUndoArm=false,enexUndoTimer=null;
+function enexUndoLabel(batch){return batch&&batch.batchCount>1?"↶ 방금 가져온 전체 묶음 되돌리기":"↶ 방금 가져온 묶음 되돌리기";}
 function refreshEnexUndoAction(){
-  var button=document.getElementById("enexUndo"),available=!!normalizeImportUndo(state.lastImportUndo);
+  var button=document.getElementById("enexUndo"),batch=normalizeImportUndo(state.lastImportUndo),available=!!batch;
   button.classList.toggle("show",available);
   button.hidden=!available;
-  if(!available){ enexUndoArm=false; clearTimeout(enexUndoTimer); button.textContent="↶ 방금 가져온 묶음 되돌리기"; }
+  if(!available){ enexUndoArm=false; clearTimeout(enexUndoTimer); }
+  button.textContent=enexUndoLabel(batch);
 }
 function finalizeEnexUndo(message,saved){
   document.getElementById("enexStatus").textContent=message;
@@ -1175,11 +1209,11 @@ function undoLastEnexImport(){
   var batch=normalizeImportUndo(state.lastImportUndo);
   if(!batch) return;
   if(!enexUndoArm){
-    enexUndoArm=true; this.textContent="한 번 더 눌러 가져오기 되돌리기";
-    enexUndoTimer=setTimeout(function(){enexUndoArm=false;var button=document.getElementById("enexUndo");button.textContent="↶ 방금 가져온 묶음 되돌리기";},3000);
+    enexUndoArm=true; this.textContent=batch.batchCount>1?"한 번 더 눌러 전체 묶음 되돌리기":"한 번 더 눌러 가져오기 되돌리기";
+    enexUndoTimer=setTimeout(function(){enexUndoArm=false;var button=document.getElementById("enexUndo");button.textContent=enexUndoLabel(normalizeImportUndo(state.lastImportUndo));},3000);
     return;
   }
-  clearTimeout(enexUndoTimer); enexUndoArm=false; this.textContent="↶ 방금 가져온 묶음 되돌리기";
+  clearTimeout(enexUndoTimer); enexUndoArm=false; this.textContent=enexUndoLabel(batch);
   var noteMap={}; batch.noteIds.forEach(function(id){noteMap[id]=true;});
   var changed=state.notes.filter(function(note){return noteMap[note.id]&&Object.prototype.hasOwnProperty.call(batch.noteUpdated,note.id)&&Number(note.updated)!==Number(batch.noteUpdated[note.id]);});
   (batch.mergedNotes||[]).forEach(function(snapshot){
@@ -1200,7 +1234,7 @@ function undoLastEnexImport(){
   state.evernoteBannerDismissed=batch.previousBannerDismissed;
   state.lastImportUndo=null;
   if(!byId(ui.selectedId)) ui.selectedId=state.notes[0]?state.notes[0].id:null;
-  var message="방금 가져온 노트 "+batch.noteIds.length+"개, 병합 "+(batch.mergedNotes||[]).length+"개와 첨부 "+batch.attachmentIds.length+"개를 되돌렸습니다.";
+  var message=(batch.batchCount>1?"자동 분할 "+batch.batchCount+"개 묶음에서 ":"방금 ")+"가져온 노트 "+batch.noteIds.length+"개, 병합 "+(batch.mergedNotes||[]).length+"개와 첨부 "+batch.attachmentIds.length+"개를 되돌렸습니다.";
   if(noteDb){
     writeStateAndAttachments([],batch.attachmentIds,null).then(function(){setPersistenceMode("idb");finalizeEnexUndo(message,true);}).catch(function(){var saved=writeFallbackState();finalizeEnexUndo(message,saved);});
   }else{
@@ -2068,7 +2102,7 @@ function finishEnexBatchWithoutPreview(reason){
     var msg=reason+" 다음 자동 묶음을 계속 처리합니다.";document.getElementById("enexStatus").textContent=msg;setBackupStatus(msg);startNextEnexBatch();return true;
   }
   var coverage=enexBatchCoverageText(),done="자동 분할 가져오기 종료 · 파일 "+enexBatchSession.importedFiles+"개 · 노트 "+enexBatchSession.importedNotes+"개"+(reason?" · "+reason:"")+(enexBatchSession.persistenceLimited?" · 일부 첨부는 현재 세션에만 유지됨":"")+(coverage?" · "+coverage:"");
-  clearEnexBatchSession();document.getElementById("enexStatus").textContent=done;setBackupStatus(done);setEnexProgress(100,"자동 분할 처리 종료",true);return true;
+  clearEnexBatchSession();document.getElementById("enexStatus").textContent=done;setBackupStatus(done);setEnexProgress(100,"자동 분할 처리 종료",true);refreshEvernoteBar();return true;
 }
 function planEnexFiles(inputFiles){
   var files=Array.prototype.slice.call(inputFiles||[]);
@@ -2387,7 +2421,7 @@ document.getElementById("enexFile").onchange = function(e){
   if(!e._enexBatch){
     var split=splitEnexIntoBatches(selectedFiles);
     if(split.batches.length>1){
-      enexBatchSession={queue:split.batches.slice(1),total:split.batches.length,current:1,foundNotes:0,notebooks:{},importedNotes:0,importedFiles:0,persistenceLimited:false,rejected:split.rejected.map(function(file){return file.name;})};
+      enexBatchSession={queue:split.batches.slice(1),total:split.batches.length,current:1,foundNotes:0,notebooks:{},importedNotes:0,importedFiles:0,persistenceLimited:false,undoBatch:null,rejected:split.rejected.map(function(file){return file.name;})};
       var batchMsg="전체 "+selectedFiles.length+"개 ENEX를 안전한 크기의 "+split.batches.length+"개 묶음으로 자동 처리합니다."+(split.rejected.length?" 250MB 초과 "+split.rejected.length+"개는 제외합니다.":"");
       document.getElementById("enexStatus").textContent=batchMsg;setBackupStatus(batchMsg);
       document.getElementById("enexFile").onchange({target:{files:split.batches[0],value:""},_enexBatch:true});e.target.value="";return;
