@@ -272,6 +272,12 @@
 - 복구 지점은 상태 메타데이터만 복사하며 첨부 Blob은 같은 IndexedDB 보존본을 참조한다. 고아 첨부 정리는 활성·휴지통의 attachment id를 전부 모은 뒤에만 실행하며, 실패 시 삭제하지 않는다.
 - 공유는 Markdown, 텍스트, 새니타이즈된 HTML 내보내기를 지원한다. 암호화 백업 비밀번호·평문은 저장하지 않는다.
 
+## 30. 2026-07-18 · 공개 배포 및 홈 화면 바로가기
+- 공개 주소: `https://hanksleekorea-boop.github.io/noteplusp/`. GitHub Pages build `0e41c9e`는 built 상태이고, 공개 URL HTTP 200을 확인했다.
+- 배포 저장소는 `https://github.com/hanksleekorea-boop/noteplusp`이며, 정본을 변경하면 이 저장소의 `main`에 커밋·push하여 Pages 반영을 확인한다.
+- `index.html`은 정본 `노트앱_v5.html`로 이동시킨다. 앱의 홈 화면 추가 버튼은 지원되는 브라우저의 설치 프롬프트를 열며, 지원되지 않는 브라우저에는 정확한 수동 설치 경로를 안내한다.
+- PWA는 HTTPS 공개 주소에서만 설치된다. 이 앱의 데이터 저장은 여전히 사용자 브라우저의 IndexedDB/localStorage에만 있고, Pages는 정적 앱 파일만 제공한다.
+
 ## 28. 2026-07-18 · 즉시 실행 가능 20개 일괄 구현
 - 사용자 지시에 따라 즉시 실행 가능 목록 20개를 묶어 구현했다. 정본 SHA-256: `A5E9E3798457425A714811BE86ED379D8DCE552C129853BAD496A9EA07E28AAA`.
 - 모바일 탐색, IME·단축키, 복구 지점, 조건 검색·저장 검색·전문 캐시, 즐겨찾기, 내부 링크, Markdown·표, 인쇄, PWA, 암호화 백업/복호화 가져오기, 저장소 사용량, sync 메타, 템플릿, 외부 링크 확인, 변경 이력, Markdown 공유를 추가했다.

@@ -1,6 +1,6 @@
 # NEXT_PRIORITIES — 노트플러스P
 
-최종 갱신: 2026-07-17 · 정본 앱: 노트앱_v5.html · 프레임워크: v7.2
+최종 갱신: 2026-07-18 · 정본 앱: 노트앱_v5.html · 공개 앱: https://hanksleekorea-boop.github.io/noteplusp/ · 프레임워크: v7.2
 
 ## 지금 상태 한 줄
 v5 schema 5의 우선순위 0과 ENEX 선택 미리보기 완료: 확인 전 상태 불변, 선택 노트·첨부만 원자 저장, 취소 무손실까지 자동검증 통과.
