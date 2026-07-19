@@ -1,7 +1,7 @@
 {
   "name": "노트플러스P",
   "short_name": "노트플러스",
-  "start_url": "./노트앱_v8.html",
+  "start_url": "./노트앱_v9.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#00a82d",

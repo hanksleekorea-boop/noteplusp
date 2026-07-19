@@ -18,6 +18,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const artifacts = path.join(root, "artifacts");
 const publicUrl = process.env.NOTEPLUS_PUBLIC_URL || "https://hanksleekorea-boop.github.io/noteplusp/";
+const appFile = process.env.NOTEPLUS_APP_FILE || "%EB%85%B8%ED%8A%B8%EC%95%B1_v8.html";
 const edge = process.env.NOTEPLUS_BROWSER || "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
 const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "931DCD4EED4FE128A3A549D018795BEF130442B2FAD00A41E35853D3DE24F460";
 const marker = `schema4-${Date.now()}`;
@@ -46,7 +47,7 @@ function sha256(bytes) {
 }
 
 async function verifyRelease() {
-  const appUrl = new URL("%EB%85%B8%ED%8A%B8%EC%95%B1_v8.html?qa=" + Date.now(), publicUrl);
+  const appUrl = new URL(appFile + "?qa=" + Date.now(), publicUrl);
   const response = await fetch(appUrl, { cache: "no-store" });
   assert.equal(response.status, 200);
   const bytes = Buffer.from(await response.arrayBuffer());
