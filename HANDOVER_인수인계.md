@@ -375,3 +375,13 @@
 - 검증: 새 브라우저 회귀와 `new Function` 정적 검사를 통과했다. 정본 앱 코드는 변경되지 않았으며 SHA-256은 `1A4AD63C384EB81B5141046609C021D369DAA28F1830D3B84EFB15BF2DF9CCC8`이다.
 - 참고 캡처: `artifacts/old_ux_preview_reference.png`, `artifacts/current_editor_reference.png`.
 - 다음 자동 개발 항목은 모바일 화면 탐색 구조 개선이다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
+
+## 42. 2026-07-19 · 첨부 SHA-256 무결성 검사 완료
+- 새 ENEX·JSON·직접 추가 첨부는 Blob 저장 전에 Web Crypto SHA-256을 계산해 선택적 `attachment_meta.sha256` 기준값으로 저장한다. schema 5와 IndexedDB 버전은 올리지 않았고 기존 메타·Blob 분리 구조를 유지한다.
+- 기존 첨부는 첫 검사에서 기준값을 생성하고 이후 검사에서 실제 Blob을 다시 해시해 일치, 해시 불일치, Blob 누락, 크기 불일치, 노트 소유 관계 불일치, 비지원 MIME, 해시 API 오류를 구분한다. 검사는 활성·휴지통 노트가 참조하는 첨부를 대상으로 하며 문제를 발견해도 노트나 Blob을 삭제하지 않는다.
+- 상단 Evernote 바와 항상 접근 가능한 사이드바에 `첨부 무결성 검사`를 추가했다. 검사 중 진행 수를 표시하고 결과 뒤 개인정보 최소화 JSON 보고서를 내려받을 수 있다.
+- 보고서는 노트 제목·본문·첨부 내용·파일 이름을 포함하지 않고 첨부 ID, MIME, 크기, 기대/실제 SHA-256, 상태와 합계만 기록한다.
+- IndexedDB에 새 기준을 저장하지 못하면 Blob과 노트 기능을 유지하고 `새 기준은 현재 세션에만 유지됨`을 고지한다. SHA-256 API 실패도 앱을 멈추지 않고 `hash-error`로 보고한다.
+- 자동검증: 새 `tests/test_attachment_integrity.mjs`에서 새 기준 저장, 기존 기준 생성·재검증, 같은 크기 Blob 변조, Blob 누락, 세션 전용 기준, 해시 API 실패, 보고서 개인정보 제외를 통과했다. `test_noteplus_regress.mjs`, 직접 첨부, 중복 병합, 재시도, 생산성/PWA·모바일 회귀도 통과했다.
+- 시각 검증: `artifacts/attachment_integrity_mismatch.png`. 서비스워커 `noteplusp-v5-shell-12`, 정본 SHA-256 `F9DC9C17B415FB8817FE2439A293E51B93075C75C2BDA4A06435D31FD3202CDA`.
+- 다음 즉시 실행 항목은 파일별 노트·첨부 합계 대시보드다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.

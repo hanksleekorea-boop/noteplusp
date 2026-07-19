@@ -502,6 +502,8 @@
     <button class="enex-job-action undo" id="enexUndo" type="button">↶ 방금 가져온 묶음 되돌리기</button>
     <button class="enex-job-action report" id="enexReportHtml" type="button">⬇ 결과 보고서 HTML</button>
     <button class="enex-job-action report" id="enexReportJson" type="button">⬇ 결과 보고서 JSON</button>
+    <button class="enex-job-action show" id="attachmentIntegrity" type="button">🔐 첨부 무결성 검사</button>
+    <button class="enex-job-action report" id="attachmentIntegrityReport" type="button" hidden>⬇ 무결성 보고서 JSON</button>
     <button class="eb-close" id="enexClose" title="닫기">✕ 나중에</button>
     <span class="eb-status" id="enexStatus"></span>
     <div class="enex-progress" id="enexProgress" role="status" aria-live="polite">
@@ -542,6 +544,10 @@
       <div class="backup-row full">
         <button class="backup-btn" id="snapshotBtn">◷ 복구 지점</button>
         <button class="backup-btn" id="storageBtn">▣ 저장소</button>
+      </div>
+      <div class="backup-row full">
+        <button class="backup-btn" id="attachmentIntegritySide">🔐 첨부 검사</button>
+        <button class="backup-btn" id="attachmentIntegrityReportSide" disabled>⬇ 검사 보고서</button>
       </div>
       <div class="backup-row full">
         <button class="backup-btn" id="templateBtn">▤ 템플릿</button>
@@ -760,6 +766,23 @@ catch(e){ localAvailable=false; canPersist=false; }
 function escHtml(s){ var e=document.createElement("div"); e.textContent=s||""; return e.innerHTML; }
 function cloneState(st){ return JSON.parse(JSON.stringify(st)); }
 function validAttachmentId(id){ return typeof id==="string" && /^att_[a-z0-9_-]{6,100}$/i.test(id); }
+function normalizeAttachmentHash(value){value=String(value||"").trim().toUpperCase();return /^[A-F0-9]{64}$/.test(value)?value:"";}
+function sha256Blob(blob){
+  if(!(blob instanceof Blob))return Promise.reject(new Error("첨부 Blob 없음"));
+  if(!(window.crypto&&window.crypto.subtle&&window.crypto.subtle.digest))return Promise.reject(new Error("SHA-256 미지원"));
+  var read=blob.arrayBuffer?blob.arrayBuffer():new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(reader.result);};reader.onerror=function(){reject(new Error("첨부 읽기 실패"));};reader.readAsArrayBuffer(blob);});
+  return read.then(function(buffer){return window.crypto.subtle.digest("SHA-256",buffer);}).then(function(hash){return Array.prototype.map.call(new Uint8Array(hash),function(byte){return byte.toString(16).padStart(2,"0");}).join("").toUpperCase();});
+}
+function ensureAttachmentHashes(items){
+  items=Array.isArray(items)?items:[];var cursor=0,workers=[];
+  function worker(){
+    var item=items[cursor++];if(!item)return Promise.resolve();
+    if(!item.meta||!(item.blob instanceof Blob)||normalizeAttachmentHash(item.meta.sha256))return worker();
+    return sha256Blob(item.blob).then(function(hash){item.meta.sha256=hash;},function(){item.meta.sha256="";}).then(worker);
+  }
+  for(var i=0;i<Math.min(2,items.length);i++)workers.push(worker());
+  return Promise.all(workers).then(function(){return items;});
+}
 function normalizeAttachmentIds(ids){
   var seen={};
   return (Array.isArray(ids)?ids:[]).filter(function(id){
@@ -1286,7 +1309,7 @@ function confirmPendingEnexImport(){
   });
   var selectedAttachments=(pendingEnexImport.attachments||[]).filter(function(item){return item&&item.meta&&destinationBySource[item.meta.noteId];}).map(function(item){
     var targetId=destinationBySource[item.meta.noteId];
-    return {meta:{id:item.meta.id,noteId:targetId,name:item.meta.name,mime:item.meta.mime,size:item.meta.size,created:item.meta.created},blob:item.blob};
+    return {meta:{id:item.meta.id,noteId:targetId,name:item.meta.name,mime:item.meta.mime,size:item.meta.size,created:item.meta.created,sha256:normalizeAttachmentHash(item.meta.sha256)},blob:item.blob};
   });
   var attachmentIdsByTarget={}; selectedAttachments.forEach(function(item){
     if(!attachmentIdsByTarget[item.meta.noteId]) attachmentIdsByTarget[item.meta.noteId]=[];
@@ -1724,7 +1747,7 @@ function renameNoteAttachment(note,item){
   if(requested===null) return;
   var nextName=safeAttachmentName(requested,item.meta.mime,0);
   if(nextName===item.meta.name) return;
-  item.meta={id:item.meta.id,noteId:note.id,name:nextName,mime:item.meta.mime,size:item.meta.size||item.blob.size,created:item.meta.created};
+  item.meta={id:item.meta.id,noteId:note.id,name:nextName,mime:item.meta.mime,size:item.meta.size||item.blob.size,created:item.meta.created,sha256:normalizeAttachmentHash(item.meta.sha256)};
   volatileAttachments[item.meta.id]=item; note.updated=Date.now();
   saveImportedBundle([item]).then(function(saved){
     renderAttachments(note); attachmentStatus("첨부파일 이름을 변경했습니다."+(saved?"":" 첨부는 이번 세션에만 유지됩니다."));
@@ -2125,11 +2148,12 @@ function rememberAttachments(items){
   (items||[]).forEach(function(item){ if(item&&item.meta&&validAttachmentId(item.meta.id)) volatileAttachments[item.meta.id]=item; });
 }
 function saveImportedBundle(items){
-  rememberAttachments(items);
-  if(noteDb){
-    return writeStateAndAttachments(items||[],[],null).then(function(){setPersistenceMode("idb");return true;}).catch(function(){writeFallbackState();return false;});
-  }
-  return persist().then(function(){return false;});
+  items=Array.isArray(items)?items:[];rememberAttachments(items);
+  return ensureAttachmentHashes(items).then(function(prepared){
+    rememberAttachments(prepared);
+    if(noteDb)return writeStateAndAttachments(prepared,[],null).then(function(){setPersistenceMode("idb");return true;}).catch(function(){writeFallbackState();return false;});
+    return persist().then(function(){return false;});
+  });
 }
 function collectExportAttachments(){
   var seen={}, ids=[];
@@ -2138,7 +2162,7 @@ function collectExportAttachments(){
     return getAttachmentRecord(id).then(function(item){
       if(!item||!item.meta||!(item.blob instanceof Blob)) return null;
       return blobToBase64(item.blob).then(function(dataBase64){
-        return {id:item.meta.id,noteId:item.meta.noteId,name:item.meta.name,mime:item.meta.mime,size:item.meta.size,created:item.meta.created,dataBase64:dataBase64};
+        return {id:item.meta.id,noteId:item.meta.noteId,name:item.meta.name,mime:item.meta.mime,size:item.meta.size,created:item.meta.created,sha256:normalizeAttachmentHash(item.meta.sha256),dataBase64:dataBase64};
       });
     });
   })).then(function(items){return items.filter(Boolean);});
@@ -2163,6 +2187,57 @@ document.getElementById("exportBtn").onclick=function(){
 function downloadBlob(blob,name){
   var url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},1000);
 }
+var lastAttachmentIntegrityReport=null,attachmentIntegrityRunning=false;
+function writeAttachmentMetadata(items){
+  if(!noteDb)return Promise.reject(new Error("IndexedDB 연결 없음"));
+  var tx=noteDb.transaction("attachment_meta","readwrite"),store=tx.objectStore("attachment_meta");
+  (items||[]).forEach(function(item){if(item&&item.meta&&validAttachmentId(item.meta.id))store.put(item.meta);});
+  return transactionDone(tx);
+}
+function attachmentOwnerMap(){
+  var owners={};allStoredNotes().forEach(function(note){normalizeAttachmentIds(note.attachmentIds).forEach(function(id){if(!owners[id])owners[id]=[];if(owners[id].indexOf(note.id)<0)owners[id].push(note.id);});});return owners;
+}
+function newAttachmentIntegrityReport(total){return {format:"noteplusp-attachment-integrity-v1",startedAt:Date.now(),completedAt:0,persistenceMode:persistenceMode,attachmentCount:total,verifiedCount:0,baselineCreatedCount:0,hashMismatchCount:0,missingCount:0,sizeMismatchCount:0,ownerMismatchCount:0,unsupportedMimeCount:0,hashErrorCount:0,problemCount:0,baselinePersisted:true,truncatedItemCount:0,items:[]};}
+function recordAttachmentIntegrityItem(report,item){if(report.items.length<20000)report.items.push(item);else report.truncatedItemCount++;}
+function finishAttachmentIntegrityReport(report,baselineItems){
+  report.completedAt=Date.now();report.problemCount=report.hashMismatchCount+report.missingCount+report.sizeMismatchCount+report.ownerMismatchCount+report.unsupportedMimeCount+report.hashErrorCount;
+  var persistBaseline=baselineItems.length?(noteDb?writeAttachmentMetadata(baselineItems).then(function(){report.baselinePersisted=true;},function(){report.baselinePersisted=false;}):Promise.resolve().then(function(){report.baselinePersisted=false;})):Promise.resolve();
+  return persistBaseline.then(function(){
+    lastAttachmentIntegrityReport=report;attachmentIntegrityRunning=false;
+    var run=document.getElementById("attachmentIntegrity"),runSide=document.getElementById("attachmentIntegritySide"),download=document.getElementById("attachmentIntegrityReport"),downloadSide=document.getElementById("attachmentIntegrityReportSide");run.disabled=false;run.textContent="🔐 첨부 무결성 검사";runSide.disabled=false;runSide.textContent="🔐 첨부 검사";download.hidden=false;download.classList.add("show");downloadSide.disabled=false;
+    var summary=report.problemCount?("첨부 무결성 경고 "+report.problemCount+"개 · 일치 "+report.verifiedCount+"개"):("첨부 무결성 확인 완료 · 일치 "+report.verifiedCount+"개"+(report.baselineCreatedCount?" · 새 기준 "+report.baselineCreatedCount+"개":""));
+    if(report.baselineCreatedCount&&!report.baselinePersisted)summary+=" · 새 기준은 현재 세션에만 유지됨";
+    if(!report.attachmentCount)summary="검사할 첨부가 없습니다.";
+    document.getElementById("enexStatus").textContent=summary;setBackupStatus(summary);return report;
+  });
+}
+function runAttachmentIntegrityCheck(){
+  if(attachmentIntegrityRunning)return Promise.resolve(null);
+  attachmentIntegrityRunning=true;var button=document.getElementById("attachmentIntegrity"),buttonSide=document.getElementById("attachmentIntegritySide");button.disabled=true;button.textContent="첨부 검사 중…";buttonSide.disabled=true;buttonSide.textContent="검사 중…";
+  var owners=attachmentOwnerMap(),ids=Object.keys(owners),report=newAttachmentIntegrityReport(ids.length),baselineItems=[],processed=0,chain=Promise.resolve();
+  document.getElementById("attachmentIntegrityReport").hidden=true;document.getElementById("enexStatus").textContent="첨부 무결성 검사 준비 중…";
+  ids.forEach(function(id){chain=chain.then(function(){return getAttachmentRecord(id).then(function(item){
+    processed++;if(processed===1||processed===ids.length||processed%10===0)document.getElementById("enexStatus").textContent="첨부 SHA-256 검사 "+processed+" / "+ids.length;
+    if(!item||!item.meta||!(item.blob instanceof Blob)){report.missingCount++;recordAttachmentIntegrityItem(report,{id:id,status:"missing"});return;}
+    var ownerInvalid=owners[id].length!==1||item.meta.noteId!==owners[id][0],mimeInvalid=!supportedAttachmentMime(item.meta.mime),sizeInvalid=Number(item.meta.size)!==item.blob.size;
+    if(ownerInvalid)report.ownerMismatchCount++;if(mimeInvalid)report.unsupportedMimeCount++;if(sizeInvalid)report.sizeMismatchCount++;
+    return sha256Blob(item.blob).then(function(actual){
+      var expected=normalizeAttachmentHash(item.meta.sha256),status="verified";
+      if(ownerInvalid)status="owner-mismatch";else if(mimeInvalid)status="unsupported-mime";else if(sizeInvalid)status="size-mismatch";else if(expected&&expected!==actual){status="hash-mismatch";report.hashMismatchCount++;}else if(!expected){status="baseline-created";item.meta.sha256=actual;volatileAttachments[id]=item;baselineItems.push(item);report.baselineCreatedCount++;}else report.verifiedCount++;
+      recordAttachmentIntegrityItem(report,{id:id,status:status,mime:String(item.meta.mime||"").slice(0,100),size:item.blob.size,expectedSha256:expected||actual,actualSha256:actual});
+    },function(){report.hashErrorCount++;recordAttachmentIntegrityItem(report,{id:id,status:"hash-error",mime:String(item.meta.mime||"").slice(0,100),size:item.blob.size});});
+  },function(){processed++;report.missingCount++;recordAttachmentIntegrityItem(report,{id:id,status:"read-error"});});});});
+  return chain.then(function(){return finishAttachmentIntegrityReport(report,baselineItems);},function(){report.hashErrorCount++;return finishAttachmentIntegrityReport(report,baselineItems);});
+}
+function downloadAttachmentIntegrityReport(){
+  if(!lastAttachmentIntegrityReport){setBackupStatus("먼저 첨부 무결성 검사를 실행하세요.");return;}
+  var payload={notice:"노트 제목·본문·첨부 내용·파일 이름은 포함하지 않습니다.",report:lastAttachmentIntegrityReport};
+  downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),"noteplusp_attachment_integrity_"+new Date().toISOString().slice(0,10)+".json");setBackupStatus("첨부 무결성 JSON 보고서를 저장했습니다.");
+}
+document.getElementById("attachmentIntegrity").onclick=runAttachmentIntegrityCheck;
+document.getElementById("attachmentIntegrityReport").onclick=downloadAttachmentIntegrityReport;
+document.getElementById("attachmentIntegritySide").onclick=runAttachmentIntegrityCheck;
+document.getElementById("attachmentIntegrityReportSide").onclick=downloadAttachmentIntegrityReport;
 function cloneSnapshotData(){var copy=cloneState(state);if(copy.preferences) copy.preferences.snapshots=[];return copy;}
 function createRecoverySnapshot(reason){
   state.preferences=state.preferences||{savedSearches:[],sync:{version:1,deviceId:uid(),updatedAt:Date.now()},snapshots:[]};
@@ -2248,7 +2323,7 @@ document.getElementById("importFile").onchange=function(e){
         try{
           var oldId=raw.id, newId=validAttachmentId(oldId)&&!existingAttachmentIds[oldId]?oldId:"att_"+uid();
           var blob=base64ToBlob(raw.dataBase64,raw.mime);
-          var meta={id:newId,noteId:raw.noteId,name:safeAttachmentName(raw.name,raw.mime,index),mime:raw.mime,size:blob.size,created:Number(raw.created)||Date.now()};
+          var meta={id:newId,noteId:raw.noteId,name:safeAttachmentName(raw.name,raw.mime,index),mime:raw.mime,size:blob.size,created:Number(raw.created)||Date.now(),sha256:normalizeAttachmentHash(raw.sha256)};
           importedAttachments.push({meta:meta,blob:blob}); attachmentMap[oldId]=newId; existingAttachmentIds[newId]=true;
         }catch(ignore){}
       });
