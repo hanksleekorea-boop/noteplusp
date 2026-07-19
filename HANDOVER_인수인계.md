@@ -442,3 +442,11 @@
 - v3 공개 회귀는 모바일 IDB·저장 차단 폴백, 합성 ENEX PDF Blob, 외부 HTML, 빈 ENEX, schema 4→5 이전까지 전부 통과했다. 공개 정본은 HTTP 200, 226,646바이트, SHA-256 `6D8F20F73896DA3F94EFAFE9291CEB51E53D4BD84560430583F9F0EFFCE633A0`이다.
 - 서비스 워커는 `noteplusp-v7-shell-1`, 앱 빌드 커밋은 `42a1cbb`다. 자동 공개 범위의 미해결 P0·P1은 없고, 실제 한국어 ENEX·실기기·비개발자 파일럿은 여전히 외부 의존성이다.
 - 캡처는 v3 핵심 회귀 5개, `public_enex_empty_warning_v1.png`, `public_enex_zero_notes_warning_v1.png`, `public_schema4_migration_v1.png`다. 다음 즉시 실행은 파일별 노트·첨부·실패 합계 대시보드다.
+
+## 51. 2026-07-19 · 실제 Samsung Android 제한 알파 핵심 여정 통과
+- 사용자의 무선 연결 신호에 따라 설치돼 있던 Android Platform-Tools를 찾아 mDNS ADB로 Samsung SM-G996N(Android 15, Chrome 150)에 연결했다. 물리 화면은 1080×2400, 앱 CSS viewport는 411×781, DPR 2.625다.
+- 새 Chrome 탭에서만 공개 v7을 실행했다. 모바일 `정리 → 홈 화면에 추가` 경로, PWA 설치 프롬프트 준비, IndexedDB 노트 저장·재접속, 합성 ENEX 노트·태그·노트북·PDF Blob 재접속, 서비스워커 활성·제어·오프라인 재진입, 수평 넘침 없음을 통과했다.
+- 테스트 전 상태 JSON과 `stateSignature`를 보존했다. QA 노트와 첨부를 검사한 뒤 원래 상태를 다시 기록하고 첨부 Blob을 삭제했으며, 재접속 후 QA 노트 0개·ENEX 노트 0개·시작 상태 서명 일치를 확인했다. 실제 사용자 데이터는 삭제하지 않았다.
+- 첫 실기기 하네스는 모바일 설치 버튼이 첫 화면에 직접 보여야 한다는 잘못된 가정으로 중단됐다. 제품의 실제 경로인 하단 `정리` 패널을 반영해 수정했다. 이후 무선 전달 경로 단절과 CDP 연결 유지로 인한 종료 지연을 mDNS 고정 전달·명시 프로세스 종료로 해결했다.
+- `tests/test_physical_android_alpha_v1.mjs`, `artifacts/physical_android_alpha_v1.png`, `artifacts/physical_android_alpha_v1.json`을 추가했다. 공개 자동회귀 5종도 전부 재통과했다.
+- 실제 모바일 관문을 통과로 올려 제한 알파는 통과 3/5, 부분 1, 미통과 1, 공식 60%다. 실제 한국어 ENEX와 비개발자 파일럿 3~5명은 남아 있다. 다음 즉시 실행은 파일별 노트·첨부·실패 합계 대시보드다.

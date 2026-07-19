@@ -1,0 +1,35 @@
+{
+  "format": "noteplusp-physical-android-alpha-v1",
+  "testedAt": "2026-07-19",
+  "publicUrl": "https://hanksleekorea-boop.github.io/noteplusp/",
+  "app": {
+    "file": "노트앱_v7.html",
+    "bytes": 226646,
+    "sha256": "6D8F20F73896DA3F94EFAFE9291CEB51E53D4BD84560430583F9F0EFFCE633A0"
+  },
+  "device": {
+    "manufacturer": "Samsung",
+    "model": "SM-G996N",
+    "android": 15,
+    "chrome": "150.0.7871.124",
+    "physicalPixels": "1080x2400",
+    "cssViewport": "411x781",
+    "devicePixelRatio": 2.625
+  },
+  "results": {
+    "indexedDb": "pass",
+    "noteReload": "pass",
+    "syntheticEnexPdfReload": "pass",
+    "serviceWorkerActive": "pass",
+    "offlineReopen": "pass",
+    "mobileInstallPath": "pass",
+    "horizontalOverflow": "pass",
+    "cleanup": "pass",
+    "originalStateSignatureRestored": true
+  },
+  "scope": {
+    "actualUserEnex": false,
+    "homeScreenInstallationChanged": false,
+    "userDataDeleted": false
+  }
+}
