@@ -1,10 +1,15 @@
 # 노트플러스P 제한 알파 상태 대시보드 v2
 
-기준일: 2026-07-19  
-공개 앱: https://hanksleekorea-boop.github.io/noteplusp/  
-현재 정본: `노트앱_v6.html`  
-앱 SHA-256: `A7173ACA0DD1DC44017D4C4FA289E2E96C7690D5245A38AB3D016C42A8F6E108`  
-서비스 워커: `noteplusp-v6-shell-1`  
+기준일: 2026-07-19
+
+공개 앱: https://hanksleekorea-boop.github.io/noteplusp/
+
+현재 정본: `노트앱_v6.html`
+
+앱 SHA-256: `A7173ACA0DD1DC44017D4C4FA289E2E96C7690D5245A38AB3D016C42A8F6E108`
+
+서비스 워커: `noteplusp-v6-shell-1`
+
 앱 빌드 커밋: `57c56f6`
 
 이 문서는 v6 이후의 제한 알파 상태 정본이다. `ALPHA_READINESS.md`와 `LIMITED_ALPHA_PLAN_v1.md`는 v5 당시의 역사적 기준으로 보존한다.
