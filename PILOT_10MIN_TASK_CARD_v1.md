@@ -2,7 +2,7 @@
 
 공개 앱: https://hanksleekorea-boop.github.io/noteplusp/
 
-현재 버전: v10
+현재 버전: v11
 
 파일럿 샘플 ENEX: https://hanksleekorea-boop.github.io/noteplusp/pilot-assets/%EB%85%B8%ED%8A%B8%ED%94%8C%EB%9F%AC%EC%8A%A4P_%ED%8C%8C%EC%9D%BC%EB%9F%BF_%EC%83%98%ED%94%8C.enex
 
