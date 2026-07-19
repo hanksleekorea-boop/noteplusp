@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export4.dtd">
+<en-export export-date="20260719T000000Z" application="노트플러스P 제한 알파" version="1">
+  <note>
+    <title>노트플러스P 파일럿 샘플 노트</title>
+    <content><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">
+<en-note>
+  <div>이 노트가 보이면 ENEX 가져오기가 정상적으로 끝났습니다.</div>
+  <div><br/></div>
+  <div>아래에는 파일럿 확인용 PDF 첨부가 있습니다.</div>
+  <en-media type="application/pdf" hash="1bbc324fd49ac1b6e692f4520dcc42d7"/>
+</en-note>]]></content>
+    <created>20260719T000000Z</created>
+    <updated>20260719T000100Z</updated>
+    <tag>파일럿</tag>
+    <resource>
+      <data encoding="base64" hash="1bbc324fd49ac1b6e692f4520dcc42d7">JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZz4+ZW5kb2JqCnRyYWlsZXI8PC9Sb290IDEgMCBSPj4KJSVFT0YK</data>
+      <mime>application/pdf</mime>
+      <resource-attributes>
+        <file-name>노트플러스P_파일럿_확인.pdf</file-name>
+      </resource-attributes>
+    </resource>
+  </note>
+</en-export>
