@@ -308,13 +308,13 @@
   /* ═══ Evernote ENEX 추출 튜토리얼 ═══ */
   .guide-overlay{display:none; position:fixed; inset:0; z-index:1000; background:rgba(20,20,18,.56); padding:24px; align-items:center; justify-content:center;}
   .guide-overlay.show{display:flex;}
-  .guide-dialog{width:min(860px,100%); max-height:min(90vh,900px); overflow-y:auto; background:var(--bg); color:var(--ink); border:1px solid var(--line-strong); border-radius:14px; box-shadow:0 18px 60px rgba(0,0,0,.28);}
-  .guide-head{display:flex; align-items:flex-start; gap:16px; padding:20px 22px 14px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:1;}
+  .guide-dialog{width:min(900px,100%); max-height:min(92vh,920px); overflow:hidden; display:flex; flex-direction:column; background:var(--bg); color:var(--ink); border:1px solid var(--line-strong); border-radius:14px; box-shadow:0 18px 60px rgba(0,0,0,.28);}
+  .guide-head{display:flex; align-items:flex-start; gap:16px; padding:18px 22px 13px; border-bottom:1px solid var(--line); background:var(--bg); flex-shrink:0;}
   .guide-head h2{font-size:20px; line-height:1.35; margin:0;}
   .guide-head p{font-size:12.5px; color:var(--sub); margin-top:4px; line-height:1.5;}
   .guide-close{margin-left:auto; border:none; border-radius:7px; background:var(--side-hover); color:var(--sub); width:32px; height:32px; font-size:17px; cursor:pointer; flex-shrink:0;}
   .guide-close:hover{color:var(--ink);}
-  .guide-body{padding:18px 22px 22px;}
+  .guide-body{padding:18px 22px 20px; overflow-y:auto; min-height:0;}
   .guide-important{border:1px solid #b9d8bf; background:var(--green-ll); border-radius:9px; padding:11px 13px; font-size:13px; line-height:1.6; margin-bottom:16px;}
   .guide-steps{counter-reset:guide-step; display:grid; gap:10px;}
   .guide-step{counter-increment:guide-step; position:relative; border:1px solid var(--line); border-radius:10px; padding:12px 14px 12px 48px; min-height:48px; line-height:1.55; font-size:13.5px;}
@@ -346,7 +346,52 @@
   .guide-action{border:1px solid var(--line-strong); border-radius:8px; background:#fff; color:var(--ink); padding:8px 12px; font-size:12.5px; font-weight:700; cursor:pointer; text-decoration:none;}
   .guide-action.primary{background:var(--green); border-color:var(--green); color:#fff;}
   .guide-action:hover{border-color:var(--green);}
-  @media(max-width:640px){.guide-overlay{padding:10px; align-items:flex-end;}.guide-dialog{max-height:94vh; border-radius:14px 14px 8px 8px;}.guide-head,.guide-body{padding-left:16px;padding-right:16px;}.guide-head h2{font-size:18px;}.migration-route{grid-template-columns:1fr 1fr;}.migration-counts{grid-template-columns:1fr;}.migration-counts p{grid-column:auto;}.guide-step{padding-left:43px;padding-right:10px}.guide-step::before{left:10px}.guide-shot{margin-left:-32px;}.guide-shot figcaption{font-size:10.5px;}}
+  .guide-wizard-nav{display:grid; grid-template-columns:repeat(5,1fr); gap:6px; padding:11px 22px; border-bottom:1px solid var(--line); background:var(--side-bg); flex-shrink:0;}
+  .guide-wizard-tab{border:1px solid var(--line); border-radius:9px; background:var(--bg); color:var(--sub); padding:8px 5px; font-size:11px; font-weight:800; cursor:pointer; line-height:1.35;}
+  .guide-wizard-tab b{display:block; font-size:13px; color:var(--green-d);}
+  .guide-wizard-tab[aria-current="step"]{border-color:var(--green); background:var(--green-ll); color:var(--ink); box-shadow:inset 0 0 0 1px var(--green);}
+  .guide-panel[hidden]{display:none;}
+  .guide-panel h3{font-size:19px; line-height:1.35; margin:0 0 7px; outline:none;}
+  .guide-panel-lead{margin:0 0 14px; color:var(--sub); font-size:13px; line-height:1.65;}
+  .guide-hero{border:2px solid var(--green); border-radius:12px; padding:14px 16px; background:var(--green-ll); margin-bottom:13px; text-align:center;}
+  .guide-hero strong{display:block; font-size:17px; line-height:1.45; margin-bottom:4px;}
+  .guide-hero span{font-size:12.5px; line-height:1.55; color:var(--sub);}
+  .guide-pc-only{border-radius:10px; padding:11px 13px; margin-bottom:13px; background:#fff8dc; border:1px solid #e3c462; color:#654e00; font-size:12.5px; line-height:1.55;}
+  .guide-pc-only strong{display:block; font-size:14px; margin-bottom:2px;}
+  .guide-scope{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .guide-scope-card{border:1px solid var(--line); border-radius:10px; padding:12px 13px; background:var(--side-bg);}
+  .guide-scope-card h4{font-size:13px; margin:0 0 7px;}
+  .guide-scope-card ul{margin:0; padding-left:18px; color:var(--sub); font-size:12px; line-height:1.65;}
+  .guide-scope-card.caution{border-color:#e4c9a8;}
+  .guide-task{display:flex; gap:12px; align-items:flex-start; border:1px solid var(--line); border-radius:11px; padding:13px 14px; margin:10px 0; background:var(--side-bg);}
+  .guide-task-number{display:flex; align-items:center; justify-content:center; width:29px; height:29px; border-radius:50%; flex:0 0 29px; background:var(--green); color:#fff; font-size:13px; font-weight:900;}
+  .guide-task strong{display:block; margin-bottom:3px; font-size:13.5px;}
+  .guide-task p{margin:0; color:var(--sub); font-size:12.5px; line-height:1.6;}
+  .guide-shots-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .guide-shots-grid .guide-shot{margin:0;}
+  .guide-current-note{margin-top:9px; color:var(--sub); font-size:11.5px; line-height:1.55;}
+  .guide-checklist-builder{border:1px solid var(--line); border-radius:11px; background:var(--side-bg); padding:12px;}
+  .guide-checklist-builder label{display:grid; gap:6px; font-size:12.5px; font-weight:800;}
+  .guide-checklist-builder textarea{width:100%; min-height:72px; resize:vertical; border:1px solid var(--line-strong); border-radius:8px; padding:9px 10px; background:var(--bg); color:var(--ink); font:inherit; line-height:1.5;}
+  .guide-checklist-tools{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;}
+  .guide-checklist-note{color:var(--sub); font-size:11.5px; line-height:1.5;}
+  .guide-checklist-progress{margin:12px 0 7px; font-size:13px; font-weight:800; color:var(--green-d);}
+  .guide-notebook-list{display:grid; gap:6px; list-style:none; padding:0; margin:0;}
+  .guide-notebook-item{display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:var(--bg);}
+  .guide-notebook-item label{display:flex; align-items:center; gap:8px; flex:1; min-width:0; font-size:12.5px; font-weight:700;}
+  .guide-notebook-item label span{overflow-wrap:anywhere;}
+  .guide-notebook-remove{border:none; background:transparent; color:var(--sub); cursor:pointer; font-size:12px; padding:4px 6px;}
+  .guide-empty{padding:12px; border:1px dashed var(--line-strong); border-radius:8px; color:var(--sub); font-size:12px; text-align:center;}
+  .guide-final-checks{display:grid; gap:7px; margin:11px 0;}
+  .guide-final-checks label{display:flex; gap:8px; align-items:flex-start; border:1px solid var(--line); border-radius:8px; padding:9px 10px; font-size:12.5px; line-height:1.5; background:var(--side-bg);}
+  .guide-wizard-footer{display:flex; align-items:center; gap:8px; padding:11px 22px; border-top:1px solid var(--line); background:var(--side-bg); flex-shrink:0;}
+  .guide-step-status{font-size:12px; font-weight:800; color:var(--sub); margin-right:auto;}
+  .guide-nav-button{border:1px solid var(--line-strong); border-radius:8px; background:var(--bg); color:var(--ink); padding:8px 14px; font-size:12.5px; font-weight:800; cursor:pointer;}
+  .guide-nav-button.primary{background:var(--green); border-color:var(--green); color:#fff;}
+  .guide-nav-button:disabled{opacity:.45; cursor:default;}
+  :root[data-theme="dark"] .guide-pc-only{background:#322b17; color:#e5d18b; border-color:#6f5d2b;}
+  :root[data-theme="dark"] .guide-scope-card.caution{border-color:#71573a;}
+  @media(max-width:640px){.guide-overlay{padding:10px; align-items:flex-end;}.guide-dialog{max-height:96vh; border-radius:14px 14px 8px 8px;}.guide-head,.guide-body,.guide-wizard-footer{padding-left:15px;padding-right:15px;}.guide-head h2{font-size:18px;}.guide-head p{display:none;}.guide-wizard-nav{padding:8px 10px;gap:4px;overflow-x:auto;}.guide-wizard-tab{min-width:64px;font-size:9.5px;padding:6px 3px;}.guide-wizard-tab b{font-size:11px;}.guide-scope,.guide-shots-grid,.migration-counts{grid-template-columns:1fr;}.migration-counts p{grid-column:auto;}.guide-pc-only{border-width:2px;font-size:13px;}.guide-pc-only strong{font-size:16px;}.guide-shot figcaption{font-size:10.5px;}.guide-wizard-footer{position:sticky;bottom:0;}.guide-nav-button{padding:8px 11px;}}
 
   /* ═══ ENEX 가져오기 미리보기 ═══ */
   .import-preview-overlay{display:none; position:fixed; inset:0; z-index:1100; background:rgba(20,20,18,.62); padding:24px; align-items:center; justify-content:center;}
@@ -598,54 +643,85 @@
 <div class="guide-overlay" id="enexGuide" aria-hidden="true">
   <section class="guide-dialog" role="dialog" aria-modal="true" aria-labelledby="enexGuideTitle">
     <div class="guide-head">
-      <div><h2 id="enexGuideTitle">Evernote 모든 파일 가져오기 — 그대로 따라 하기</h2><p>실제 Evernote Windows 화면을 보며 모든 노트북을 한 폴더에 백업하고, 그 폴더를 노트플러스P에서 한 번만 선택합니다.</p></div>
+      <div><h2 id="enexGuideTitle">Evernote 모든 노트·첨부 가져오기</h2><p>한 화면에서 한 행동만 따라 하세요. Evernote에서는 노트북별로 저장하고, 노트플러스P에서는 폴더를 한 번만 선택합니다.</p></div>
       <button class="guide-close" id="enexGuideClose" type="button" aria-label="추출 안내 닫기">×</button>
     </div>
-    <div class="guide-body">
-      <div class="migration-route" aria-label="전체 이전 순서"><span><b>1</b>PC 앱 열기</span><span><b>2</b>노트북별 ENEX</span><span><b>3</b>한 폴더에 모으기</span><span><b>4</b>폴더 한 번 선택</span></div>
-      <div class="guide-important"><strong>완료 모습:</strong> <b>업무.enex · 개인.enex · 자료.enex…</b>처럼 모든 노트북의 ENEX가 한 폴더에 모입니다. 마지막에 노트플러스P의 <strong>백업 폴더 전체 선택</strong>을 한 번 누르면 이미지·PDF·녹음까지 함께 분석합니다.</div>
-      <div class="migration-warning"><strong>Evernote 공식 제한을 먼저 알아두세요.</strong> 계정 전체를 한 파일로 내보내는 버튼은 없습니다. 개별 노트를 선택하면 최대 100개뿐이므로, <strong>Windows 또는 Mac 데스크톱 앱에서 노트북 전체를 하나씩</strong> 내보내야 빠짐없이 옮길 수 있습니다. 웹·휴대폰에서는 ENEX 내보내기가 되지 않습니다.</div>
-      <div class="guide-steps">
-        <div class="guide-step"><strong>PC에서 Evernote 데스크톱 앱을 열고 동기화를 끝냅니다</strong><p>노트가 들어 있는 계정으로 로그인한 뒤, 노트북 목록과 최근 노트가 모두 보일 때까지 기다립니다. 바탕화면에 <b>Evernote 전체 백업</b> 폴더 하나를 만들어 두세요.</p><div class="guide-exact"><b>화면에서 찾을 말:</b> 왼쪽 메뉴의 <b>Notebooks(노트북)</b>. <b>Notes(노트)</b>가 아닙니다.</div></div>
-        <div class="guide-step"><strong>Notebooks → 첫 노트북의 점 3개(…) → Export notebook…</strong><p>Windows에서는 노트북 행 오른쪽의 점 3개를 누릅니다. 점 3개가 없으면 노트북 이름을 마우스 오른쪽 버튼으로 누르고 <b>Export notebook… / Export…</b>를 고릅니다. Mac도 노트북 이름을 오른쪽 클릭합니다.</p><figure class="guide-shot"><img src="./assets/evernote-guide/evernote-windows-notebook-menu.png" alt="실제 Evernote Windows 노트북 목록에서 왼쪽 Notebooks, 노트북 오른쪽 점 3개, Export notebook 메뉴가 표시된 화면" width="1520" height="824"><figcaption><span class="guide-screen-badge">실제 Evernote Windows 화면</span>빨간 점선 3곳을 순서대로 누르세요. 화면 예시 출처: <a href="https://www.cbackup.com/articles/backup-evernote-to-google-drive.html" target="_blank" rel="noopener noreferrer">CBackup 안내</a></figcaption></figure><div class="guide-trap"><b>여기서 가장 많이 틀립니다:</b> 왼쪽 <b>Notes</b>에서 전체 선택하거나 <b>File → Export Notes…</b>를 누르면 100개 제한에 걸릴 수 있습니다. 반드시 노트북 이름의 메뉴를 여세요.</div></div>
-        <div class="guide-step"><strong>ENEX format (.enex) + 모든 속성 체크 → Export</strong><p><b>ENEX format (.enex)</b>를 선택하고 Note title·Created date·Updated date·Author·Reminders·Tags·Tasks·Location·Source URL처럼 보이는 속성을 모두 체크합니다. 큰 노트북은 <b>Split file size</b>를 켜고 <b>300MB</b>로 지정하세요.</p><figure class="guide-shot"><img src="./assets/evernote-guide/evernote-windows-enex-settings.png" alt="실제 Evernote Windows 내보내기 창에서 ENEX 형식, 모든 노트 속성, Export 버튼이 표시된 화면" width="1520" height="825"><figcaption><span class="guide-screen-badge">실제 Evernote Windows 화면</span>빨간 점선 영역 2곳을 확인하고 오른쪽 아래 <b>Export</b>를 누르세요. 화면 예시 출처: <a href="https://www.cbackup.com/articles/backup-evernote-to-google-drive.html" target="_blank" rel="noopener noreferrer">CBackup 안내</a></figcaption></figure><div class="guide-trap"><b>PDF를 선택하지 마세요.</b> PDF 내보내기는 PDF·문서·녹음 같은 첨부 원본을 완전한 파일로 보존하지 못할 수 있습니다.</div></div>
-        <div class="guide-step"><strong>노트북 이름으로 같은 폴더에 저장하고 모든 노트북에 반복합니다</strong><p>예: <b>업무.enex</b>, <b>개인.enex</b>, <b>자료.enex</b>. 저장 위치는 매번 처음 만든 <b>Evernote 전체 백업</b> 폴더로 고정합니다. 한 노트북이 여러 ENEX로 나뉘어도 모두 같은 폴더에 두면 됩니다.</p><div class="guide-exact"><b>반복 종료 기준:</b> Evernote의 노트북 목록을 위에서 아래까지 내려가며 각 노트북을 한 번씩 내보냈습니다.</div></div>
-        <div class="guide-step"><strong>노트북 수와 ENEX 파일 수를 비교합니다</strong><p>분할이 없다면 두 수가 같아야 합니다. 분할 파일이 있으면 ENEX 파일 수가 더 많아도 정상입니다. 0KB 파일은 실패한 것이므로 그 노트북만 다시 내보내세요.</p></div>
-        <div class="guide-step"><strong>아래 ‘백업 폴더 전체 선택’을 딱 한 번 누릅니다</strong><p>방금 만든 폴더를 고르면 노트플러스P가 안의 ENEX를 모두 찾아 분석합니다. 저장하기 전 미리보기에서 파일·노트·첨부·중복·제외 항목을 보여주며, 확인 전에는 기존 노트가 바뀌지 않습니다.</p><div class="guide-exact"><b>이 단계부터는 한 번에 진행됩니다.</b> 전체 용량이 크면 안전한 묶음으로 자동 나누어 순서대로 처리합니다.</div></div>
-      </div>
-      <div class="migration-counts">
-        <label>Evernote에서 확인한 전체 노트 수<input id="enexExpectedNotes" type="number" min="0" inputmode="numeric" placeholder="모르면 비워두기"></label>
-        <label>Evernote의 전체 노트북 수<input id="enexExpectedNotebooks" type="number" min="0" inputmode="numeric" placeholder="모르면 비워두기"></label>
-        <p>선택사항입니다. 숫자를 적으면 가져오기 미리보기에서 발견한 수와 비교해 누락 가능성을 알려드립니다. Evernote 계정 요약의 수에는 휴지통·공유 항목이 포함될 수 있어 차이가 항상 오류를 뜻하지는 않습니다.</p>
-      </div>
-      <div class="guide-help">
-        <h3>완료 기준</h3>
-        <ul>
-          <li>백업 폴더에 모든 노트북의 ENEX가 있으며 파일 크기가 0KB가 아닙니다.</li>
-          <li>ENEX를 선택하면 노트플러스P가 읽기 전에 브라우저 저장공간을 점검합니다. 한도가 확실히 부족하면 기존 데이터를 바꾸지 않고 시작을 멈춥니다.</li>
-          <li>전체 선택 용량이 500MB를 넘으면 노트플러스P가 안전한 묶음으로 자동 분할해 순서대로 미리보기를 보여줍니다.</li>
-          <li>미리보기의 발견 노트 수가 기대한 수와 맞거나, 차이 원인을 확인했습니다.</li>
-          <li>가져오기 완료 뒤 노트북·태그·이미지·PDF·녹음 표본을 열어 확인했습니다.</li>
-          <li>완료 뒤 <b>결과 보고서 HTML</b> 또는 <b>JSON</b>을 저장하면 처리 수량·제외 파일·저장 상태를 나중에도 확인할 수 있습니다. 보고서에는 노트 본문과 첨부 내용이 들어가지 않습니다.</li>
-          <li>확인이 끝날 때까지 Evernote 원본과 ENEX 백업 폴더를 삭제하지 않습니다.</li>
-        </ul>
-      </div>
-      <div class="guide-help">
-        <h3>고급 선택: PC에서 모든 노트북 자동 백업</h3>
-        <ul>
-          <li>노트북이 많다면 Windows용 도우미가 오픈소스 <b>evernote-backup</b>을 검증된 SHA-256으로 내려받아 표준 노트·태그·첨부를 노트북별 ENEX로 일괄 생성합니다.</li>
-          <li>Evernote 비밀번호는 도우미에 입력하지 않으며 브라우저 OAuth로만 로그인합니다. 백업 DB와 ENEX는 내 PC의 문서 폴더에 남습니다.</li>
-          <li><b>Evernote 공식 도구가 아닙니다.</b> 작업·알림은 공개 API 제한으로 완전하지 않을 수 있으므로 중요한 항목은 Evernote 앱에서 별도 확인하세요. 공식 방식이 기본 권장 경로입니다.</li>
-        </ul>
-      </div>
-      <div class="guide-actions">
-        <button class="guide-action primary" type="button" id="enexGuideChooseFolder">백업 폴더 전체 선택</button>
-        <button class="guide-action" type="button" id="enexGuideChoose">ENEX 파일 여러 개 선택</button>
-        <a class="guide-action" href="./노트플러스P_Evernote_전체백업_PC.zip" download>PC 전체 자동 백업 도우미 받기</a>
-        <a class="guide-action" href="https://help.evernote.com/hc/en-us/articles/209005557-Export-Notes-and-Notebooks-as-ENEX-or-HTML" target="_blank" rel="noopener noreferrer">Evernote 공식 안내 열기</a>
-        <a class="guide-action" href="https://help.evernote.com/hc/en-us/articles/47135452927251-How-to-check-your-current-usage" target="_blank" rel="noopener noreferrer">전체 노트 수 확인 방법</a>
-      </div>
+    <nav class="guide-wizard-nav" aria-label="Evernote 이전 5단계">
+      <button class="guide-wizard-tab" type="button" data-guide-step="0" aria-current="step"><b>1</b>범위 확인</button>
+      <button class="guide-wizard-tab" type="button" data-guide-step="1"><b>2</b>PC 준비</button>
+      <button class="guide-wizard-tab" type="button" data-guide-step="2"><b>3</b>ENEX 저장</button>
+      <button class="guide-wizard-tab" type="button" data-guide-step="3"><b>4</b>반복 체크</button>
+      <button class="guide-wizard-tab" type="button" data-guide-step="4"><b>5</b>폴더 선택</button>
+    </nav>
+    <div class="guide-body" id="enexGuideBody">
+      <section class="guide-panel" data-guide-panel="0">
+        <h3 tabindex="-1">먼저 이것만 확인하세요</h3>
+        <div class="guide-pc-only"><strong>이 작업은 PC에서 계속해야 합니다</strong>Evernote ENEX 내보내기는 Windows 또는 Mac 데스크톱 앱에서만 됩니다. 웹·휴대폰에서는 내보낼 수 없습니다.</div>
+        <div class="guide-hero"><strong>Evernote에서는 노트북별로 저장 → 노트플러스P에서는 폴더를 딱 한 번 선택</strong><span>Evernote에는 계정 전체를 한 파일로 내보내는 공식 버튼이 없습니다. Notes에서 개별 선택하면 최대 100개 제한이 있으므로 노트북 전체를 하나씩 저장합니다.</span></div>
+        <div class="guide-scope">
+          <article class="guide-scope-card"><h4>✓ 가져오는 핵심 데이터</h4><ul><li>노트 제목·본문·태그</li><li>생성·수정일과 출처 주소</li><li>이미지·PDF·녹음 첨부</li><li>노트북별 ENEX와 파일명</li></ul></article>
+          <article class="guide-scope-card caution"><h4>△ 별도로 확인할 데이터</h4><ul><li>작업·알림의 완전한 기능 상태</li><li>노트 과거 기록과 공유 권한</li><li>스택·바로가기·계정 설정</li><li>암호화 블록의 복호화 내용</li></ul></article>
+        </div>
+        <div class="guide-actions"><a class="guide-action" href="https://help.evernote.com/hc/en-us/articles/209005557-Export-Notes-and-Notebooks-as-ENEX-or-HTML" target="_blank" rel="noopener noreferrer">Evernote 공식 제한 확인</a></div>
+      </section>
+
+      <section class="guide-panel" data-guide-panel="1" hidden>
+        <h3 tabindex="-1">PC와 백업 폴더를 준비하세요</h3>
+        <p class="guide-panel-lead">이 단계에서는 내보내지 않습니다. Evernote 동기화와 저장 위치만 준비합니다.</p>
+        <div class="guide-task"><span class="guide-task-number">1</span><div><strong>Evernote 데스크톱 앱을 열고 올바른 계정으로 로그인</strong><p>왼쪽 노트북 목록과 최근 노트가 모두 보일 때까지 동기화를 기다립니다.</p></div></div>
+        <div class="guide-task"><span class="guide-task-number">2</span><div><strong>바탕화면에 ‘Evernote 전체 백업’ 폴더 만들기</strong><p>앞으로 내보내는 모든 `.enex` 파일을 이 폴더 하나에 저장합니다.</p></div></div>
+        <div class="guide-exact"><b>완료 모습:</b> 빈 `Evernote 전체 백업` 폴더가 열려 있고 Evernote의 <b>Notebooks(노트북)</b> 목록이 보입니다.</div>
+        <div class="guide-help"><h3>고급 선택: PC에서 모든 노트북 자동 백업</h3><ul><li>노트북이 매우 많다면 검증된 오픈소스 `evernote-backup` 도우미로 노트북별 ENEX를 자동 생성할 수 있습니다.</li><li>Evernote 공식 도구가 아니며 작업·알림은 공개 API 제한으로 완전하지 않을 수 있습니다. 공식 노트북별 방식이 기본 권장 경로입니다.</li></ul><div class="guide-actions"><a class="guide-action" href="./노트플러스P_Evernote_전체백업_PC.zip" download>PC 전체 자동 백업 도우미 받기</a></div></div>
+      </section>
+
+      <section class="guide-panel" data-guide-panel="2" hidden>
+        <h3 tabindex="-1">실제 화면의 빨간 점선만 따라 하세요</h3>
+        <p class="guide-panel-lead"><b>Notebooks(노트북)</b>에서 노트북 하나를 열어 ENEX로 저장합니다. Notes(노트) 전체 선택은 사용하지 않습니다.</p>
+        <div class="guide-shots-grid">
+          <div><div class="guide-task"><span class="guide-task-number">1</span><div><strong>Notebooks → 노트북의 … → Export notebook…</strong><p>점 3개가 없으면 노트북 이름을 마우스 오른쪽 버튼으로 누르고 `Export notebook…` 또는 `Export…`를 고릅니다.</p></div></div><figure class="guide-shot"><img src="./assets/evernote-guide/evernote-windows-notebook-menu.png" alt="실제 Evernote Windows 노트북 목록에서 왼쪽 Notebooks, 노트북 오른쪽 점 3개, Export notebook 메뉴가 표시된 화면" width="1520" height="824"><figcaption><span class="guide-screen-badge">실제 Windows 화면 예시</span>빨간 점선 3곳을 순서대로 누르세요. 출처: <a href="https://www.cbackup.com/articles/backup-evernote-to-google-drive.html" target="_blank" rel="noopener noreferrer">CBackup 안내</a></figcaption></figure></div>
+          <div><div class="guide-task"><span class="guide-task-number">2</span><div><strong>ENEX + 모든 속성 + 300MB → Export</strong><p>`ENEX format (.enex)`를 선택하고 보이는 속성을 모두 체크합니다. 큰 노트북은 `Split file size`를 켜고 300MB로 지정합니다.</p></div></div><figure class="guide-shot"><img src="./assets/evernote-guide/evernote-windows-enex-settings.png" alt="실제 Evernote Windows 내보내기 창에서 ENEX 형식, 모든 노트 속성, Export 버튼이 표시된 화면" width="1520" height="825"><figcaption><span class="guide-screen-badge">실제 Windows 화면 예시</span>ENEX와 속성을 확인한 뒤 오른쪽 아래 Export를 누르세요. 출처: <a href="https://www.cbackup.com/articles/backup-evernote-to-google-drive.html" target="_blank" rel="noopener noreferrer">CBackup 안내</a></figcaption></figure></div>
+        </div>
+        <div class="guide-trap"><b>피해야 할 경로:</b> Notes → 전체 선택 또는 File → Export Notes…는 최대 100개 제한에 걸릴 수 있습니다. PDF 형식은 첨부 원본 보존용으로 사용하지 마세요.</div>
+        <p class="guide-current-note">화면 예시는 2026-07-19에 공식 절차와 다시 대조했습니다. 설치 버전에 따라 점 3개의 위치가 다르면 노트북 이름을 우클릭하세요.</p>
+      </section>
+
+      <section class="guide-panel" data-guide-panel="3" hidden>
+        <h3 tabindex="-1">모든 노트북을 빠짐없이 반복하세요</h3>
+        <p class="guide-panel-lead">노트북 이름을 쉼표나 줄바꿈으로 붙여 넣어 체크리스트를 만드세요. ENEX 저장을 끝낼 때마다 체크합니다.</p>
+        <div class="guide-checklist-builder">
+          <label for="guideNotebookNames">Evernote 노트북 이름
+            <textarea id="guideNotebookNames" maxlength="4000" placeholder="업무, 개인, 자료&#10;또는 한 줄에 하나씩"></textarea>
+          </label>
+          <div class="guide-checklist-tools"><button class="guide-action primary" id="guideNotebookBuild" type="button">체크리스트 만들기</button><span class="guide-checklist-note">중복 이름은 한 번만 추가됩니다. 체크는 현재 브라우저 탭에서만 유지됩니다.</span></div>
+        </div>
+        <div class="guide-checklist-progress" id="guideChecklistProgress" aria-live="polite">노트북 목록을 입력하면 빠뜨리지 않고 확인할 수 있습니다.</div>
+        <div class="guide-empty" id="guideChecklistEmpty">아직 만든 체크리스트가 없습니다.</div>
+        <ul class="guide-notebook-list" id="guideNotebookList" aria-label="Evernote 노트북 내보내기 체크리스트"></ul>
+        <div class="guide-exact"><b>저장 규칙:</b> `업무.enex`, `개인.enex`처럼 노트북 이름으로 같은 `Evernote 전체 백업` 폴더에 저장하세요. 분할 파일도 같은 폴더에 둡니다. 0KB 파일은 그 노트북만 다시 내보냅니다.</div>
+      </section>
+
+      <section class="guide-panel" data-guide-panel="4" hidden>
+        <h3 tabindex="-1">이제 백업 폴더를 딱 한 번 선택하세요</h3>
+        <p class="guide-panel-lead">노트플러스P가 폴더의 ENEX만 골라 저장공간을 점검하고, 저장 전 미리보기에서 파일·노트·첨부·중복·제외 항목을 보여줍니다.</p>
+        <div class="migration-counts">
+          <label>Evernote에서 확인한 전체 노트 수<input id="enexExpectedNotes" type="number" min="0" inputmode="numeric" placeholder="모르면 비워두기"></label>
+          <label>Evernote의 전체 노트북 수<input id="enexExpectedNotebooks" type="number" min="0" inputmode="numeric" placeholder="체크리스트에서 자동 입력"></label>
+          <p>선택사항입니다. 숫자를 적으면 미리보기에서 발견한 수와 비교해 누락 가능성을 알려드립니다. 휴지통·공유 항목 때문에 차이가 항상 오류를 뜻하지는 않습니다.</p>
+        </div>
+        <div class="guide-final-checks" aria-label="폴더 선택 전 확인">
+          <label><input type="checkbox"> 모든 노트북의 ENEX를 같은 폴더에 저장했습니다.</label>
+          <label><input type="checkbox"> 0KB 파일이 없거나 실패한 노트북을 다시 저장했습니다.</label>
+          <label><input type="checkbox"> 확인이 끝날 때까지 Evernote 원본과 ENEX 폴더를 삭제하지 않겠습니다.</label>
+        </div>
+        <div class="migration-warning"><strong>선택 후에도 바로 저장되지 않습니다.</strong> 먼저 안전한 미리보기가 열립니다. 전체 용량이 500MB를 넘으면 안전한 묶음으로 자동 나누고, 저장공간이 확실히 부족하면 기존 데이터를 바꾸지 않고 중단합니다.</div>
+        <div class="guide-actions">
+          <button class="guide-action primary" type="button" id="enexGuideChooseFolder">백업 폴더 전체 선택</button>
+          <button class="guide-action" type="button" id="enexGuideChoose">ENEX 파일 여러 개 선택</button>
+          <a class="guide-action" href="https://help.evernote.com/hc/en-us/articles/47135452927251-How-to-check-your-current-usage" target="_blank" rel="noopener noreferrer">전체 노트 수 확인 방법</a>
+        </div>
+      </section>
     </div>
+    <div class="guide-wizard-footer"><span class="guide-step-status" id="guideStepStatus">1 / 5 · 범위 확인</span><button class="guide-nav-button" type="button" id="guidePrev" disabled>이전</button><button class="guide-nav-button primary" type="button" id="guideNext">다음: PC 준비</button></div>
   </section>
 </div>
 
@@ -958,16 +1034,62 @@ document.getElementById("themeBtn").onclick=function(){
   persist().then(function(ok){ setBackupStatus(ok?"화면 모드를 저장했습니다.":"화면 모드는 이번 세션에만 유지됩니다."); });
 };
 
-var enexGuideLastFocus=null,enexExpectedNotes=0,enexExpectedNotebooks=0;
+var enexGuideLastFocus=null,enexExpectedNotes=0,enexExpectedNotebooks=0,enexGuideStep=0,enexGuideNotebooks=[],enexChecklistAutoCount=0;
+var enexGuideStepNames=["범위 확인","PC 준비","ENEX 저장","반복 체크","폴더 선택"];
+function setEnexGuideStep(index,focusHeading){
+  index=Math.max(0,Math.min(4,Number(index)||0));enexGuideStep=index;
+  Array.prototype.slice.call(document.querySelectorAll("[data-guide-panel]")).forEach(function(panel){panel.hidden=Number(panel.getAttribute("data-guide-panel"))!==index;});
+  Array.prototype.slice.call(document.querySelectorAll("[data-guide-step]")).forEach(function(button){if(Number(button.getAttribute("data-guide-step"))===index)button.setAttribute("aria-current","step");else button.removeAttribute("aria-current");});
+  var previous=document.getElementById("guidePrev"),next=document.getElementById("guideNext");
+  previous.disabled=index===0;next.hidden=index===4;
+  if(index<4)next.textContent="다음: "+enexGuideStepNames[index+1];
+  document.getElementById("guideStepStatus").textContent=(index+1)+" / 5 · "+enexGuideStepNames[index];
+  document.getElementById("enexGuideBody").scrollTop=0;
+  if(focusHeading){var heading=document.querySelector('[data-guide-panel="'+index+'"] h3');if(heading)heading.focus();}
+}
+function normalizeGuideNotebookNames(value){
+  var seen={},result=[];
+  String(value||"").split(/[\n,;]+/).forEach(function(raw){
+    var name=raw.replace(/\s+/g," ").trim().slice(0,80);if(!name)return;
+    var key=(name.normalize?name.normalize("NFC"):name).toLocaleLowerCase("ko");
+    if(!seen[key]){seen[key]=true;result.push({name:name,done:false});}
+  });
+  return result.slice(0,200);
+}
+function syncGuideNotebookExpectation(){
+  var field=document.getElementById("enexExpectedNotebooks"),current=Math.max(0,Number(field.value)||0);
+  if(!current||current===enexChecklistAutoCount){field.value=enexGuideNotebooks.length||"";enexChecklistAutoCount=enexGuideNotebooks.length;}
+}
+function renderGuideNotebookChecklist(){
+  var list=document.getElementById("guideNotebookList");while(list.firstChild)list.removeChild(list.firstChild);
+  var done=enexGuideNotebooks.filter(function(item){return item.done;}).length;
+  document.getElementById("guideChecklistEmpty").hidden=!!enexGuideNotebooks.length;
+  document.getElementById("guideChecklistProgress").textContent=enexGuideNotebooks.length?("완료 "+done+" / "+enexGuideNotebooks.length+"개"+(done===enexGuideNotebooks.length?" · 모든 노트북 ENEX 저장 확인":" · 남은 "+(enexGuideNotebooks.length-done)+"개")):"노트북 목록을 입력하면 빠뜨리지 않고 확인할 수 있습니다.";
+  enexGuideNotebooks.forEach(function(item,index){
+    var row=document.createElement("li");row.className="guide-notebook-item";
+    var label=document.createElement("label"),check=document.createElement("input"),name=document.createElement("span"),remove=document.createElement("button");
+    check.type="checkbox";check.checked=!!item.done;check.setAttribute("aria-label",item.name+" ENEX 저장 완료");
+    check.addEventListener("change",function(){item.done=check.checked;renderGuideNotebookChecklist();});
+    name.textContent=item.name;label.appendChild(check);label.appendChild(name);
+    remove.type="button";remove.className="guide-notebook-remove";remove.textContent="삭제";remove.setAttribute("aria-label",item.name+" 체크리스트에서 삭제");
+    remove.addEventListener("click",function(){enexGuideNotebooks.splice(index,1);syncGuideNotebookExpectation();renderGuideNotebookChecklist();});
+    row.appendChild(label);row.appendChild(remove);list.appendChild(row);
+  });
+}
+function buildGuideNotebookChecklist(){
+  var input=document.getElementById("guideNotebookNames"),items=normalizeGuideNotebookNames(input.value);
+  if(!items.length){document.getElementById("guideChecklistProgress").textContent="노트북 이름을 하나 이상 입력하세요.";input.focus();return;}
+  enexGuideNotebooks=items;syncGuideNotebookExpectation();renderGuideNotebookChecklist();
+}
 function captureEnexExpectations(){
   enexExpectedNotes=Math.max(0,Number(document.getElementById("enexExpectedNotes").value)||0);
-  enexExpectedNotebooks=Math.max(0,Number(document.getElementById("enexExpectedNotebooks").value)||0);
+  enexExpectedNotebooks=Math.max(0,Number(document.getElementById("enexExpectedNotebooks").value)||enexGuideNotebooks.length||0);
 }
 function openEnexGuide(opener){
   var guide=document.getElementById("enexGuide");
   enexGuideLastFocus=opener||document.activeElement;
   guide.classList.add("show"); guide.setAttribute("aria-hidden","false");
-  guide.querySelector(".guide-dialog").scrollTop=0;
+  renderGuideNotebookChecklist();setEnexGuideStep(0,false);
   document.getElementById("enexGuideClose").focus();
 }
 function closeEnexGuide(returnFocus){
@@ -978,6 +1100,11 @@ function closeEnexGuide(returnFocus){
 document.getElementById("enexGuideTop").onclick=function(){openEnexGuide(this);};
 document.getElementById("enexGuideSide").onclick=function(){openEnexGuide(this);};
 document.getElementById("enexGuideClose").onclick=function(){closeEnexGuide(true);};
+Array.prototype.slice.call(document.querySelectorAll("[data-guide-step]")).forEach(function(button){button.addEventListener("click",function(){setEnexGuideStep(button.getAttribute("data-guide-step"),true);});});
+document.getElementById("guidePrev").onclick=function(){setEnexGuideStep(enexGuideStep-1,true);};
+document.getElementById("guideNext").onclick=function(){setEnexGuideStep(enexGuideStep+1,true);};
+document.getElementById("guideNotebookBuild").onclick=buildGuideNotebookChecklist;
+document.getElementById("guideNotebookNames").addEventListener("keydown",function(e){if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();buildGuideNotebookChecklist();}});
 document.getElementById("enexGuideChoose").onclick=function(){captureEnexExpectations();closeEnexGuide(false);document.getElementById("enexFile").click();};
 document.getElementById("enexGuideChooseFolder").onclick=function(){captureEnexExpectations();closeEnexGuide(false);document.getElementById("enexFolder").click();};
 document.getElementById("enexFolder").onchange=function(){
@@ -992,7 +1119,7 @@ document.addEventListener("keydown",function(e){
   if(!guide.classList.contains("show")) return;
   if(e.key==="Escape"){e.preventDefault();closeEnexGuide(true);return;}
   if(e.key==="Tab"){
-    var focusable=Array.prototype.slice.call(guide.querySelectorAll('button,[href]')).filter(function(el){return el.offsetParent!==null;});
+    var focusable=Array.prototype.slice.call(guide.querySelectorAll('button:not([disabled]),[href],input,textarea,select')).filter(function(el){return el.offsetParent!==null&&!el.hidden;});
     if(!focusable.length) return;
     var first=focusable[0],last=focusable[focusable.length-1];
     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}

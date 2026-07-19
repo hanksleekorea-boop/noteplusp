@@ -266,6 +266,16 @@
 - 화면 검증: `artifacts/notebook_tag_management.png`를 직접 확인했다.
 - 다음 자동 개발 항목은 모바일 화면 탐색 구조 개선이다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
 
+## 41. 2026-07-19 · Evernote 5단계 전체 이전 온보딩 재설계 완료
+- `ONBOARDING_REDESIGN_PLAN.md`에 사용자 사실, 기존 실측 문제, 5단계 흐름, 보안·저장 원칙, 완료 조건, 검증·되돌리기를 정본화한 뒤 구현했다.
+- 기존 6단계 장문 모달을 `범위 확인 → PC 준비 → ENEX 저장 → 반복 체크 → 폴더 선택` 5단계 마법사로 교체했다. 한 번에 한 패널만 보이고 이전·다음·직접 단계 이동, `aria-current`, 제목 포커스, Escape·포커스 트랩을 지원한다.
+- 첫 단계는 `Evernote에서는 노트북별 / 노트플러스P에서는 폴더 한 번`을 크게 표시하고 PC 전용 제약, 가져오는 핵심 데이터, 작업·기록·공유 권한 등 별도 확인 대상을 구분한다. 모바일에서는 PC에서 계속해야 한다는 고지를 강화했다.
+- 실제 Windows 화면 2장은 기존 로컬 자산만 사용한다. 버전별 차이를 고려해 점 3개가 없을 때 노트북 우클릭 대체 경로를 함께 제공하며 외부 `img src`는 0개다.
+- 노트북 이름을 쉼표·줄바꿈으로 붙여 넣으면 최대 200개를 중복 제거한 체크리스트로 만든다. 입력은 `textContent`로만 렌더하고 완료 수를 표시하며, 체크리스트 수를 기대 노트북 수 기본값에 연결한다. 체크 상태는 현재 탭에서만 유지된다고 고지한다.
+- schema 5, IndexedDB 상태/Blob 분리, localStorage 원본, 새니타이저, 350MB/500MB 가드, 미리보기·취소·되돌리기·결과 보고서는 변경하지 않았다. 서비스워커는 `noteplusp-v5-shell-11`이다.
+- 검증: `test_enex_tutorial.mjs`, `test_productivity_mobile.mjs`, `test_noteplus_regress.mjs`, ENEX 진행률·미리보기·중단·되돌리기·중복·재시도 회귀 전부 통과. 캡처: `evernote_onboarding_scope_desktop.png`, `evernote_visual_tutorial_desktop.png`, `evernote_onboarding_checklist_desktop.png`, `evernote_visual_tutorial_mobile.png`.
+- 정본 SHA-256: `B357704EA1769E1426327C7E5CF9DE12379A070E66499F842319A7339CA6F48A`. 다음 즉시 실행 항목은 첨부 SHA-256 무결성 검사다.
+
 ## 40. 2026-07-19 · ENEX 중단·재시도·중복 방지 회귀 확대
 - 새 `tests/test_enex_retry_dedupe.mjs`는 활성 FileReader 중단 뒤 노트·첨부·되돌리기 메타가 바뀌지 않는지 확인하고, 같은 ENEX를 다시 선택해 노트 1개와 PDF Blob 1개만 저장되는지 검증한다.
 - 앱을 다시 시작한 뒤 정확히 같은 ENEX를 또 선택하면 기존 노트 중복 후보 1개로 표시되고, 기본 처리 `건너뛰기`, 선택 `0 / 1개`, 확인 버튼 비활성 상태가 되는지 검증한다. 미리보기를 취소한 뒤 노트 수, 첨부 ID, IndexedDB 메타·Blob이 첫 저장과 동일하며 대기 가져오기와 활성 작업 참조가 남지 않는 것도 확인한다.
