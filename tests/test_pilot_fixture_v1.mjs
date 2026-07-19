@@ -15,9 +15,10 @@ const root = path.resolve(here, "..");
 const artifacts = path.join(root, "artifacts");
 const fixturePath = path.join(root, "pilot-assets", "노트플러스P_파일럿_샘플.enex");
 const publicUrl = process.env.NOTEPLUS_PUBLIC_URL || "https://hanksleekorea-boop.github.io/noteplusp/";
-const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "7CFFB092375878B282C161FFA3D103BE607FDA67C81CD66E756C4A7525D587BA";
+const version = process.env.NOTEPLUS_VERSION || "v10";
+const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "856D5FFA793210347E4647CCCDB4731810F729D08AF2AB0812666F389435D9E1";
 const edge = process.env.NOTEPLUS_BROWSER || "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
-const appUrl = new URL(`%EB%85%B8%ED%8A%B8%EC%95%B1_v9.html?pilot=${Date.now()}`, publicUrl).href;
+const appUrl = new URL(`${encodeURIComponent(`노트앱_${version}.html`)}?pilot=${Date.now()}`, publicUrl).href;
 const fixture = fs.readFileSync(fixturePath);
 fs.mkdirSync(artifacts, { recursive: true });
 
