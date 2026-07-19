@@ -425,3 +425,11 @@
 - 미리보기에서 파일 1·노트 1·첨부 1, 확인 전 기존 상태 불변, 선택 가져오기 뒤 IndexedDB 상태·첨부 메타·PDF Blob 저장, 새로고침 뒤 전 항목 복원을 실제 Microsoft Edge에서 확인했다.
 - 공개 정본 HTTP 200·SHA-256·정적 구문도 같은 검사에서 확인했다. 캡처는 `artifacts/public_enex_preview_v1.png`, `artifacts/public_enex_reloaded_v1.png`다.
 - 앱 코드는 변경하지 않았다. 합성 자료는 공개 기술 회귀 전용이며 실제 사용자 ENEX·실기기·파일럿 증거로 사용하지 않는다. 다음 즉시 실행은 공개 외부 콘텐츠 보안 회귀 v1이다.
+
+## 49. 2026-07-19 · v6 외부 HTML 저장 경계 P0 수정·공개 검증
+- `tests/test_public_external_content_security_v2.mjs`로 공개 v5의 ENEX, JSON 활성 노트, JSON 휴지통, 붙여넣기 저장 경계를 검사했다. JSON 휴지통 `bodyHtml`이 화면 표시 때는 정화되지만 IndexedDB에는 스크립트·외부 이미지·이벤트·위험 URL을 포함한 원문으로 남는 P0 보안 경계 위반을 재현했다.
+- 기존 `노트앱_v5.html`은 보존하고 새 정본 `노트앱_v6.html`을 만들었다. `sanitizeStoredNoteHtml()`과 `sanitizeSnapshotNoteHtml()`을 추가하고 `sanitizeAllNoteHtml()`을 활성 노트·휴지통·변경 이력·템플릿·복구 지점 전체에 적용했다. 저장된 원문 HTML을 신뢰하지 않는 기존 첨부 렌더와 Blob URL 해제 원칙은 유지했다.
+- 배포 포인터 `index.html`, `noteplus.webmanifest`, `sw.js`를 v6로 올렸고 캐시는 `noteplusp-v6-shell-1`이다. 앱 빌드 커밋은 `57c56f6`, 정본 SHA-256은 `A7173ACA0DD1DC44017D4C4FA289E2E96C7690D5245A38AB3D016C42A8F6E108`이다.
+- 공개 주소에서 `test_public_alpha_journey_v2.mjs`, `test_public_enex_import_v2.mjs`, `test_public_external_content_security_v2.mjs`를 모두 통과했다. IndexedDB 재접속 저장, 전체 저장 차단 시 입력 유지·정직 고지, PDF Blob 복원, ENEX/JSON/휴지통/붙여넣기 정화, 외부 요청 0건, 코드 실행 0건을 확인했다.
+- 캡처는 `artifacts/public_alpha_mobile_persist_v2.png`, `artifacts/public_alpha_mobile_storage_blocked_v2.png`, `artifacts/public_enex_preview_v2.png`, `artifacts/public_enex_reloaded_v2.png`, `artifacts/public_external_content_security_v2.png`다.
+- 제한 알파 관문은 2/5를 유지한다. 자동 공개 범위의 미해결 P0은 없고, 실제 한국어 ENEX·실제 Android/iPhone·비개발자 파일럿 3~5명은 외부 의존성이다. 다음 즉시 실행은 빈 ENEX·0KB·파싱 0건 경고 회귀다.
