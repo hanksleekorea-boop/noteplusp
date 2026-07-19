@@ -433,3 +433,12 @@
 - 공개 주소에서 `test_public_alpha_journey_v2.mjs`, `test_public_enex_import_v2.mjs`, `test_public_external_content_security_v2.mjs`를 모두 통과했다. IndexedDB 재접속 저장, 전체 저장 차단 시 입력 유지·정직 고지, PDF Blob 복원, ENEX/JSON/휴지통/붙여넣기 정화, 외부 요청 0건, 코드 실행 0건을 확인했다.
 - 캡처는 `artifacts/public_alpha_mobile_persist_v2.png`, `artifacts/public_alpha_mobile_storage_blocked_v2.png`, `artifacts/public_enex_preview_v2.png`, `artifacts/public_enex_reloaded_v2.png`, `artifacts/public_external_content_security_v2.png`다.
 - 제한 알파 관문은 2/5를 유지한다. 자동 공개 범위의 미해결 P0은 없고, 실제 한국어 ENEX·실제 Android/iPhone·비개발자 파일럿 3~5명은 외부 의존성이다. 다음 즉시 실행은 빈 ENEX·0KB·파싱 0건 경고 회귀다.
+
+## 50. 2026-07-19 · v7 빈 ENEX·파싱 0건 실패 경계
+- 공개 v6에서 0바이트 ENEX가 FileReader까지 들어가고 `가져오기 실패 — 파일명`만 표시되며, 공백·노트 0건 파일을 성공 처리 파일로 세어 보고서가 완료가 될 수 있는 P1을 재현했다. 기존 노트는 변하지 않았지만 원인·다음 행동·완전성 판정이 부족했다.
+- v6를 보존하고 `노트앱_v7.html`을 생성했다. `planEnexFiles()`가 0바이트를 별도 제외하며, 공백·파싱 0건은 파일명과 `(노트 0개)` 사유를 포함한 실패로 기록한다. 사용자에게 Evernote 데스크톱 앱에서 노트가 들어 있는 노트북을 ENEX로 다시 내보내도록 안내한다.
+- 새 `tests/test_public_enex_empty_warning_v1.mjs`는 0바이트 FileReader 사전 차단, 공백 파일, 노트 없는 정상 ENEX, 미리보기 미노출, 활성·휴지통 무변경, 실패 보고서와 파일명을 검증한다.
+- 누락됐던 마이그레이션 자동증거를 `tests/test_public_schema4_migration_v1.mjs`로 복구했다. schema 4 localStorage 원문 바이트 보존, schema 5 검증 기록, 악성 HTML 정화, 재접속 멱등성, 이전 후 수정본 우선 복원을 공개 환경에서 확인했다.
+- v3 공개 회귀는 모바일 IDB·저장 차단 폴백, 합성 ENEX PDF Blob, 외부 HTML, 빈 ENEX, schema 4→5 이전까지 전부 통과했다. 공개 정본은 HTTP 200, 226,646바이트, SHA-256 `6D8F20F73896DA3F94EFAFE9291CEB51E53D4BD84560430583F9F0EFFCE633A0`이다.
+- 서비스 워커는 `noteplusp-v7-shell-1`, 앱 빌드 커밋은 `42a1cbb`다. 자동 공개 범위의 미해결 P0·P1은 없고, 실제 한국어 ENEX·실기기·비개발자 파일럿은 여전히 외부 의존성이다.
+- 캡처는 v3 핵심 회귀 5개, `public_enex_empty_warning_v1.png`, `public_enex_zero_notes_warning_v1.png`, `public_schema4_migration_v1.png`다. 다음 즉시 실행은 파일별 노트·첨부·실패 합계 대시보드다.
