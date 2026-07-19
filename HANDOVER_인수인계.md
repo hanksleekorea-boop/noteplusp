@@ -266,6 +266,13 @@
 - 화면 검증: `artifacts/notebook_tag_management.png`를 직접 확인했다.
 - 다음 자동 개발 항목은 모바일 화면 탐색 구조 개선이다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
 
+## 40. 2026-07-19 · ENEX 중단·재시도·중복 방지 회귀 확대
+- 새 `tests/test_enex_retry_dedupe.mjs`는 활성 FileReader 중단 뒤 노트·첨부·되돌리기 메타가 바뀌지 않는지 확인하고, 같은 ENEX를 다시 선택해 노트 1개와 PDF Blob 1개만 저장되는지 검증한다.
+- 앱을 다시 시작한 뒤 정확히 같은 ENEX를 또 선택하면 기존 노트 중복 후보 1개로 표시되고, 기본 처리 `건너뛰기`, 선택 `0 / 1개`, 확인 버튼 비활성 상태가 되는지 검증한다. 미리보기를 취소한 뒤 노트 수, 첨부 ID, IndexedDB 메타·Blob이 첫 저장과 동일하며 대기 가져오기와 활성 작업 참조가 남지 않는 것도 확인한다.
+- 직접 관련 회귀 `test_enex_cancel_undo.mjs`, `test_enex_duplicates.mjs`, 새 재시도 회귀가 모두 통과했다. 전체 `test_noteplus_regress.mjs`도 정적 구문, schema 4→5 무손실·멱등 이전, ENML/JSON 새니타이저, 이미지·PDF·녹음 Blob, IndexedDB/localStorage/세션 폴백까지 전부 통과했다.
+- 시각 검증: `artifacts/enex_retry_duplicate_guard.png`. 앱 코드는 변경하지 않았고 공개 정본 SHA-256은 `936CD84FB798FCBEA4D06A4DF082338EC33947876B9861A954C6D895B1D5689D` 그대로다.
+- 다음 단독 실행 신호에서는 즉시 실행 목록 2번인 첨부 SHA-256 무결성 검사를 진행한다. 사용자 실제 한국어 ENEX 검증(S-1)은 파일을 받는 즉시 최우선 수행한다.
+
 ## 39. 2026-07-18 · 실제 Evernote 화면 기반 전체 이전 튜토리얼
 - 앱의 최우선 온보딩 제목을 `Evernote 모든 파일 가져오기 — 그대로 따라 하기`로 바꾸고, 목표를 `모든 노트북의 ENEX를 한 폴더에 모은 뒤 백업 폴더 전체 선택을 한 번 누르기`로 고정했다.
 - 실제 Windows Evernote 화면 2장을 로컬 정적 자산으로 포함했다. `Notebooks → 노트북 행 점 3개 → Export notebook…`과 `ENEX format + 모든 속성 → Export` 화면이며, 앱 안에 실제 화면·출처 링크를 명시했다. 이 PC에는 Evernote 데스크톱 앱이 노출되지 않아 사용자 계정 화면을 캡처하지 않았고, 공개된 실제 화면 예시를 사용했다.
