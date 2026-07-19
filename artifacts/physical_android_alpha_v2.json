@@ -1,0 +1,13 @@
+{
+  "ok": true,
+  "publicUrl": "https://hanksleekorea-boop.github.io/noteplusp/",
+  "version": "v8",
+  "release": { "bytes": 238434, "sha256": "931DCD4EED4FE128A3A549D018795BEF130442B2FAD00A41E35853D3DE24F460" },
+  "device": { "model": "Samsung SM-G996N", "chrome": "150.0.0.0", "viewport": { "width": 411, "height": 781, "dpr": 2.625, "scrollWidth": 411 } },
+  "persistenceMode": "idb",
+  "noteReloaded": true,
+  "enexPdfReloaded": true,
+  "serviceWorker": { "active": true, "controlled": true, "offlineReopen": true },
+  "install": { "buttonExists": true, "mobilePathVerified": true, "promptReady": true },
+  "cleanup": { "qaCount": 0, "enexCount": 0, "signatureMatch": true }
+}
