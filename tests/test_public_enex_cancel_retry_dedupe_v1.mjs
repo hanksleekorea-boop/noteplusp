@@ -75,6 +75,12 @@ try {
   assert.match(await page.locator("#importPreviewSummary").innerText(), /1개 파일에서 노트 1개와 첨부 1개/);
   await page.locator("#importPreviewConfirm").click();
   await page.waitForFunction(expected => window.state.notes.some(note => note.title === expected), title, { timeout: 30000 });
+  await page.waitForFunction(async expected => {
+    const note = window.state.notes.find(item => item.title === expected);
+    const attachmentId = note?.attachmentIds?.[0];
+    const stored = attachmentId ? await window.idbGet("attachment_blob", attachmentId) : null;
+    return Boolean(stored?.blob?.size);
+  }, title, { timeout: 30000 });
   const imported = await page.evaluate(async expected => {
     const note = window.state.notes.find(item => item.title === expected);
     const attachmentId = note?.attachmentIds?.[0];
