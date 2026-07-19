@@ -465,3 +465,12 @@
 - PNG·PDF·MP3 ENEX 3종은 미리보기와 재접속 뒤 파일명·MIME·메타 크기·Blob 크기가 모두 일치했다.
 - IndexedDB만 차단한 환경에서는 노트가 localStorage 보조 저장으로 재접속 후 유지됐다. 첨부는 이번 세션에만 유지된다는 경고가 표시됐다.
 - 네 검사 모두 공개 v8 SHA를 먼저 확인했고 종료 시 시험 상태를 제거했다. 다음 즉시 실행은 키보드·포커스·ARIA 검사다.
+
+## 54. 2026-07-19 · 공개 v8 10종·실제 Android 전수 재검증
+- 현재 v8 대상 공개 회귀 10종을 전부 다시 실행했다. 모바일 저장·완전 차단, ENEX PDF, 외부 HTML, 빈 ENEX, schema 4→5, 파일별 완전성, 취소·재시도·중복, JSON 복원, PNG·PDF·MP3, IDB 단독 차단이 모두 통과했다. 과거 v1~v3 고정 검사는 이전 앱 버전의 불변 증거이므로 최신 전수 집계에서 제외했다.
+- Samsung SM-G996N(Android 15, Chrome 150.0.7871.124)의 실제 Chrome 엔진에서 IDB 저장·재접속, ENEX PDF Blob 재접속, 서비스 워커 활성·제어, 오프라인 재진입, 설치 경로, 수평 넘침 없음과 원상복구를 재검증했다. CSS viewport는 411×781, DPR 2.625다.
+- Chrome에 기존 탭이 수백 개 있어 브라우저 전체 대상 열거가 불안정했고, 전면 앱이 YouTube·알림창으로 바뀌어 일반 터치 actionability도 불안정했다. `tests/test_physical_android_cdp_v5.mjs`는 기존 HTTP 탭 하나에 직접 연결하고 종료 시 원래 URL을 복원하도록 구성했다. 데이터 판정 통과 뒤 ADB로 실제 모바일 화면을 별도 캡처했다.
+- 이전 중단 시험에서 남은 QA 노트 2개·첨부 1개를 소유관계로 식별해 제거한 뒤 시작 상태를 다시 잡았다. 최종 종료 상태는 QA 노트 0개, ENEX 시험 노트 0개, 시작 상태 서명 일치다. 원래 사용자 노트 1개는 유지했다.
+- 공개 정본은 v8, 238,434바이트, SHA-256 `931DCD4EED4FE128A3A549D018795BEF130442B2FAD00A41E35853D3DE24F460`, 캐시 `noteplusp-v8-shell-1`로 변함없다. 앱 코드는 변경하지 않았다.
+- 최신 대시보드는 `ALPHA_READINESS_v6.md`, 기계 판정은 `artifacts/physical_android_alpha_v5.json`, 화면 증거는 `artifacts/physical_android_alpha_v5.png`다. 제한 알파는 통과 3/5, 부분 1, 미통과 1이며 현재 검증 범위 P0·P1은 0건이다.
+- 다음 즉시 실행은 키보드·포커스·ARIA 핵심 자동 검사다. 실제 한국어 ENEX나 파일럿 참여자가 준비되면 그 외부 의존 임계 경로를 우선한다.

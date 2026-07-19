@@ -1,0 +1,58 @@
+{
+  "ok": true,
+  "verifiedAt": "2026-07-19T18:12:09+07:00",
+  "publicUrl": "https://hanksleekorea-boop.github.io/noteplusp/",
+  "release": {
+    "version": "v8",
+    "bytes": 238434,
+    "sha256": "931DCD4EED4FE128A3A549D018795BEF130442B2FAD00A41E35853D3DE24F460",
+    "serviceWorker": "noteplusp-v8-shell-1"
+  },
+  "device": {
+    "manufacturer": "Samsung",
+    "model": "SM-G996N",
+    "android": "15",
+    "chrome": "150.0.7871.124",
+    "viewport": {
+      "innerWidth": 411,
+      "innerHeight": 781,
+      "screenWidth": 412,
+      "screenHeight": 915,
+      "devicePixelRatio": 2.625,
+      "scrollWidth": 411
+    }
+  },
+  "initialCounts": {
+    "notes": 1,
+    "trash": 0
+  },
+  "checks": {
+    "persistenceMode": "idb",
+    "noteReloaded": true,
+    "enexPdfReloaded": true,
+    "serviceWorkerActive": true,
+    "serviceWorkerControlled": true,
+    "offlineReopen": true,
+    "installButtonExists": true,
+    "mobileInstallPathVerified": true,
+    "installPromptReady": true,
+    "horizontalOverflow": false
+  },
+  "cleanup": {
+    "qaNoteCount": 0,
+    "enexNoteCount": 0,
+    "stateSignatureMatch": true,
+    "originalTabRestored": true,
+    "remoteScreenshotTemporaryFileRemoved": true
+  },
+  "visualEvidence": {
+    "path": "artifacts/physical_android_alpha_v5.png",
+    "bytes": 209084,
+    "sha256": "93873A66B24D95F7C5425DCFC7337920619BCD20A0C5DDE181BC6B402BBBFF3F"
+  },
+  "notes": [
+    "Direct target CDP was used because Android Chrome had hundreds of existing tabs and browser-wide target enumeration was unreliable.",
+    "The test reused one existing HTTP tab and restored its original URL in finally.",
+    "The final screenshot was captured through ADB after the data assertions passed."
+  ]
+}
