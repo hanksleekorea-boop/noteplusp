@@ -3045,10 +3045,11 @@ document.getElementById("enexFile").onchange = function(e){
       processedBytes+=Number(f.size)||0;
       setEnexProgress((processedBytes/totalBytes)*100,"처리 완료 "+idx+"/"+files.length,true);
       setTimeout(next,0);
-    }).catch(function(){
+    }).catch(function(err){
       if(job.cancelled) return;
-      failFiles++; failNames.push(f.name+"(읽기 실패)");fileResults.push({name:f.name,size:Number(f.size)||0,notebook:nbName,status:"read-failed",noteCount:0,attachmentCount:0,attachmentErrorCount:0,reason:"브라우저가 파일을 읽지 못함"});processedBytes+=Number(f.size)||0;
-      setEnexProgress((processedBytes/totalBytes)*100,"읽기 실패 "+idx+"/"+files.length+" · "+f.name,true);
+      var zero=err&&err.message==="no notes found";
+      failFiles++; failNames.push(f.name+(zero?"(노트 0개)":"(읽기 실패)"));fileResults.push({name:f.name,size:Number(f.size)||0,notebook:nbName,status:zero?"zero-notes":"read-failed",noteCount:0,attachmentCount:0,attachmentErrorCount:0,reason:zero?"ENEX에서 노트를 찾지 못함":"브라우저가 파일을 읽지 못함"});processedBytes+=Number(f.size)||0;
+      setEnexProgress((processedBytes/totalBytes)*100,(zero?"노트 0개":"읽기 실패")+" "+idx+"/"+files.length+" · "+f.name,true);
       setTimeout(next,0);
     });
   }
