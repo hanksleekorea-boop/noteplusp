@@ -539,3 +539,10 @@
 - `firebase.storage.rules`는 UID 격리, 다른 모든 경로 거부, 삭제 금지, JSON·첨부 형식 제한을 둔다. 복원·자동 동기화·폰 로그인은 v13 범위가 아니다.
 - 정적 구문·규칙 검사, Google 무설정, 모의 업로드 실패·성공 무손실, 기존 IDB·schema·ENEX·JSON·첨부·보안·완전성·취소·고정 제한 제거 회귀 12종이 로컬 후보에서 통과했다. 실제 Firebase 계정 업로드 통과로 과장하지 않는다.
 - 설계는 `PC_GOOGLE_BACKUP_DESIGN_v1.md`, 활성화 절차는 `GOOGLE_PC_ACTIVATION_GUIDE_v1.md`, 대시보드는 `ALPHA_READINESS_v13.md`다.
+
+## 64. 2026-07-22 · v13 공개 배포·핵심 회귀
+
+- GitHub Pages 배포가 성공했다. 직접 링크는 HTTP 200, 253,318바이트, SHA-256 `991EE96B4148CD100F830A3D9579418280EF42B5D665333101BF8314D8A2FE0A`, 캐시는 `noteplusp-v13-shell-1`, 앱 빌드 커밋은 `f1b7bb5`다.
+- 공개 v13에서 Google 무설정, 업로드 실패 무손실, 동일 상태 재시도 동일 snapshot, 모의 성공 manifest, IDB 저장·재접속, 저장소 완전 차단 입력 유지, schema 4 원본 보존·멱등 이전, 외부 HTML·이미지 차단이 통과했다.
+- 추가 공개 ENEX·JSON·첨부·대용량 병렬 묶음은 브라우저 종료가 실행 제한을 넘어 결과 집계가 중단됐다. 같은 SHA의 로컬 v13에서 해당 8종은 통과했으므로 제품 실패로 기록하지 않되 공개 전수 통과로도 과장하지 않는다.
+- 기본 `firebase-config.js`는 계속 null이다. 실제 Google 로그인·Cloud Storage 백업은 사용자 소유 프로젝트 설정과 Blaze 승인이 있어야 다음 검증으로 진행할 수 있다.

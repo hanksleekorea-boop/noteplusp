@@ -17,7 +17,9 @@ const edge = process.env.NOTEPLUS_BROWSER || "C:/Program Files (x86)/Microsoft/E
 fs.mkdirSync(artifacts, { recursive: true });
 
 const mime = new Map([[".html", "text/html; charset=utf-8"], [".js", "text/javascript; charset=utf-8"], [".json", "application/json; charset=utf-8"], [".svg", "image/svg+xml"]]);
-const server = http.createServer((request, response) => {
+const externalAppUrl = process.env.NOTEPLUS_GOOGLE_TEST_URL || "";
+let server = null;
+function createServer() { return http.createServer((request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, "http://127.0.0.1").pathname);
   const target = path.resolve(root, "." + (pathname === "/" ? "/노트앱_v13.html" : pathname));
   if (!target.startsWith(root + path.sep) && target !== root) { response.writeHead(403).end(); return; }
@@ -26,10 +28,21 @@ const server = http.createServer((request, response) => {
     response.writeHead(200, {"content-type": mime.get(path.extname(target).toLowerCase()) || "application/octet-stream", "cache-control": "no-store"});
     response.end(bytes);
   });
-});
-await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
-const address = server.address();
-const appUrl = `http://127.0.0.1:${address.port}/노트앱_v13.html?qa=${Date.now()}`;
+}); }
+let appUrl = externalAppUrl;
+if (!appUrl) {
+  server = createServer();
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  appUrl = `http://127.0.0.1:${address.port}/노트앱_v13.html?qa=${Date.now()}`;
+}
+const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "";
+if (expectedSha) {
+  const releaseResponse = await fetch(appUrl, {cache: "no-store"});
+  assert.equal(releaseResponse.status, 200);
+  const releaseBytes = Buffer.from(await releaseResponse.arrayBuffer());
+  assert.equal(crypto.createHash("sha256").update(releaseBytes).digest("hex").toUpperCase(), expectedSha);
+}
 
 const browser = await chromium.launch({executablePath: edge, headless: true});
 try {
@@ -121,5 +134,5 @@ try {
   await context.close();
 } finally {
   await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  if (server) await new Promise(resolve => server.close(resolve));
 }
