@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "publicUrl": "https://hanksleekorea-boop.github.io/noteplusp/",
+  "version": "v15",
+  "release": {
+    "bytes": 264544,
+    "sha256": "A298F4132170378C4BC8E095BCE0F090CDB4E540D50A6E1DEB53D2DC67F666C3"
+  },
+  "device": {
+    "userAgent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36",
+    "viewport": {
+      "innerWidth": 411,
+      "innerHeight": 781,
+      "screenWidth": 412,
+      "screenHeight": 915,
+      "dpr": 2.625,
+      "scrollWidth": 411
+    }
+  },
+  "initialCounts": {
+    "notes": 1,
+    "trash": 0
+  },
+  "persistenceMode": "idb",
+  "noteReloaded": true,
+  "enexPdfReloaded": true,
+  "serviceWorker": {
+    "active": true,
+    "controlled": true,
+    "offlineReopen": true
+  },
+  "install": {
+    "buttonExists": true,
+    "mobilePathVerified": true,
+    "promptReady": true
+  },
+  "cleanup": {
+    "qaCount": 0,
+    "enexCount": 0,
+    "signatureMatch": true
+  }
+}

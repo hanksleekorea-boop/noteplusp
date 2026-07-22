@@ -21,7 +21,7 @@ const externalAppUrl = process.env.NOTEPLUS_GOOGLE_TEST_URL || "";
 let server = null;
 function createServer() { return http.createServer((request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, "http://127.0.0.1").pathname);
-  const target = path.resolve(root, "." + (pathname === "/" ? "/노트앱_v15.html" : pathname));
+  const target = path.resolve(root, "." + (pathname === "/" ? "/노트앱_v16.html" : pathname));
   if (!target.startsWith(root + path.sep) && target !== root) { response.writeHead(403).end(); return; }
   fs.readFile(target, (error, bytes) => {
     if (error) { response.writeHead(404).end(); return; }
@@ -34,7 +34,7 @@ if (!appUrl) {
   server = createServer();
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
-  appUrl = `http://127.0.0.1:${address.port}/노트앱_v15.html?qa=${Date.now()}`;
+  appUrl = `http://127.0.0.1:${address.port}/노트앱_v16.html?qa=${Date.now()}`;
 }
 const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "";
 if (expectedSha) {

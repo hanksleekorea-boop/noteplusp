@@ -10,7 +10,7 @@ const requested = process.argv[2];
 if (!requested || !/^[a-z0-9_.-]+\.mjs$/i.test(requested)) throw new Error("test filename required");
 const testPath = path.join(here, requested);
 if (!fs.existsSync(testPath)) throw new Error(`test missing: ${requested}`);
-const version = process.env.NOTEPLUS_VERSION || "v15";
+const version = process.env.NOTEPLUS_VERSION || "v16";
 const appName = fs.readdirSync(root).find(name => name.endsWith(`_${version}.html`));
 if (!appName) throw new Error(`${version} app missing`);
 

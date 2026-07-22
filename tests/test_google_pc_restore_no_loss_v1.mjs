@@ -19,12 +19,12 @@ const externalAppUrl = process.env.NOTEPLUS_RESTORE_TEST_URL || "";
 let server = null;
 function createServer() { return http.createServer((request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, "http://127.0.0.1").pathname);
-  const target = path.resolve(root, "." + (pathname === "/" ? "/노트앱_v15.html" : pathname));
+  const target = path.resolve(root, "." + (pathname === "/" ? "/노트앱_v16.html" : pathname));
   if (!target.startsWith(root + path.sep) && target !== root) { response.writeHead(403).end(); return; }
   fs.readFile(target, (error, bytes) => { if (error) { response.writeHead(404).end(); return; } response.writeHead(200, {"content-type": types.get(path.extname(target).toLowerCase()) || "application/octet-stream", "cache-control": "no-store"}); response.end(bytes); });
 }); }
 let appUrl = externalAppUrl;
-if (!appUrl) { server = createServer(); await new Promise(resolve => server.listen(0, "127.0.0.1", resolve)); appUrl = `http://127.0.0.1:${server.address().port}/노트앱_v15.html?qa=${Date.now()}`; }
+if (!appUrl) { server = createServer(); await new Promise(resolve => server.listen(0, "127.0.0.1", resolve)); appUrl = `http://127.0.0.1:${server.address().port}/노트앱_v16.html?qa=${Date.now()}`; }
 const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "";
 if (expectedSha) { const response = await fetch(appUrl, {cache: "no-store"}); assert.equal(response.status, 200); const bytes = Buffer.from(await response.arrayBuffer()); assert.equal(crypto.createHash("sha256").update(bytes).digest("hex").toUpperCase(), expectedSha); }
 
@@ -59,7 +59,7 @@ try {
     const cloudState = {schema: 5, notebooks: ["클라우드"], notes: [{id: cloudNoteId, title: "클라우드 복원 노트", body: "검증된 복원", bodyHtml: "<div>검증된 복원</div>", notebook: "클라우드", tags: ["복원"], attachmentIds: [conflictId], favorite: true, history: [], created: Date.now() - 1000, updated: Date.now() - 1000}], trash: [], evernoteBannerDismissed: false, theme: "light", preferences: {savedSearches: [], templates: [], snapshots: [], sync: {version: 1, deviceId: "cloud-device", updatedAt: Date.now(), pendingOps: [], conflicts: []}}};
     const snapshotId = "s5_restore_" + marker;
     const descriptor = {id: conflictId, noteId: cloudNoteId, name: "cloud.pdf", mime: "application/pdf", size: cloudBlob.size, created: Date.now() - 1000, sha256: cloudSha};
-    const manifest = {format: "noteplusp-cloud-snapshot-v1", schema: 5, appVersion: "v15", snapshotId, createdAt: new Date().toISOString(), counts: {noteCount: 1, activeNoteCount: 1, trashNoteCount: 0, attachmentCount: 1}, state: cloudState, attachments: [descriptor]};
+    const manifest = {format: "noteplusp-cloud-snapshot-v1", schema: 5, appVersion: "v16", snapshotId, createdAt: new Date().toISOString(), counts: {noteCount: 1, activeNoteCount: 1, trashNoteCount: 0, attachmentCount: 1}, state: cloudState, attachments: [descriptor]};
     window.__restoreCloudBlob = cloudBlob;
     window.__restoreBundle = {pointer: {format: "noteplusp-cloud-current-v1", snapshotId}, manifest, accountUid: "restore-user"};
     window.__restoreShouldFail = true;

@@ -18,7 +18,7 @@ fs.mkdirSync(artifacts, {recursive: true});
 const types = new Map([[".html", "text/html; charset=utf-8"], [".js", "text/javascript; charset=utf-8"], [".json", "application/json; charset=utf-8"], [".svg", "image/svg+xml"]]);
 function createServer() { return http.createServer((request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, "http://127.0.0.1").pathname);
-  const target = path.resolve(root, "." + (pathname === "/" ? "/노트앱_v15.html" : pathname));
+  const target = path.resolve(root, "." + (pathname === "/" ? "/노트앱_v16.html" : pathname));
   if (!target.startsWith(root + path.sep) && target !== root) { response.writeHead(403).end(); return; }
   fs.readFile(target, (error, bytes) => { if (error) { response.writeHead(404).end(); return; } response.writeHead(200, {"content-type": types.get(path.extname(target).toLowerCase()) || "application/octet-stream", "cache-control": "no-store"}); response.end(bytes); });
 }); }
@@ -28,7 +28,7 @@ let appUrl = externalAppUrl;
 if (!appUrl) {
   server = createServer();
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
-  appUrl = `http://127.0.0.1:${server.address().port}/노트앱_v15.html?mobile-google=${Date.now()}`;
+  appUrl = `http://127.0.0.1:${server.address().port}/노트앱_v16.html?mobile-google=${Date.now()}`;
 }
 const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "";
 if (expectedSha) {
