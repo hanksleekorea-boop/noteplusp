@@ -1,0 +1,36 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function owns(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/current.json {
+      allow read: if owns(uid);
+      allow create, update: if owns(uid)
+        && request.resource.size < 64 * 1024
+        && request.resource.contentType == 'application/json';
+      allow delete: if false;
+    }
+
+    match /users/{uid}/snapshots/{snapshotId}/manifest.json {
+      allow read: if owns(uid);
+      allow create, update: if owns(uid)
+        && request.resource.size < 1024 * 1024 * 1024
+        && request.resource.contentType == 'application/json';
+      allow delete: if false;
+    }
+
+    match /users/{uid}/snapshots/{snapshotId}/attachments/{attachmentId} {
+      allow read: if owns(uid);
+      allow create, update: if owns(uid)
+        && request.resource.size < 5 * 1024 * 1024 * 1024
+        && request.resource.contentType.matches('^(image|audio)/.*$|^application/pdf$|^application/octet-stream$');
+      allow delete: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

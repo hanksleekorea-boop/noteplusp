@@ -530,3 +530,12 @@
 - 사용자 개입은 실제 가져오기와 Android 연결을 묶은 20~40분 창, 참가자 3명 병렬 파일럿 조율 창으로 압축했다. 대기 중에는 별도 자율 작업열을 소진하고 외부 입력이 도착하면 임계 경로가 선점한다.
 - `ALPHA_ACCELERATION_PLAN_v1.md`와 `노트플러스P_알파가속_무중단_자율개발_총괄프롬프트_v4.md`를 추가했다. 앱 코드는 변경하지 않았으며 공개 정본은 v12 그대로다.
 - `tests/test_post_import_integrity_v1.mjs`를 추가했다. 공개 앱 탭의 CDP에 읽기 전용으로 연결해 제목·본문·파일명을 출력하지 않고 마지막 가져오기 1,950/2,272, IDB 모드, 첨부 메타·Blob 누락, 고아 수량과 MIME 합계만 감사한다. 실제 최종 가져오기 전이므로 구문검사만 수행하고 실데이터 통과로 기록하지 않는다.
+
+## 63. 2026-07-22 · v13 PC Google 계정 보호 후보
+
+- v12 원본을 보존하고 `노트앱_v13.html`을 만들었다. IndexedDB schema 5가 계속 유일한 편집 원본이며 Google 로그인만으로는 전송하지 않는다.
+- `noteplus-cloud-v1.js`는 Firebase Web SDK 12.16.0을 설정이 있을 때만 불러온다. 첨부를 UID 전용 snapshot 경로에 먼저 올려 크기·SHA-256을 검사하고 manifest를 검증한 뒤 `current.json`을 마지막에 갱신한다. 실패 시 로컬과 이전 완성 백업을 변경·삭제하지 않는다.
+- 기본 `firebase-config.js`는 null이라 외부 SDK도 불러오지 않고 로컬 앱을 그대로 사용한다. 실제 활성화에는 사용자 소유 Firebase 프로젝트, Google 공급자, 승인 도메인, Blaze·Storage, 보안 규칙 게시가 필요하다.
+- `firebase.storage.rules`는 UID 격리, 다른 모든 경로 거부, 삭제 금지, JSON·첨부 형식 제한을 둔다. 복원·자동 동기화·폰 로그인은 v13 범위가 아니다.
+- 정적 구문·규칙 검사, Google 무설정, 모의 업로드 실패·성공 무손실, 기존 IDB·schema·ENEX·JSON·첨부·보안·완전성·취소·고정 제한 제거 회귀 12종이 로컬 후보에서 통과했다. 실제 Firebase 계정 업로드 통과로 과장하지 않는다.
+- 설계는 `PC_GOOGLE_BACKUP_DESIGN_v1.md`, 활성화 절차는 `GOOGLE_PC_ACTIVATION_GUIDE_v1.md`, 대시보드는 `ALPHA_READINESS_v13.md`다.

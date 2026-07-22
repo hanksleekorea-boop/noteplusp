@@ -128,6 +128,14 @@ v5 schema 5와 Evernote 전체 이전 핵심 흐름 완료: 실제 Windows Evern
 19. [ ] RC 종합 체크리스트 자동 생성
 20. [ ] 공개 배포 파일·해시·서비스워커 무결성 검사
 
+## 2026-07-22 · v13 PC Google 계정 보호 우선순위 재작성
+
+- 최신 정본은 `ALPHA_READINESS_v13.md`의 전체 우선순위 20개와 Codex 즉시 실행 20개다.
+- PC 1차 범위는 Google 로그인, 사용자가 누르는 버전형 Cloud Storage 백업, 첨부·manifest SHA-256 검증, `current.json` 마지막 커밋이다. 자동 동기화·폰·복원은 실제 백업 성공 뒤로 미룬다.
+- 현재 최우선 외부 의존은 Firebase Web App, Google 공급자, 승인 도메인, Blaze·Storage, UID 보안 규칙이다. 정확한 절차는 `GOOGLE_PC_ACTIVATION_GUIDE_v1.md`에 있다.
+- 외부 설정을 기다리는 동안 공개 v13 회귀, 설정 검사, 실패·재시도·계정 전환, manifest 감사, 복원 미리보기 설계를 순서대로 계속한다.
+- 실제 Evernote 이전은 원본 1,950/2,272 중 현재 1,914/2,250이므로 중복 기본 제외로 빠진 36노트·22첨부 회수가 Google 백업 다음 P1이다.
+
 ## 2026-07-19 · v10 ENEX 고정 용량 제한 제거 뒤 우선순위 갱신
 
 - v9를 보존하고 v10에서 300MB 권장 분할, 350MB 단일 거부, 500MB 선택 합계 차단을 제거했다.
