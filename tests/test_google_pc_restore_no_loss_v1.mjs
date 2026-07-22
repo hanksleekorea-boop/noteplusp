@@ -15,14 +15,18 @@ const artifacts = path.join(root, "artifacts");
 const edge = process.env.NOTEPLUS_BROWSER || "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
 fs.mkdirSync(artifacts, {recursive: true});
 const types = new Map([[".html", "text/html; charset=utf-8"], [".js", "text/javascript; charset=utf-8"], [".json", "application/json; charset=utf-8"], [".svg", "image/svg+xml"]]);
-const server = http.createServer((request, response) => {
+const externalAppUrl = process.env.NOTEPLUS_RESTORE_TEST_URL || "";
+let server = null;
+function createServer() { return http.createServer((request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, "http://127.0.0.1").pathname);
   const target = path.resolve(root, "." + (pathname === "/" ? "/노트앱_v14.html" : pathname));
   if (!target.startsWith(root + path.sep) && target !== root) { response.writeHead(403).end(); return; }
   fs.readFile(target, (error, bytes) => { if (error) { response.writeHead(404).end(); return; } response.writeHead(200, {"content-type": types.get(path.extname(target).toLowerCase()) || "application/octet-stream", "cache-control": "no-store"}); response.end(bytes); });
-});
-await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
-const appUrl = `http://127.0.0.1:${server.address().port}/노트앱_v14.html?qa=${Date.now()}`;
+}); }
+let appUrl = externalAppUrl;
+if (!appUrl) { server = createServer(); await new Promise(resolve => server.listen(0, "127.0.0.1", resolve)); appUrl = `http://127.0.0.1:${server.address().port}/노트앱_v14.html?qa=${Date.now()}`; }
+const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "";
+if (expectedSha) { const response = await fetch(appUrl, {cache: "no-store"}); assert.equal(response.status, 200); const bytes = Buffer.from(await response.arrayBuffer()); assert.equal(crypto.createHash("sha256").update(bytes).digest("hex").toUpperCase(), expectedSha); }
 
 const localBytes = Buffer.from("LOCAL ORIGINAL ATTACHMENT", "utf8");
 const cloudBytes = Buffer.from("CLOUD RESTORED ATTACHMENT", "utf8");
@@ -123,5 +127,5 @@ try {
   await context.close();
 } finally {
   await browser.close();
-  await new Promise(resolve => server.close(resolve));
+  if (server) await new Promise(resolve => server.close(resolve));
 }

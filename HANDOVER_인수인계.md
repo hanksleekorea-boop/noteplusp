@@ -556,3 +556,12 @@
 - 중복 지문에 노트북·태그·생성시각을 추가했다. 첨부가 있는 중복 후보는 기본 선택·별도 추가로 바꿔 제목·본문 동일만으로 첨부가 빠지지 않는다.
 - 신규 복원·중복·정적 보안·10,000노트 manifest와 기존 핵심 11종이 로컬 v14에서 통과했다. 실제 Firebase·실사용자 데이터는 사용하지 않았다.
 - 설계는 `PC_GOOGLE_RESTORE_DESIGN_v1.md`, 대시보드는 `ALPHA_READINESS_v14.md`, 파일럿 판정표는 `PILOT_RESULTS_AND_DEFECT_TRIAGE_v1.md`다.
+
+## 2026-07-22 · v14 공개 검증 인수인계 추가
+
+- 현재 공개 정본: `노트앱_v14.html`
+- 공개 직접 링크: `https://hanksleekorea-boop.github.io/noteplusp/%EB%85%B8%ED%8A%B8%EC%95%B1_v14.html`
+- 공개 검증값: HTTP 200, 264,076바이트, SHA-256 `08961F3DCBF2651BBC9E5FA4A44F6C4AB6EE6C55B31AB21EDA3CFF22CB64768F`
+- 공개 회귀 7개 묶음 통과: Google 백업, Google 복원 무손실, 기본 저장·저장 차단, 외부 HTML 보안, ENEX 첨부 중복 보호, 접근성, 390/360px 모바일 UI.
+- Samsung SM-G996N은 무선 ADB로 보였으나 Chrome DevTools 소켓 부재로 공개 v14 실기기 자동화가 시작되지 못했다. 앱 데이터 변경은 없었다. `tests/test_physical_android_cdp_v6.mjs`로 재실행한다.
+- Google 실제 기능은 `firebase-config.js`가 null인 한 비활성이다. Firebase 계정·결제·규칙 게시 없이는 실제 로그인/백업/복원을 통과로 기록하지 않는다.
