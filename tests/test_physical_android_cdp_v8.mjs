@@ -78,14 +78,23 @@ for (const match of releaseBytes.toString("utf8").matchAll(/<script\b[^>]*>([\s\
 const targetListResponse = await fetch(cdpHttp + "/json/list");
 assert.equal(targetListResponse.ok, true, "Android Chrome target list must be readable");
 const targetList = await targetListResponse.json();
-const targetInfo = targetList.find(target => target.type === "page" && /^https?:/i.test(target.url));
-assert.ok(targetInfo, "Android Chrome reusable HTTP page must exist");
+const candidates = targetList.filter(target => target.type === "page" && /^https?:/i.test(target.url) && target.webSocketDebuggerUrl).sort((a,b) => Number(/noteplusp/i.test(b.url)) - Number(/noteplusp/i.test(a.url))).slice(0,8);
+let targetInfo = null;
+let cdp = null;
+for (const candidate of candidates) {
+  const probe = new CdpTarget(candidate.webSocketDebuggerUrl);
+  try {
+    await probe.connect();
+    await probe.send("Page.enable", {}, 3000);
+    await probe.send("Runtime.enable", {}, 3000);
+    await probe.send("Network.enable", {}, 3000);
+    targetInfo = candidate;
+    cdp = probe;
+    break;
+  } catch { probe.close(); }
+}
+assert.ok(targetInfo && cdp, "Android Chrome responsive HTTP page must exist");
 const originalTargetUrl = targetInfo.url;
-const cdp = new CdpTarget(targetInfo.webSocketDebuggerUrl);
-await cdp.connect();
-await cdp.send("Page.enable");
-await cdp.send("Runtime.enable");
-await cdp.send("Network.enable");
 console.log("STEP target-connected", targetInfo.id);
 
 let originalStateJson = "";
