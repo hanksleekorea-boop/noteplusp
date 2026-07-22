@@ -573,3 +573,9 @@
 - redirect를 선택하면 `getRedirectResult`를 처리하며, 인증 중 중복 클릭·승인 도메인·브라우저 저장소·오프라인 오류를 무손실로 고지한다.
 - 인증 전후 앱 상태 서명은 동일했다. 360/390px 패널, PC 백업·복원, 10,000노트, schema·보안·ENEX·JSON·첨부·접근성 회귀가 통과했다.
 - `firebase-config.js`는 계속 null이다. 실제 계정 활성화 절차는 `GOOGLE_MOBILE_ACTIVATION_GUIDE_v1.md`, 대시보드는 `ALPHA_READINESS_v15.md`다.
+
+## 2026-07-22 · v15 공개 배포 인수인계 추가
+
+- 공개 v15는 HTTP 200, 264,544바이트, SHA-256 `A298F4132170378C4BC8E095BCE0F090CDB4E540D50A6E1DEB53D2DC67F666C3`다.
+- 공개 URL에서 모바일 로그인·PC 백업·복원·첨부 중복 보호와 핵심 저장·보안·접근성·360/390px UI 8개 묶음이 통과했다.
+- 공개 루트·manifest·서비스워커는 v15를 가리킨다. 실제 Google 로그인 활성화에는 Firebase 외부 설정이 필요하다.
