@@ -593,3 +593,12 @@
 - 공개 저장공간 사전차단·복원 무손실·기본 저장·360/390px UI가 통과했다.
 - Samsung v16은 CDP 탭이 `Page.enable`에 응답하지 않아 앱 접근 전에 세 번 중단됐다. 데이터 변경은 없다. `tests/test_physical_android_cdp_v8.mjs`는 응답 탭 최대 8개·각 3초로 제한했다.
 - 실제 모바일 통과 근거는 v15이며, 실제 Google 계정·v16 실기기·파일럿은 미검증이다.
+
+## 2026-07-23 · Firebase 실제 활성화 준비 패킷 (추가)
+
+- 현행 공개 정본 v16과 로컬 앱 코드는 변경하지 않았다. `firebase-config.js`는 계속 `null`이며, 실제 Google 로그인·전송도 비활성 상태다.
+- `firebase.json`은 Storage 규칙만 가리키며 GitHub Pages 호스팅을 변경하지 않는다. `.firebaserc.example`에는 예시 프로젝트 ID만 들어 있다.
+- `tools/firebase-activation-diagnostics-v1.mjs`는 설정 형식과 규칙의 최소 안전 계약을 읽기 전용으로 검사한다. Firebase 로그인·전송·규칙 게시·사용자 데이터 접근을 하지 않는다.
+- 형식 회귀는 유효 설정 모의값과 실제 rules 파일로 통과했다. 현재 null 설정은 의도대로 `readyForFirebaseConsole: false`로 정직하게 보고한다.
+- 실제 활성화에는 소유자 Firebase 프로젝트, Google 공급자, 승인 도메인, Storage 요금제, 규칙 게시 권한이 필요하다. 이 외부 권한 없이는 실제 동기화 통과로 기록하지 않는다.
+- 운영자 절차와 실제 PC→휴대폰 검증 순서는 `FIREBASE_ACTIVATION_PACKET_v1.md`에 고정했다.
