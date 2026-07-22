@@ -32,12 +32,19 @@ try {
     if (state !== "preview") throw new Error(`real ENEX did not reach preview: ${status}`);
   });
 
-  const summary = await page.locator("#importPreviewSummary").innerText();
+  const preview = await page.evaluate(() => window.pendingEnexImport ? ({
+    notes: window.pendingEnexImport.notes.length,
+    attachments: window.pendingEnexImport.attachments.length,
+    attachmentErrors: window.pendingEnexImport.totalAttachmentErrors,
+    attachmentIssues: (window.pendingEnexImport.attachmentIssues || []).length
+  }) : null);
   const after = await page.evaluate(() => ({ notes: window.state.notes.length, trash: (window.state.trash || []).length }));
   assert.deepEqual(after, before, "previewing a real ENEX must not mutate existing notes");
-  assert.match(summary, /노트 [1-9][0-9]*개/);
+  assert.ok(preview && preview.notes > 0, "a real ENEX preview must contain notes");
+  assert.ok(preview.attachments > 0, "a real ENEX with attachments must not silently drop them");
+  assert.equal(preview.attachmentErrors, 0, "valid real ENEX attachments must not be reported as errors");
   await page.locator("#importPreviewCancel").click();
-  console.log(JSON.stringify({ ok: true, fileBytes: fs.statSync(realEnex).size, previewReached: true, stateUnchanged: true, pageErrors }, null, 2));
+  console.log(JSON.stringify({ ok: true, fileBytes: fs.statSync(realEnex).size, previewReached: true, stateUnchanged: true, preview, pageErrors }, null, 2));
   await context.close();
 } finally {
   await browser.close();
