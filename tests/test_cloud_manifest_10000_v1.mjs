@@ -11,9 +11,9 @@ let chromium;
 try { ({chromium} = require("playwright-core")); } catch { ({chromium} = require(runtimePlaywright)); }
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const edge = process.env.NOTEPLUS_BROWSER || "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
-const server = http.createServer((request, response) => { const pathname = decodeURIComponent(new URL(request.url, "http://127.0.0.1").pathname), target = path.resolve(root, "." + (pathname === "/" ? "/노트앱_v14.html" : pathname)); if (!target.startsWith(root + path.sep) && target !== root) { response.writeHead(403).end(); return; } fs.readFile(target, (error, bytes) => { if (error) { response.writeHead(404).end(); return; } response.writeHead(200, {"content-type": path.extname(target) === ".js" ? "text/javascript; charset=utf-8" : "text/html; charset=utf-8", "cache-control": "no-store"}); response.end(bytes); }); });
+const server = http.createServer((request, response) => { const pathname = decodeURIComponent(new URL(request.url, "http://127.0.0.1").pathname), target = path.resolve(root, "." + (pathname === "/" ? "/노트앱_v15.html" : pathname)); if (!target.startsWith(root + path.sep) && target !== root) { response.writeHead(403).end(); return; } fs.readFile(target, (error, bytes) => { if (error) { response.writeHead(404).end(); return; } response.writeHead(200, {"content-type": path.extname(target) === ".js" ? "text/javascript; charset=utf-8" : "text/html; charset=utf-8", "cache-control": "no-store"}); response.end(bytes); }); });
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
-const appUrl = `http://127.0.0.1:${server.address().port}/노트앱_v14.html?qa=${Date.now()}`;
+const appUrl = `http://127.0.0.1:${server.address().port}/노트앱_v15.html?qa=${Date.now()}`;
 const browser = await chromium.launch({executablePath: edge, headless: true});
 try {
   const page = await browser.newPage(); await page.goto(appUrl, {waitUntil: "networkidle"}); await page.evaluate(() => window.storageReady);

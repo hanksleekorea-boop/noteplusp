@@ -565,3 +565,11 @@
 - 공개 회귀 7개 묶음 통과: Google 백업, Google 복원 무손실, 기본 저장·저장 차단, 외부 HTML 보안, ENEX 첨부 중복 보호, 접근성, 390/360px 모바일 UI.
 - Samsung SM-G996N은 무선 ADB로 보였으나 Chrome DevTools 소켓 부재로 공개 v14 실기기 자동화가 시작되지 못했다. 앱 데이터 변경은 없었다. `tests/test_physical_android_cdp_v6.mjs`로 재실행한다.
 - Google 실제 기능은 `firebase-config.js`가 null인 한 비활성이다. Firebase 계정·결제·규칙 게시 없이는 실제 로그인/백업/복원을 통과로 기록하지 않는다.
+
+## 2026-07-22 · v15 모바일 Google 로그인 인수인계 추가
+
+- v14를 보존하고 `노트앱_v15.html`, `noteplus-cloud-v3.js`를 만들었다.
+- GitHub Pages에서는 모바일도 사용자 클릭 기반 popup을 기본으로 사용한다. `mobileAuthMode: "redirect"`는 Firebase 공식 인증 프록시·동일 도메인 구성을 완료한 경우에만 사용한다.
+- redirect를 선택하면 `getRedirectResult`를 처리하며, 인증 중 중복 클릭·승인 도메인·브라우저 저장소·오프라인 오류를 무손실로 고지한다.
+- 인증 전후 앱 상태 서명은 동일했다. 360/390px 패널, PC 백업·복원, 10,000노트, schema·보안·ENEX·JSON·첨부·접근성 회귀가 통과했다.
+- `firebase-config.js`는 계속 null이다. 실제 계정 활성화 절차는 `GOOGLE_MOBILE_ACTIVATION_GUIDE_v1.md`, 대시보드는 `ALPHA_READINESS_v15.md`다.

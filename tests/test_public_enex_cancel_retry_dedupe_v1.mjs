@@ -95,8 +95,9 @@ try {
   await page.locator("#enexFile").setInputFiles({ name: "RetryNotebook.enex", mimeType: "application/xml", buffer: enex });
   await page.locator("#importPreview").waitFor({ state: "visible", timeout: 30000 });
   assert.equal(await page.locator(".import-preview-note.has-duplicate").count(), 1);
-  assert.equal(await page.locator(".import-duplicate-mode").inputValue(), "skip");
-  assert.equal(await page.locator("#importPreviewConfirm").isDisabled(), true);
+  assert.equal(await page.locator(".import-duplicate-mode").inputValue(), "add");
+  assert.match(await page.locator(".import-preview-note.has-duplicate").innerText(), /첨부가 있어 자동 제외하지 않습니다/);
+  assert.equal(await page.locator("#importPreviewConfirm").isDisabled(), false);
   const beforeCancel = await page.evaluate(expected => ({ count: window.state.notes.filter(note => note.title === expected).length, attachmentIds: window.state.notes.find(note => note.title === expected)?.attachmentIds || [] }), title);
   await page.screenshot({ path: path.join(artifacts, "public_enex_cancel_retry_dedupe_v1.png"), fullPage: true });
   await page.locator("#importPreviewCancel").click();
@@ -114,7 +115,7 @@ try {
   await page.evaluate(() => window.storageReady);
   assert.equal(await page.evaluate(({ expected, signature }) => window.state.notes.filter(note => note.title === expected).length === 0 && window.stateSignature(window.state) === signature, { expected: title, signature: original.signature }), true, "cleanup must restore the original state exactly");
   assert.deepEqual(errors, [], errors.join("\n"));
-  console.log(JSON.stringify({ ok: true, publicUrl, release: verified, cancellation: { stateUnchanged: true }, retry: { noteCount: 1, blobSize: imported.blobSize, survivedReload: true }, duplicate: { detected: true, defaultSkipped: true, cancelUnchanged: true }, cleanup: { signatureMatch: true } }, null, 2));
+  console.log(JSON.stringify({ ok: true, publicUrl, release: verified, cancellation: { stateUnchanged: true }, retry: { noteCount: 1, blobSize: imported.blobSize, survivedReload: true }, duplicate: { detected: true, attachmentProtectedByDefaultAdd: true, cancelUnchanged: true }, cleanup: { signatureMatch: true } }, null, 2));
   await context.close();
 } finally {
   await browser.close();
