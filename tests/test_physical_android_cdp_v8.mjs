@@ -170,8 +170,17 @@ try {
   assert.equal(offlineOk, true);
   console.log("STEP offline-reopen");
 
-  const screenshot = await cdp.send("Page.captureScreenshot", { format: "png", fromSurface: true });
-  fs.writeFileSync(path.join(artifacts, "physical_android_alpha_v16.png"), Buffer.from(screenshot.data, "base64"));
+  // Screenshot capture is evidence-only. A slow Android CDP screenshot must not prevent
+  // the protected cleanup below from restoring the original user state.
+  let screenshot = {captured: false, error: ""};
+  try {
+    const captured = await cdp.send("Page.captureScreenshot", { format: "png", fromSurface: true }, 10000);
+    fs.writeFileSync(path.join(artifacts, "physical_android_alpha_v16.png"), Buffer.from(captured.data, "base64"));
+    screenshot = {captured: true, error: ""};
+  } catch (error) {
+    screenshot = {captured: false, error: String(error && error.message || error)};
+    console.log(`STEP screenshot-unavailable ${screenshot.error}`);
+  }
 
   await cdp.evaluate(`(async()=>{window.state=window.migrateState(JSON.parse(${JSON.stringify(originalStateJson)}));window.sanitizeAllNoteHtml(window.state);if(window.noteDb)await window.writeStateAndAttachments([],${JSON.stringify(createdAttachmentIds)},null);else await window.persist();window.render();return true;})()`);
   cleaned = true;
@@ -181,7 +190,7 @@ try {
   const cleanup = await cdp.evaluate(`({qaCount:window.state.notes.filter(note=>note.title===${JSON.stringify(qaTitle)}).length,enexCount:window.state.notes.filter(note=>note.title===${JSON.stringify(enexTitle)}).length,signatureMatch:window.stateSignature(window.state)===${JSON.stringify(originalSignature)}})`);
   assert.deepEqual(cleanup, { qaCount: 0, enexCount: 0, signatureMatch: true });
   console.log("STEP cleanup-verified");
-  const result={ok:true,publicUrl,version,release:{bytes:releaseBytes.length,sha256:expectedSha},device:{userAgent:initial.userAgent,viewport:initial.viewport},initialCounts:{notes:initial.notes,trash:initial.trash},persistenceMode:initial.persistenceMode,noteReloaded:true,enexPdfReloaded:true,serviceWorker:{active:restored.swActive,controlled:restored.swControlled,offlineReopen:offlineOk},install:{buttonExists:initial.installButtonExists,mobilePathVerified:true,promptReady:restored.installPromptReady},cleanup};
+  const result={ok:true,publicUrl,version,release:{bytes:releaseBytes.length,sha256:expectedSha},device:{userAgent:initial.userAgent,viewport:initial.viewport},initialCounts:{notes:initial.notes,trash:initial.trash},persistenceMode:initial.persistenceMode,noteReloaded:true,enexPdfReloaded:true,serviceWorker:{active:restored.swActive,controlled:restored.swControlled,offlineReopen:offlineOk},install:{buttonExists:initial.installButtonExists,mobilePathVerified:true,promptReady:restored.installPromptReady},screenshot,cleanup};
   fs.writeFileSync(path.join(artifacts,"physical_android_alpha_v16.json"),JSON.stringify(result,null,2));
   console.log(JSON.stringify(result,null,2));
 } finally {

@@ -411,3 +411,13 @@ v5 schema 5와 Evernote 전체 이전 핵심 흐름 완료: 실제 Windows Evern
 5. [외부/Codex] 실제 휴대폰 로그인·미리보기·명시 복원·재접속
 6. [외부] 파일럿 3~5명 핵심 여정 결과 수집
 7. [Codex] 재현 P0 즉시 수정, P1 최소 수정, 종료 판정 보고
+
+## 2026-07-23 · v16 실기기 재검증 결과 (추가)
+
+1. [x] 공개 v16 Samsung IDB·ENEX PDF·오프라인·PWA·원상복구 회귀
+2. [외부] Firebase 프로젝트·Web App·Google 공급자·승인 도메인·Storage 활성화
+3. [외부] 소유자 계정으로 Storage Rules 게시
+4. [외부/Codex] 실제 PC 1,915노트 백업과 pointer·manifest·SHA 검증
+5. [외부/Codex] 실제 휴대폰 로그인·미리보기·명시 복원·재접속
+6. [외부] 파일럿 3~5명 핵심 여정 결과 수집
+7. [Codex] 재현 P0 즉시 수정, P1 최소 수정, 종료 판정 보고
