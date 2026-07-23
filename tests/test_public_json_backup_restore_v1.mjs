@@ -20,6 +20,25 @@ const edge = process.env.NOTEPLUS_BROWSER || "C:/Program Files (x86)/Microsoft/E
 fs.mkdirSync(artifacts, { recursive: true });
 
 function sha256(bytes) { return crypto.createHash("sha256").update(bytes).digest("hex").toUpperCase(); }
+
+// This deliberately does not call the app's import function. It checks the portable
+// JSON contract before the app gets a chance to interpret the backup.
+function validatePortableBackup(bundle) {
+  assert.ok(bundle && typeof bundle === "object" && !Array.isArray(bundle), "backup must be an object");
+  assert.equal(Number(bundle.schema), 5, "backup must declare schema 5");
+  assert.ok(Array.isArray(bundle.notes) && Array.isArray(bundle.trash) && Array.isArray(bundle.notebooks), "backup state lists are required");
+  assert.ok(Array.isArray(bundle.attachments), "attachment export list is required");
+  const noteIds = new Set(bundle.notes.concat(bundle.trash).map(note => String(note && note.id || "")));
+  assert.equal(noteIds.size, bundle.notes.length + bundle.trash.length, "note IDs must be unique");
+  for (const item of bundle.attachments) {
+    assert.match(String(item && item.id || ""), /^att_[a-z0-9_-]{6,100}$/i, "attachment ID must be safe");
+    assert.ok(noteIds.has(String(item.noteId || "")), "attachment must belong to an exported note");
+    assert.match(String(item.mime || ""), /^(image|audio)\/.+|^application\/pdf$|^text\/html$/i, "attachment MIME must be portable");
+    assert.equal(Number(item.size), Buffer.from(String(item.dataBase64 || ""), "base64").length, "attachment byte size must match base64");
+    assert.equal(Object.hasOwn(item, "blob"), false, "backup must not serialize a runtime Blob");
+  }
+  return {notes: bundle.notes.length + bundle.trash.length, attachments: bundle.attachments.length};
+}
 const response = await fetch(appUrl, { cache: "no-store" });
 assert.equal(response.status, 200);
 const releaseBytes = Buffer.from(await response.arrayBuffer());
@@ -63,6 +82,9 @@ try {
   });
   assert.equal(backup.notes.filter(note => note.title === title).length, 1);
   assert.equal(backup.attachments.filter(item => item.noteId === created.noteId).length, 1);
+  const portable = validatePortableBackup(backup);
+  assert.throws(() => validatePortableBackup({...backup, schema: 4}), /schema 5/);
+  assert.throws(() => validatePortableBackup({...backup, attachments: [{...backup.attachments[0], dataBase64: "%%%"}]}), /byte size/);
 
   await page.evaluate(async attachmentId => {
     const cleared = window.cloneState(window.state);
@@ -109,7 +131,7 @@ try {
   await page.evaluate(() => window.storageReady);
   assert.equal(await page.evaluate(({ expected, signature }) => !window.state.notes.some(note => note.title === expected) && window.stateSignature(window.state) === signature, { expected: title, signature: original.signature }), true);
   assert.deepEqual(errors, [], errors.join("\n"));
-  console.log(JSON.stringify({ ok: true, publicUrl, release: { bytes: releaseBytes.length, sha256: expectedSha }, backup: { notes: backup.notes.length, attachments: backup.attachments.length }, reset: { fixtureRemoved: true }, restored, reload: { exactlyOnce: true }, cleanup: { signatureMatch: true } }, null, 2));
+  console.log(JSON.stringify({ ok: true, publicUrl, release: { bytes: releaseBytes.length, sha256: expectedSha }, backup: portable, independentSchemaValidation: true, reset: { fixtureRemoved: true }, restored, reload: { exactlyOnce: true }, cleanup: { signatureMatch: true } }, null, 2));
   await context.close();
 } finally {
   await browser.close();
