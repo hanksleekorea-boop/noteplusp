@@ -476,3 +476,14 @@ v5 schema 5와 Evernote 전체 이전 핵심 흐름 완료: 실제 Windows Evern
 5. [외부/Codex] 실제 휴대폰 로그인·미리보기·명시 복원·재접속
 6. [외부] 파일럿 3~5명 핵심 여정 결과 수집
 7. [Codex] 재현 P0 즉시 수정, P1 최소 수정, 종료 판정 보고
+
+## 2026-07-23 · Firebase 생성 재개 우선순위 (추가)
+
+1. [외부/Codex] Firebase Console에서 `noteplusp-8487a`가 실제 생성됐는지 먼저 확인하고, 없을 때만 승인된 동일 설정으로 한 번 재시도
+2. [외부/Codex] Web App 등록, Google 로그인 공급자, `hanksleekorea-boop.github.io` 승인 도메인 구성
+3. [외부/소유자 확인] Storage 생성 시 요금제·결제 요구가 나오면 비용 발생 전 정확한 선택을 확인
+4. [외부/소유자 확인] UID 격리·삭제 금지 Storage Rules 게시 직전 권한 변경 확인
+5. [Codex] 실제 공개 설정을 새 버전 앱(v17) 전용 파일에 넣고 v16은 유지
+6. [외부/Codex] PC Google 로그인→백업→휴대폰 Google 로그인→명시 복원→재접속 실증
+7. [외부] 실제 파일럿 3~5명 핵심 여정 결과 수집
+8. [Codex] P0 즉시·재현 P1 최소 수정 후 제한 알파 종료 보고

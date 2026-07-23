@@ -644,3 +644,10 @@
 
 - 앱의 가져오기 코드와 별개로 schema 5, 노트 ID 유일성, 첨부 noteId 소유권, MIME, base64 바이트 크기, runtime Blob 비직렬화를 검사했다.
 - schema 4·손상 base64 모의 파일은 독립 검사에서 거부됐고, 유효 JSON은 공개 v16 가져오기·재접속 뒤 원상복구 서명까지 통과했다.
+
+## 2026-07-23 · Firebase 생성 시도 및 가상 100명 회귀 (추가)
+
+- Firebase Console에서 `NotePlusP` / `noteplusp-8487a` 프로젝트 생성 화면까지 준비하고, Gemini와 Google Analytics를 모두 끈 뒤 소유자의 명시 승인으로 생성 요청을 제출했다.
+- 콘솔은 생성 완료 대신 `ProgressEvent` 네트워크 오류를 반환했고 이후 브라우저 연결도 불안정했다. 프로젝트 존재·Web App·Google 공급자·승인 도메인·Storage·Rules 게시를 성공으로 기록하지 않는다. 다음 실행 시 콘솔에서 프로젝트 목록을 먼저 확인해 중복 생성을 피한다.
+- `tests/test_virtual_pilot_100_v1.mjs`가 공개 `노트앱_v16.html` SHA-256 `64832DEDEB76D7A469B6238F274042A27C894BCBAFD56E4B36B526FDBAE2E520`을 고정해 100개 합성 자동 세션을 실행했다. 모바일 IDB 저장 25, 데스크톱 IDB 저장 25, ENEX·첨부 import 25, 영속저장 차단 시 입력 유지·정직 고지 25가 모두 통과했다.
+- 이 결과는 자동화 회귀 증거일 뿐 실제 3~5명 파일럿, 실제 Google 로그인, PC→휴대폰 클라우드 동기화의 증거가 아니다.

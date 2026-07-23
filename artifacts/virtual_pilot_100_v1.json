@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "label": "100 virtual automated testers (not human pilot evidence)",
+  "publicUrl": "https://hanksleekorea-boop.github.io/noteplusp/%EB%85%B8%ED%8A%B8%EC%95%B1_v16.html",
+  "release": {
+    "bytes": 267916,
+    "sha256": "64832DEDEB76D7A469B6238F274042A27C894BCBAFD56E4B36B526FDBAE2E520"
+  },
+  "testerCount": 100,
+  "concurrency": 4,
+  "passed": 100,
+  "failed": 0,
+  "byProfile": {
+    "desktop-persist": 25,
+    "enex-import": 25,
+    "storage-blocked": 25,
+    "mobile-persist": 25
+  },
+  "failures": []
+}
