@@ -58,6 +58,21 @@ assert.match(api.uploadProgressMessage(3,5,Date.now()-10_000),/3 \/ 5/);
 assert(events.some(event=>event.detail?.phase==="uploading"&&/5 \/ 5/.test(event.detail.message)));
 
 mockWindow.__parallelState={inFlight:0,maxInFlight:0,attachmentsComplete:0,nonAttachments:[]};
+const noAttachmentPointer=await api.uploadSnapshot({
+  snapshotId:"snapshot_v20cc",
+  attachments:[],
+  manifestText:'{"format":"noteplusp-cloud-snapshot-v1"}',
+  manifestSha256:"E".repeat(64),
+  counts:{noteCount:1,attachmentCount:0}
+});
+assert.equal(noAttachmentPointer.snapshotId,"snapshot_v20cc");
+assert.equal(mockWindow.__parallelState.maxInFlight,0,"empty snapshots must not create attachment workers");
+assert.deepEqual(mockWindow.__parallelState.nonAttachments,[
+  {kind:"manifest",attachmentsComplete:0},
+  {kind:"pointer",attachmentsComplete:0}
+]);
+
+mockWindow.__parallelState={inFlight:0,maxInFlight:0,attachmentsComplete:0,nonAttachments:[]};
 const failedAttachments=["att_ok0000","att_fail000","att_after00"].map((id,index)=>({
   id,
   blob:new Blob([`failure-${index}`],{type:"text/plain"}),
