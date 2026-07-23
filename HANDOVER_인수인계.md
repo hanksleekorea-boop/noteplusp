@@ -669,3 +669,9 @@
 - `NotePlusP Web`의 Firebase Console SDK 설정에서 공개 Web config를 확인했다. 프로젝트·웹 앱·저장소 식별자는 `noteplusp-d1078` 기준이며, 값은 `firebase-config-v17.js`에만 저장했다.
 - `tests/test_firebase_config_v17_v1.mjs`로 v16의 `firebase-config.js`는 계속 null이고 v17 전용 config의 필드·프로젝트·앱 식별자가 일치함을 확인했다.
 - 대용량 단일 파일 v16은 원본 보존 규칙 때문에 이 실행에서 v17 HTML로 복제하지 않았다. Google 공급자·Storage·Rules가 미설정인 상태에서 공개 기본 링크를 바꾸지 않는다.
+## 2026-07-23 · v17 원본보존 로더·모바일 설치 경로 로컬 검증 (추가)
+
+- `노트앱_v17.html`은 v16 원본을 수정·복제하지 않고, 실행 시 보존된 `노트앱_v16.html`을 읽어 v17 전용 Firebase config·매니페스트·서비스 워커 참조만 정확히 치환한다. 로더 실패 시 v16 안전 링크와 “기존 데이터는 변경되지 않았다”는 고지를 보여 준다.
+- `noteplus-v17.webmanifest`의 시작 주소는 `노트앱_v17.html`이고, `sw-v17.js`는 v16 캐시와 분리된 `noteplusp-v17-shell-1`을 사용한다. 따라서 휴대폰 홈 화면 설치 후에도 v17 경로로 다시 연다.
+- `test_v17_versioned_loader_v1.mjs`, v17 로컬 공개 접근성·키보드 회귀가 통과했다. 이는 로컬 실행 증거이며, Google 제공업체·Storage·Rules가 활성화되거나 실제 PC→휴대폰 데이터 이동을 입증한 것은 아니다.
+- v16, 기존 localStorage/IndexedDB 데이터, 공개 기본 링크는 변경하지 않았다. Google 지원 이메일 등록·제공업체 저장과 Storage 외부 설정은 아직 별도 관문이다.

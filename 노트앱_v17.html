@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>노트플러스P v17 준비 중</title>
+<style>body{font-family:system-ui,sans-serif;margin:2rem;line-height:1.6;color:#243}a{color:#075}</style>
+<body>
+  <p>노트플러스P를 안전하게 준비하고 있습니다…</p>
+  <noscript>이 버전은 JavaScript가 필요합니다. <a href="노트앱_v16.html">v16 열기</a></noscript>
+  <script>
+  (async function loadVersionedApp(){
+    const source = "노트앱_v16.html";
+    const closeScriptTag = "<" + "/script>";
+    const oldConfig = '<script src="firebase-config.js">' + closeScriptTag;
+    const newConfig = '<script src="firebase-config-v17.js">' + closeScriptTag;
+    const oldManifest = '<link rel="manifest" href="noteplus.webmanifest">';
+    const newManifest = '<link rel="manifest" href="noteplus-v17.webmanifest">';
+    const oldWorker = 'navigator.serviceWorker.register("./sw.js")';
+    const newWorker = 'navigator.serviceWorker.register("./sw-v17.js")';
+    try {
+      const response = await fetch(source, {cache:"no-store"});
+      if (!response.ok) throw new Error("원본 앱을 불러오지 못했습니다 (HTTP " + response.status + ")");
+      const original = await response.text();
+      if (original.indexOf(oldConfig) < 0 || original.indexOf(oldManifest) < 0 || original.indexOf(oldWorker) < 0) throw new Error("안전한 버전 연결 지점을 찾지 못했습니다");
+      document.open();
+      document.write(original.replace(oldConfig, newConfig).replace(oldManifest, newManifest).replace(oldWorker, newWorker));
+      document.close();
+    } catch (error) {
+      document.body.innerHTML = '<p>v17 준비에 실패했습니다. 기존 데이터는 변경되지 않았습니다.</p><p><a href="노트앱_v16.html">안전한 v16 열기</a></p><pre></pre>';
+      document.querySelector("pre").textContent = String(error && error.message || error);
+    }
+  }());
+  </script>
+</body>
+</html>
