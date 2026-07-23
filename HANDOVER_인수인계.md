@@ -707,3 +707,10 @@
 
 - commit `23a7a0e`를 GitHub Pages에 반영했고, v19 loader·Drive module·worker가 모두 HTTP 200 및 기록된 SHA-256으로 공개 확인됐다. 공개 기본 링크는 검증 전 v16으로 유지하고, PC·휴대폰 전송 후보의 정확한 URL은 `노트앱_v19.html`이다.
 - SM-G996N 미러를 재개하려 했으나 scrcpy 창이 없고 기존 scrcpy 실행은 Computer Use `system cursor manager did not become ready`로 실패했다. 기기 입력·로그인·Drive 파일 쓰기를 하지 않았으며 자세한 증거는 `QA_DEVICE_MIRROR_v19_20260723.md`다.
+
+## 2026-07-23 · v20 제한 병렬 Drive 백업·공개 모바일 회귀 (추가)
+
+- v19를 보존한 별도 `노트앱_v20.html`/Drive module/worker를 공개했다. 첨부 업로드와 원문 SHA-256 재다운로드 검증을 최대 2건으로만 병렬화하고, 진행 화면에는 완료 수·경과·대략적인 남은 시간·동시 2건 처리를 표시한다.
+- 첨부 하나가 실패하면 manifest 및 current pointer를 전혀 쓰지 않는 모의 실행 회귀를 추가했다. 성공 경로도 모든 첨부가 끝난 뒤에만 manifest와 pointer를 쓰는 것을 확인했다. 5MB 이하 multipart/related, 초과 resumable 및 수동 Content-Length 부재 계약도 유지했다.
+- GitHub Pages v20 loader/module/worker/manifest는 모두 HTTP 200 및 `QA_V20_DRIVE_PARALLEL_20260723.md`의 SHA-256으로 확인됐다. 공개 v20 URL의 모바일 IDB 저장·재접속, 저장소 완전 차단 시 입력 유지·정직 고지도 통과했다.
+- 이 검증은 실제 Google Drive 쓰기·사용자 1,914노트/2,250첨부 전체 백업·휴대폰 복원을 통과로 바꾸지 않는다. 화면에 진행 중인 v19 백업은 새로고침·닫기·버전 전환하지 않으며 v20은 다음에 새로 시작하는 백업에만 적용된다.

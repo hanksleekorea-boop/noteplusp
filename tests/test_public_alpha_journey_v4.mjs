@@ -17,6 +17,8 @@ try {
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const artifacts = path.join(root, "artifacts");
+const artifactPrefix = process.env.NOTEPLUS_ARTIFACT_PREFIX || "";
+const artifactPath = name => path.join(artifacts, artifactPrefix + name);
 const publicUrl = process.env.NOTEPLUS_PUBLIC_URL || "https://hanksleekorea-boop.github.io/noteplusp/";
 const appFile = process.env.NOTEPLUS_APP_FILE || "%EB%85%B8%ED%8A%B8%EC%95%B1_v16.html";
 const edge = process.env.NOTEPLUS_BROWSER || "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
@@ -97,7 +99,7 @@ async function verifyPersistentMobileJourney(browser) {
   }, { title, marker });
   assert.ok(persisted, "created note must survive a public-page reload");
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), true, "mobile page must not overflow horizontally");
-  await page.screenshot({ path: path.join(artifacts, "public_alpha_mobile_persist_v4.png"), fullPage: true });
+  await page.screenshot({ path: artifactPath("public_alpha_mobile_persist_v4.png"), fullPage: true });
   assert.deepEqual(errors, [], errors.join("\n"));
   await context.close();
   return { title, persistenceMode: "idb" };
@@ -132,7 +134,7 @@ async function verifyHonestNoStorageFallback(browser) {
   assert.equal(await page.locator("#edTitle").inputValue(), marker, "title must remain on screen when persistence fails");
   assert.match(await page.locator("#edContent").innerText(), /현재 화면 입력 유지/);
   assert.match(await page.locator("#edStatus").innerText(), /이번 세션/);
-  await page.screenshot({ path: path.join(artifacts, "public_alpha_mobile_storage_blocked_v4.png"), fullPage: true });
+  await page.screenshot({ path: artifactPath("public_alpha_mobile_storage_blocked_v4.png"), fullPage: true });
   assert.deepEqual(errors, [], errors.join("\n"));
   await context.close();
   return { persistenceMode: "memory", honestDisclosure: true, inputRetained: true };
