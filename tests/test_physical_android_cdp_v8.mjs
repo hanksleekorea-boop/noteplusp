@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
+import {execFileSync} from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +13,8 @@ const publicUrl = process.env.NOTEPLUS_PUBLIC_URL || "https://hanksleekorea-boop
 const version = process.env.NOTEPLUS_VERSION || "v16";
 const appUrl = new URL(`${encodeURIComponent(`노트앱_${version}.html`)}?physical=${Date.now()}`, publicUrl).href;
 const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "64832DEDEB76D7A469B6238F274042A27C894BCBAFD56E4B36B526FDBAE2E520";
+const adbPath = process.env.NOTEPLUS_ADB_PATH || "";
+const adbSerial = process.env.NOTEPLUS_ANDROID_SERIAL || "";
 const marker = `physical-cdp-${Date.now()}`;
 const qaTitle = `실기기 저장 확인 ${marker}`;
 const enexTitle = `실기기 ENEX 확인 ${marker}`;
@@ -170,18 +173,6 @@ try {
   assert.equal(offlineOk, true);
   console.log("STEP offline-reopen");
 
-  // Screenshot capture is evidence-only. A slow Android CDP screenshot must not prevent
-  // the protected cleanup below from restoring the original user state.
-  let screenshot = {captured: false, error: ""};
-  try {
-    const captured = await cdp.send("Page.captureScreenshot", { format: "png", fromSurface: true }, 10000);
-    fs.writeFileSync(path.join(artifacts, "physical_android_alpha_v16.png"), Buffer.from(captured.data, "base64"));
-    screenshot = {captured: true, error: ""};
-  } catch (error) {
-    screenshot = {captured: false, error: String(error && error.message || error)};
-    console.log(`STEP screenshot-unavailable ${screenshot.error}`);
-  }
-
   await cdp.evaluate(`(async()=>{window.state=window.migrateState(JSON.parse(${JSON.stringify(originalStateJson)}));window.sanitizeAllNoteHtml(window.state);if(window.noteDb)await window.writeStateAndAttachments([],${JSON.stringify(createdAttachmentIds)},null);else await window.persist();window.render();return true;})()`);
   cleaned = true;
   await cdp.send("Page.reload", { ignoreCache: false });
@@ -190,6 +181,29 @@ try {
   const cleanup = await cdp.evaluate(`({qaCount:window.state.notes.filter(note=>note.title===${JSON.stringify(qaTitle)}).length,enexCount:window.state.notes.filter(note=>note.title===${JSON.stringify(enexTitle)}).length,signatureMatch:window.stateSignature(window.state)===${JSON.stringify(originalSignature)}})`);
   assert.deepEqual(cleanup, { qaCount: 0, enexCount: 0, signatureMatch: true });
   console.log("STEP cleanup-verified");
+
+  // Never capture a user's note list. Replace the live DOM only after the persisted
+  // state is restored, then capture a proof card. CDP is preferred; ADB is a bounded
+  // fallback for Chrome builds whose Page.captureScreenshot command does not respond.
+  await cdp.evaluate(`(()=>{document.documentElement.innerHTML='<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;background:#f3f7f2;color:#173b23;font:600 18px system-ui;display:grid;place-items:center;min-height:100vh}main{padding:28px;border:2px solid #00a33a;border-radius:18px;background:#fff;text-align:center;max-width:300px}small{display:block;color:#52645a;margin-top:12px;font-weight:400}</style></head><body><main>NotePlusP v16<br>Android device QA passed<small>Privacy-safe proof · no note content captured</small></main></body>';return true;})()`);
+  let screenshot = {captured: false, method: "", error: ""};
+  try {
+    const captured = await cdp.send("Page.captureScreenshot", { format: "png", fromSurface: true }, 10000);
+    fs.writeFileSync(path.join(artifacts, "physical_android_alpha_v16.png"), Buffer.from(captured.data, "base64"));
+    screenshot = {captured: true, method: "cdp", error: ""};
+  } catch (cdpError) {
+    try {
+      if (!adbPath || !adbSerial) throw new Error("ADB screenshot fallback is not configured");
+      const png = execFileSync(adbPath, ["-s", adbSerial, "exec-out", "screencap", "-p"], {encoding: "buffer", timeout: 15000, maxBuffer: 16 * 1024 * 1024});
+      if (!Buffer.isBuffer(png) || png.length < 100 || png.subarray(0, 8).compare(Buffer.from([137,80,78,71,13,10,26,10])) !== 0) throw new Error("ADB screenshot is not a valid PNG");
+      fs.writeFileSync(path.join(artifacts, "physical_android_alpha_v16.png"), png);
+      screenshot = {captured: true, method: "adb", error: String(cdpError && cdpError.message || cdpError)};
+    } catch (adbError) {
+      screenshot = {captured: false, method: "", error: `${String(cdpError && cdpError.message || cdpError)} | ${String(adbError && adbError.message || adbError)}`};
+      console.log(`STEP screenshot-unavailable ${screenshot.error}`);
+    }
+  }
+  console.log(`STEP screenshot-${screenshot.captured ? screenshot.method : "unavailable"}`);
   const result={ok:true,publicUrl,version,release:{bytes:releaseBytes.length,sha256:expectedSha},device:{userAgent:initial.userAgent,viewport:initial.viewport},initialCounts:{notes:initial.notes,trash:initial.trash},persistenceMode:initial.persistenceMode,noteReloaded:true,enexPdfReloaded:true,serviceWorker:{active:restored.swActive,controlled:restored.swControlled,offlineReopen:offlineOk},install:{buttonExists:initial.installButtonExists,mobilePathVerified:true,promptReady:restored.installPromptReady},screenshot,cleanup};
   fs.writeFileSync(path.join(artifacts,"physical_android_alpha_v16.json"),JSON.stringify(result,null,2));
   console.log(JSON.stringify(result,null,2));

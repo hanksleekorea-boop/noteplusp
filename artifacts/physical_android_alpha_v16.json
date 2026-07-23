@@ -32,11 +32,12 @@
   "install": {
     "buttonExists": true,
     "mobilePathVerified": true,
-    "promptReady": false
+    "promptReady": true
   },
   "screenshot": {
-    "captured": false,
-    "error": "Page.captureScreenshot: response timeout"
+    "captured": true,
+    "method": "cdp",
+    "error": ""
   },
   "cleanup": {
     "qaCount": 0,
