@@ -69,13 +69,22 @@ try {
   assert.deepEqual(restored.map(item => ({ name: item.name, mime: item.mime, size: item.blobSize })), expected);
   assert.ok(restored.every(item => item.metaSize === item.blobSize));
   await page.evaluate(expectedTitle => { const note = window.state.notes.find(item => item.title === expectedTitle); window.ui.selectedId = note.id; window.render(); }, title);
+  await page.locator("#attachmentIntegrity").click();
+  await page.waitForFunction(() => Boolean(window.lastAttachmentIntegrityReport) && !window.attachmentIntegrityRunning, null, {timeout: 30000});
+  const integrity = await page.evaluate(() => JSON.parse(JSON.stringify(window.lastAttachmentIntegrityReport)));
+  assert.equal(integrity.attachmentCount, 3);
+  assert.equal(integrity.verifiedCount, 3);
+  assert.equal(integrity.problemCount, 0);
+  assert.equal(integrity.items.length, 3);
+  const integrityText = JSON.stringify(integrity);
+  assert.doesNotMatch(integrityText, /pixel\.png|document\.pdf|recording\.mp3/);
   await page.screenshot({ path: path.join(artifacts, "public_attachment_types_v1.png"), fullPage: true });
   await page.evaluate(async ({ json, ids }) => { window.state = window.migrateState(JSON.parse(json)); window.sanitizeAllNoteHtml(window.state); await window.writeStateAndAttachments([], ids, null); window.render(); }, { json: original.json, ids: restored.map(item => item.id) });
   await page.reload({ waitUntil: "networkidle" });
   await page.evaluate(() => window.storageReady);
   assert.equal(await page.evaluate(({ expectedTitle, signature }) => !window.state.notes.some(note => note.title === expectedTitle) && window.stateSignature(window.state) === signature, { expectedTitle: title, signature: original.signature }), true);
   assert.deepEqual(errors, [], errors.join("\n"));
-  console.log(JSON.stringify({ ok: true, publicUrl, release: { bytes: releaseBytes.length, sha256: expectedSha }, preview: { notes: 1, attachments: 3 }, restored, cleanup: { signatureMatch: true } }, null, 2));
+  console.log(JSON.stringify({ ok: true, publicUrl, release: { bytes: releaseBytes.length, sha256: expectedSha }, preview: { notes: 1, attachments: 3 }, restored, integrity: {attachmentCount: integrity.attachmentCount, verifiedCount: integrity.verifiedCount, problemCount: integrity.problemCount, privacySafeItems: true}, cleanup: { signatureMatch: true } }, null, 2));
   await context.close();
 } finally {
   await browser.close();
