@@ -651,3 +651,9 @@
 - 콘솔은 생성 완료 대신 `ProgressEvent` 네트워크 오류를 반환했고 이후 브라우저 연결도 불안정했다. 프로젝트 존재·Web App·Google 공급자·승인 도메인·Storage·Rules 게시를 성공으로 기록하지 않는다. 다음 실행 시 콘솔에서 프로젝트 목록을 먼저 확인해 중복 생성을 피한다.
 - `tests/test_virtual_pilot_100_v1.mjs`가 공개 `노트앱_v16.html` SHA-256 `64832DEDEB76D7A469B6238F274042A27C894BCBAFD56E4B36B526FDBAE2E520`을 고정해 100개 합성 자동 세션을 실행했다. 모바일 IDB 저장 25, 데스크톱 IDB 저장 25, ENEX·첨부 import 25, 영속저장 차단 시 입력 유지·정직 고지 25가 모두 통과했다.
 - 이 결과는 자동화 회귀 증거일 뿐 실제 3~5명 파일럿, 실제 Google 로그인, PC→휴대폰 클라우드 동기화의 증거가 아니다.
+
+## 2026-07-23 · Firebase 프로젝트 실제 생성 확인 (추가)
+
+- Firebase Console 프로젝트 목록과 완료 화면에서 `NotePlusP` / `noteplusp-d1078`의 실제 생성을 확인했다. Gemini, Google Analytics, Google 개발자 프로그램은 사용 설정하지 않았다.
+- 생성 직후 콘솔 프로젝트 화면 전환은 브라우저 연결 지연으로 완료하지 못했다. Web App 등록, Google 로그인, 승인 도메인, Storage, Storage Rules는 아직 미설정이며 성공으로 표시하지 않는다.
+- v16 앱과 `firebase-config.js`의 null 설정은 변경하지 않았다. 실제 Web config를 얻은 뒤에만 새 버전(v17) 전용 설정으로 연결한다.

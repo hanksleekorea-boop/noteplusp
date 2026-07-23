@@ -487,3 +487,11 @@ v5 schema 5와 Evernote 전체 이전 핵심 흐름 완료: 실제 Windows Evern
 6. [외부/Codex] PC Google 로그인→백업→휴대폰 Google 로그인→명시 복원→재접속 실증
 7. [외부] 실제 파일럿 3~5명 핵심 여정 결과 수집
 8. [Codex] P0 즉시·재현 P1 최소 수정 후 제한 알파 종료 보고
+
+## 2026-07-23 · Firebase 프로젝트 생성 후 다음 단계 (추가)
+
+1. [외부/Codex] `noteplusp-d1078` 콘솔 재연결 후 Web App 등록과 공개 config 획득
+2. [외부/Codex] Google 로그인 공급자와 `hanksleekorea-boop.github.io` 승인 도메인 구성
+3. [외부/소유자 확인] Storage 생성 중 요금제·결제 요구가 나오면 비용 발생 직전에 선택 확인
+4. [외부/소유자 확인] UID 격리·삭제 금지 Storage Rules 게시 직전 권한 변경 확인
+5. [Codex] v17 전용 Firebase config 연결·공개 배포·실제 PC→휴대폰 동기화 검증
