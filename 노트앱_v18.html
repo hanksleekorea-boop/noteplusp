@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>노트플러스P v18 준비 중</title><style>body{font-family:system-ui,sans-serif;margin:2rem;line-height:1.6;color:#243}a{color:#075}</style>
+<body><p>노트플러스P Google Drive 버전을 안전하게 준비하고 있습니다…</p><noscript>이 버전은 JavaScript가 필요합니다. <a href="노트앱_v16.html">v16 열기</a></noscript>
+<script>
+(async function loadVersionedApp(){
+  const source="노트앱_v16.html", closeScriptTag="<"+"/script>";
+  const oldConfig='<script src="firebase-config.js">'+closeScriptTag, newConfig='<script src="google-drive-config-v18.js">'+closeScriptTag;
+  const oldCloud='<script type="module" src="noteplus-cloud-v3.js">'+closeScriptTag, newCloud='<script type="module" src="noteplus-drive-v18.js">'+closeScriptTag;
+  const oldManifest='<link rel="manifest" href="noteplus.webmanifest">',newManifest='<link rel="manifest" href="noteplus-v18.webmanifest">';
+  const oldWorker='navigator.serviceWorker.register("./sw.js")',newWorker='navigator.serviceWorker.register("./sw-v18.js")';
+  try {
+    const response=await fetch(source,{cache:"no-store"}); if(!response.ok) throw new Error("원본 앱을 불러오지 못했습니다 (HTTP "+response.status+")");
+    const original=await response.text();
+    if([oldConfig,oldCloud,oldManifest,oldWorker].some(part=>original.indexOf(part)<0)) throw new Error("안전한 버전 연결 지점을 찾지 못했습니다");
+    document.open(); document.write(original.replace(oldConfig,newConfig).replace(oldCloud,newCloud).replace(oldManifest,newManifest).replace(oldWorker,newWorker)); document.close();
+  } catch(error) { document.body.innerHTML='<p>v18 준비에 실패했습니다. 기존 데이터는 변경되지 않았습니다.</p><p><a href="노트앱_v16.html">안전한 v16 열기</a></p><pre></pre>'; document.querySelector("pre").textContent=String(error&&error.message||error); }
+}());
+</script></body></html>

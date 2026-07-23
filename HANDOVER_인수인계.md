@@ -681,3 +681,8 @@
 - 승인된 도메인에 `hanksleekorea-boop.github.io`를 Custom으로 추가했고, 성공 고지를 확인했다. 이제 GitHub Pages 공개 주소는 Google OAuth 허용 목록에 있다.
 - Firebase Storage 화면은 현재 Spark 무료 요금제에서 “Storage 기능을 사용하려면 프로젝트의 요금제를 업그레이드하세요”라고 표시한다. 따라서 실제 노트·첨부 클라우드 백업/복원은 아직 사용할 수 없으며, Blaze 전환과 결제 수단 선택은 소유자의 별도 비용 승인 없이는 수행하지 않는다.
 - 이 상태에서 v17 공개 배포·Google 로그인 비전송 회귀까지는 진행할 수 있지만, “PC 데이터가 폰에서 복원됨”은 Storage가 준비되고 실제 백업·복원 검증을 통과할 때만 기록한다.
+## 2026-07-23 · Google Drive 무료 전환 준비·v18 구현 착수 (추가)
+
+- Firebase Storage가 Spark 요금제에서 결제를 요구하는 상태이므로, 사용자 승인에 따라 Google Drive의 앱 전용 비공개 `appDataFolder`로 전환했다. Drive API를 실제 사용 설정했고, GitHub Pages 원본만 허용하는 전용 OAuth 웹 클라이언트와 비민감 `https://www.googleapis.com/auth/drive.appdata` 범위를 생성·저장했다.
+- 새 `노트앱_v18.html`은 v16 원본을 런타임에 읽고 Drive 전용 config·모듈·manifest·service worker만 치환한다. v16/v17 및 기존 IndexedDB 데이터는 수정하지 않는다.
+- `noteplus-drive-v18.js`는 액세스 토큰을 메모리에만 유지하며, 로그인만으로 데이터 전송을 하지 않는다. 첨부 업로드·원문 SHA-256 다운로드 검증·manifest 검증 뒤 마지막 current pointer를 쓰는 순서를 구현했다. 아직 실제 PC→휴대폰 Drive 백업·복원 및 파일럿 결과는 없다.

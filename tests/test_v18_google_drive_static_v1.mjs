@@ -1,0 +1,23 @@
+import fs from "node:fs";
+import assert from "node:assert/strict";
+
+const read = name => fs.readFileSync(new URL(`../${name}`, import.meta.url), "utf8");
+const loader = read("노트앱_v18.html");
+const module = read("noteplus-drive-v18.js");
+const config = read("google-drive-config-v18.js");
+assert.match(loader, /노트앱_v16\.html/);
+assert.match(loader, /google-drive-config-v18\.js/);
+assert.match(loader, /noteplus-drive-v18\.js/);
+assert.match(module, /https:\/\/www\.googleapis\.com\/auth\/drive\.appdata/);
+assert.match(module, /appDataFolder/);
+assert.match(module, /noteplusp-v18-current\.json/);
+assert.match(module, /uploadAndVerify\(attachmentName/);
+assert.match(module, /manifest=await uploadAndVerify/);
+assert.match(module, /await uploadAndVerify\("noteplusp-v18-current\.json"/);
+assert.ok(module.indexOf("uploadAndVerify(attachmentName") < module.indexOf("manifest=await uploadAndVerify"));
+assert.ok(module.indexOf("manifest=await uploadAndVerify") < module.indexOf("noteplusp-v18-current.json"));
+assert.match(module, /tokenPersistence:"memory-only"/);
+assert.match(module, /로컬 데이터는 그대로입니다/);
+assert.doesNotMatch(module, /drive\.file|drive\.readonly|drive\.metadata\.readonly/);
+assert.match(config, /\.apps\.googleusercontent\.com/);
+console.log("PASS v18 Google Drive static safety contract");
