@@ -1,7 +1,7 @@
 # NotePlusP v20 Drive 병렬 백업 QA 기록
 
-작성일: 2026-07-23  
-후보: `노트앱_v20.html` / commit `5d67aca`  
+작성일: 2026-07-23
+후보: `노트앱_v20.html` / commit `5d67aca`
 공개 URL: `https://hanksleekorea-boop.github.io/noteplusp/%EB%85%B8%ED%8A%B8%EC%95%B1_v20.html`
 
 ## 변경 범위
