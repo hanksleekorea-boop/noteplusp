@@ -495,3 +495,11 @@ v5 schema 5와 Evernote 전체 이전 핵심 흐름 완료: 실제 Windows Evern
 3. [외부/소유자 확인] Storage 생성 중 요금제·결제 요구가 나오면 비용 발생 직전에 선택 확인
 4. [외부/소유자 확인] UID 격리·삭제 금지 Storage Rules 게시 직전 권한 변경 확인
 5. [Codex] v17 전용 Firebase config 연결·공개 배포·실제 PC→휴대폰 동기화 검증
+
+## 2026-07-23 · Web App 등록 후 다음 단계 (추가)
+
+1. [외부/Codex] `NotePlusP Web`의 공개 Firebase config 재조회
+2. [외부/Codex] Google 로그인 공급자와 `hanksleekorea-boop.github.io` 승인 도메인 구성
+3. [외부/소유자 확인] Storage 생성 시 요금제·결제 요구 확인
+4. [외부/소유자 확인] UID 격리 Storage Rules 게시 직전 권한 변경 확인
+5. [Codex] 확인된 config를 v17 전용으로 연결하고 공개·기기 실증

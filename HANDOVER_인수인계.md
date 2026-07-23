@@ -657,3 +657,9 @@
 - Firebase Console 프로젝트 목록과 완료 화면에서 `NotePlusP` / `noteplusp-d1078`의 실제 생성을 확인했다. Gemini, Google Analytics, Google 개발자 프로그램은 사용 설정하지 않았다.
 - 생성 직후 콘솔 프로젝트 화면 전환은 브라우저 연결 지연으로 완료하지 못했다. Web App 등록, Google 로그인, 승인 도메인, Storage, Storage Rules는 아직 미설정이며 성공으로 표시하지 않는다.
 - v16 앱과 `firebase-config.js`의 null 설정은 변경하지 않았다. 실제 Web config를 얻은 뒤에만 새 버전(v17) 전용 설정으로 연결한다.
+
+## 2026-07-23 · Firebase Web App 등록 확인 (추가)
+
+- Firebase 프로젝트 `noteplusp-d1078`에 웹 앱 `NotePlusP Web`을 실제 등록했다. Firebase Hosting 체크박스는 선택하지 않았으므로 기존 GitHub Pages 공개 링크는 그대로다.
+- SDK 화면에서 공개 config를 읽으려는 순간 콘솔 브라우저 연결이 지연됐다. config 값, Google 로그인, 승인 도메인, Storage, Rules는 아직 연결·게시하지 않았다.
+- v16과 `firebase-config.js`는 그대로 유지한다. config가 확인된 뒤 v17 전용 파일에만 반영한다.
