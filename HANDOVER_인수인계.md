@@ -702,3 +702,8 @@
 
 - v18 공개본을 수정하지 않고 `noteplus-drive-v19.js`를 별도 산출물로 만들었다. v19은 manual `multipart/related`(5MB 이하)와 8MiB chunk resumable(5MB 초과) 업로드를 사용하며, 브라우저가 금지할 수 있는 `Content-Length` 수동 설정은 제거했다.
 - `test_v19_drive_upload_protocol_v1.mjs`는 실제 브라우저 Fetch 형태의 모의 Drive 응답에서 metadata-first multipart body, resumable session 생성, 6MB chunk의 Content-Range, 수동 Content-Length 부재를 검증해 통과했다. 이 검증은 실제 사용자 Drive에 쓰지 않은 자동 증거다.
+
+## 2026-07-23 · v19 공개 배포·미러 재개 환경 기록 (추가)
+
+- commit `23a7a0e`를 GitHub Pages에 반영했고, v19 loader·Drive module·worker가 모두 HTTP 200 및 기록된 SHA-256으로 공개 확인됐다. 공개 기본 링크는 검증 전 v16으로 유지하고, PC·휴대폰 전송 후보의 정확한 URL은 `노트앱_v19.html`이다.
+- SM-G996N 미러를 재개하려 했으나 scrcpy 창이 없고 기존 scrcpy 실행은 Computer Use `system cursor manager did not become ready`로 실패했다. 기기 입력·로그인·Drive 파일 쓰기를 하지 않았으며 자세한 증거는 `QA_DEVICE_MIRROR_v19_20260723.md`다.
