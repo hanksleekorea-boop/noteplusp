@@ -687,3 +687,18 @@
 - 새 `노트앱_v18.html`은 v16 원본을 런타임에 읽고 Drive 전용 config·모듈·manifest·service worker만 치환한다. v16/v17 및 기존 IndexedDB 데이터는 수정하지 않는다.
 - `noteplus-drive-v18.js`는 액세스 토큰을 메모리에만 유지하며, 로그인만으로 데이터 전송을 하지 않는다. 첨부 업로드·원문 SHA-256 다운로드 검증·manifest 검증 뒤 마지막 current pointer를 쓰는 순서를 구현했다. 아직 실제 PC→휴대폰 Drive 백업·복원 및 파일럿 결과는 없다.
 - 공개 검증: `노트앱_v18.html` 및 Drive config/module/worker/manifest가 GitHub Pages에서 모두 HTTP 200으로 확인됐다. v18 loader SHA-256은 `4222DB2FC0F418D92575A404280C0C24259077F147A532B60325B2C70946582D`이다.
+
+## 2026-07-23 · 실제 기기 미러 QA v18 첫 관찰·v19 로컬 수정 (추가)
+
+- SM-G996N wireless ADB와 scrcpy 미러는 실제 연결을 확인했다. 다만 전면은 LINE 인앱 브라우저이고 미러가 검은 화면이어서, 대상 앱 URL 입력·데이터 생성·로그인·권한 클릭을 하지 않았다. 실제 기기 핵심 여정은 PASS가 아니라 PARTIAL/UNVERIFIED이며 근거는 `QA_DEVICE_MIRROR_v18_20260723_190656.md`다.
+- Drive 공식 업로드 규격을 재검토해 `FormData` multipart가 아닌 `multipart/related`가 필요하고 5MB 초과 첨부에는 resumable 업로드가 적절함을 발견했다. 새 공개 배포 없이 로컬 `노트앱_v19.html` 후보에 manual multipart-related와 8MiB chunk resumable 경로를 추가했고 구문·정적 계약 검사를 통과했다.
+
+## 2026-07-23 · Google Drive 로그인 로컬 파일 진단 (추가)
+
+- 사용자가 연 주소는 `file:///.../노트앱_v18.html`이었다. 이는 OAuth에 등록된 HTTPS JavaScript origin이 아니므로 Google Drive 로그인이 동작하지 않는 것이 정상이며, 공개 v18와 config는 HTTP 200으로 별도 확인됐다.
+- 로컬 v19 후보는 `file:` 실행을 감지하면 로그인 시도 대신 공개 HTTPS v18 링크와 무데이터 변경 고지를 표시하도록 보정했다. v19 로컬 파일 guard 구문·정적 계약 검사를 통과했으며, 공개 배포는 하지 않았다.
+
+## 2026-07-23 · v19 PC→휴대폰 Drive 전송 후보 정식 분리·프로토콜 검증 (추가)
+
+- v18 공개본을 수정하지 않고 `noteplus-drive-v19.js`를 별도 산출물로 만들었다. v19은 manual `multipart/related`(5MB 이하)와 8MiB chunk resumable(5MB 초과) 업로드를 사용하며, 브라우저가 금지할 수 있는 `Content-Length` 수동 설정은 제거했다.
+- `test_v19_drive_upload_protocol_v1.mjs`는 실제 브라우저 Fetch 형태의 모의 Drive 응답에서 metadata-first multipart body, resumable session 생성, 6MB chunk의 Content-Range, 수동 Content-Length 부재를 검증해 통과했다. 이 검증은 실제 사용자 Drive에 쓰지 않은 자동 증거다.

@@ -1,0 +1,10 @@
+import fs from "node:fs";
+import assert from "node:assert/strict";
+const read=name=>fs.readFileSync(new URL(`../${name}`,import.meta.url),"utf8");
+const loader=read("노트앱_v19.html"),module=read("noteplus-drive-v19.js"),worker=read("sw-v19.js");
+assert.match(loader,/노트앱_v16\.html/);assert.match(loader,/noteplus-v19\.webmanifest/);assert.match(loader,/sw-v19\.js/);
+assert.match(loader,/location\.protocol==="file:"/);assert.match(loader,/hanksleekorea-boop\.github\.io\/noteplusp/);
+assert.match(module,/multipart\/related; boundary=/);assert.match(module,/uploadType=resumable/);assert.match(module,/Content-Range/);assert.match(module,/blob\.size<=5\*1024\*1024/);assert.match(module,/resumableStatus/);
+assert.doesNotMatch(module,/"Content-Length"/);
+assert.match(worker,/noteplusp-v19-shell-1/);assert.match(worker,/noteplus-drive-v19\.js/);
+console.log("PASS v19 local candidate uses Drive multipart-related and resumable upload paths");
