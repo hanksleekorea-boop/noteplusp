@@ -16,6 +16,11 @@ try {
   };
   assert.equal(validateFirebaseConfig(valid).ok, true);
   assert.equal(validateFirebaseConfig({...valid, mobileAuthMode: "invalid"}).ok, false);
+  assert.match(validateFirebaseConfig({...valid, authDomain: "not a domain"}).reason, /authDomain/);
+  assert.match(validateFirebaseConfig({...valid, projectId: "bad project id"}).reason, /projectId/);
+  assert.match(validateFirebaseConfig({...valid, storageBucket: "example.invalid"}).reason, /storageBucket/);
+  assert.match(validateFirebaseConfig({...valid, appId: "YOUR_PUBLIC_WEB_APP_ID"}).reason, /예시 값/);
+  assert.match(validateFirebaseConfig({...valid, apiKey: ""}).reason, /필수 항목/);
   const configPath = path.join(temp, "config.js");
   fs.writeFileSync(configPath, `window.NOTEPLUS_FIREBASE_CONFIG = ${JSON.stringify(valid)};`, "utf8");
   const result = inspectActivation(root, configPath);
@@ -23,6 +28,14 @@ try {
   assert.equal(result.rules, true);
   assert.equal(result.readyForFirebaseConsole, true);
   assert.equal(result.externalSteps.length, 5);
+  const rules = fs.readFileSync(path.join(root, "firebase.storage.rules"), "utf8");
+  assert.match(rules, /function owns\(uid\)\s*\{\s*return request\.auth != null && request\.auth\.uid == uid;/);
+  assert.match(rules, /match \/users\/\{uid\}\/current\.json/);
+  assert.match(rules, /match \/users\/\{uid\}\/snapshots\/\{snapshotId\}\/manifest\.json/);
+  assert.match(rules, /match \/users\/\{uid\}\/snapshots\/\{snapshotId\}\/attachments\/\{attachmentId\}/);
+  assert.match(rules, /allow delete: if false;/);
+  assert.match(rules, /match \/\{allPaths=\*\*\}\s*\{\s*allow read, write: if false;/);
+  assert.doesNotMatch(rules, /allow\s+(?:read|write|read, write)\s*:\s*if\s+true/);
   console.log("PASS firebase activation packet: config, rules, no-deploy readiness");
 } finally {
   fs.rmSync(temp, {recursive: true, force: true});

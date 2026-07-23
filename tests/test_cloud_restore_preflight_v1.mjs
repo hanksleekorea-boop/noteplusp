@@ -47,6 +47,8 @@ try {
     const totalBytes = 800 * 1024 * 1024;
     const low = window.assessCloudRestorePreflight({totalBytes}, {usage: 900 * 1024 * 1024, quota: 1024 * 1024 * 1024});
     const roomy = window.assessCloudRestorePreflight({totalBytes}, {usage: 100 * 1024 * 1024, quota: 2 * 1024 * 1024 * 1024});
+    const exactBoundary = window.assessCloudRestorePreflight({totalBytes}, {usage: 0, quota: low.requiredBytes});
+    const oneByteShort = window.assessCloudRestorePreflight({totalBytes}, {usage: 0, quota: low.requiredBytes - 1});
     const unknown = window.assessCloudRestorePreflight({totalBytes}, null);
     const saveData = window.cloudRestoreNetworkNotice({totalBytes}, {saveData: true, effectiveType: "4g"});
     const slow = window.cloudRestoreNetworkNotice({totalBytes}, {saveData: false, effectiveType: "3g"});
@@ -59,10 +61,12 @@ try {
     try { await window.restoreVerifiedCloudSnapshot(preview); } catch (error) { blocked = String(error && error.message || error); }
     window.pendingCloudRestore = preview;
     window.setCloudUi({phase: "error", configured: true, user: {uid: "preflight-user", email: "mobile@example.invalid"}, mobile: true, message: blocked});
-    return {low, roomy, unknown, saveData, slow, blocked, downloads, signatureSame: window.stateSignature(window.state) === signature};
+    return {low, roomy, exactBoundary, oneByteShort, unknown, saveData, slow, blocked, downloads, signatureSame: window.stateSignature(window.state) === signature};
   });
   assert.equal(result.low.status, "blocked");
   assert.equal(result.roomy.status, "ok");
+  assert.equal(result.exactBoundary.status, "ok");
+  assert.equal(result.oneByteShort.status, "blocked");
   assert.equal(result.unknown.status, "unknown");
   assert.match(result.saveData, /데이터 절약 모드/);
   assert.match(result.slow, /3G/);
@@ -73,7 +77,7 @@ try {
   await page.locator('[data-mobile-view="side"]').click();
   await page.locator("#cloudPanel").scrollIntoViewIfNeeded();
   await page.screenshot({path: path.join(artifacts, "cloud_restore_preflight_v16.png"), fullPage: true});
-  console.log(JSON.stringify({ok: true, appUrl, low: result.low, roomy: result.roomy, unknown: result.unknown, networkWarnings: true, blockedBeforeDownload: true, stateUnchanged: true}, null, 2));
+  console.log(JSON.stringify({ok: true, appUrl, low: result.low, roomy: result.roomy, exactBoundary: result.exactBoundary, oneByteShort: result.oneByteShort, unknown: result.unknown, networkWarnings: true, blockedBeforeDownload: true, stateUnchanged: true}, null, 2));
   await context.close();
 } finally {
   await browser.close();

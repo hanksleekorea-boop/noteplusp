@@ -1,13 +1,32 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
+import fs from "node:fs";
+import http from "node:http";
 import { createRequire } from "node:module";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
 
 const require = createRequire(import.meta.url);
 const runtimePlaywright = "C:/Users/User/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/playwright-core@1.61.1/node_modules/playwright-core";
 let chromium;
 try { ({ chromium } = require("playwright-core")); } catch { ({ chromium } = require(runtimePlaywright)); }
 
-const appUrl = process.env.NOTEPLUS_APP_URL || `http://127.0.0.1:4173/${encodeURIComponent(process.env.NOTEPLUS_APP_FILE || "노트앱_v12.html")}?hashless=${Date.now()}`;
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const appFile = process.env.NOTEPLUS_APP_FILE || "노트앱_v16.html";
+const externalAppUrl = process.env.NOTEPLUS_APP_URL || "";
+let server = null;
+let appUrl = externalAppUrl;
+if (!appUrl) {
+  server = http.createServer((request, response) => {
+    const pathname = decodeURIComponent(new URL(request.url, "http://127.0.0.1").pathname);
+    const target = path.resolve(root, "." + (pathname === "/" ? `/${appFile}` : pathname));
+    if (!target.startsWith(root + path.sep)) { response.writeHead(403).end(); return; }
+    const types = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml"};
+    fs.readFile(target, (error, bytes) => { if (error) { response.writeHead(404).end(); return; } response.writeHead(200, {"content-type": types[path.extname(target).toLowerCase()] || "application/octet-stream", "cache-control": "no-store"}); response.end(bytes); });
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  appUrl = `http://127.0.0.1:${server.address().port}/${encodeURIComponent(appFile)}?hashless=${Date.now()}`;
+}
 const edge = process.env.NOTEPLUS_BROWSER || "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
 const pdf = Buffer.from("%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n", "utf8");
 const htmlAttachment = Buffer.from("<script>window.hashlessAttachmentPwned=1</script><p>download-only</p>", "utf8");
@@ -70,4 +89,5 @@ try {
   await context.close();
 } finally {
   await browser.close();
+  if (server) await new Promise(resolve => server.close(resolve));
 }
