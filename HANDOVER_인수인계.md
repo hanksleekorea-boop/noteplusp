@@ -663,3 +663,9 @@
 - Firebase 프로젝트 `noteplusp-d1078`에 웹 앱 `NotePlusP Web`을 실제 등록했다. Firebase Hosting 체크박스는 선택하지 않았으므로 기존 GitHub Pages 공개 링크는 그대로다.
 - SDK 화면에서 공개 config를 읽으려는 순간 콘솔 브라우저 연결이 지연됐다. config 값, Google 로그인, 승인 도메인, Storage, Rules는 아직 연결·게시하지 않았다.
 - v16과 `firebase-config.js`는 그대로 유지한다. config가 확인된 뒤 v17 전용 파일에만 반영한다.
+
+## 2026-07-23 · Firebase 공개 Web config 회수·v17 분리 준비 (추가)
+
+- `NotePlusP Web`의 Firebase Console SDK 설정에서 공개 Web config를 확인했다. 프로젝트·웹 앱·저장소 식별자는 `noteplusp-d1078` 기준이며, 값은 `firebase-config-v17.js`에만 저장했다.
+- `tests/test_firebase_config_v17_v1.mjs`로 v16의 `firebase-config.js`는 계속 null이고 v17 전용 config의 필드·프로젝트·앱 식별자가 일치함을 확인했다.
+- 대용량 단일 파일 v16은 원본 보존 규칙 때문에 이 실행에서 v17 HTML로 복제하지 않았다. Google 공급자·Storage·Rules가 미설정인 상태에서 공개 기본 링크를 바꾸지 않는다.

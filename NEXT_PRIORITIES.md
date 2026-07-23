@@ -503,3 +503,12 @@ v5 schema 5와 Evernote 전체 이전 핵심 흐름 완료: 실제 Windows Evern
 3. [외부/소유자 확인] Storage 생성 시 요금제·결제 요구 확인
 4. [외부/소유자 확인] UID 격리 Storage Rules 게시 직전 권한 변경 확인
 5. [Codex] 확인된 config를 v17 전용으로 연결하고 공개·기기 실증
+
+## 2026-07-23 · config 회수 후 다음 단계 (추가)
+
+1. [외부/Codex] Firebase Authentication의 Google 제공업체 설정 화면 재연결·지원 이메일/사용 설정 요구 확인
+2. [외부/소유자 확인] Google 제공업체를 사용 설정하며 공개 지원 이메일을 등록해야 하면 정확한 이메일 선택 확인
+3. [외부/Codex] 승인 도메인에 `hanksleekorea-boop.github.io` 추가
+4. [외부/소유자 확인] Storage 생성의 요금제·결제 요구 확인
+5. [외부/소유자 확인] Storage Rules 게시 직전 권한 변경 확인
+6. [Codex] 원본 보존 방식의 v17 HTML 산출·config 연결·공개 검증
