@@ -675,3 +675,9 @@
 - `noteplus-v17.webmanifest`의 시작 주소는 `노트앱_v17.html`이고, `sw-v17.js`는 v16 캐시와 분리된 `noteplusp-v17-shell-1`을 사용한다. 따라서 휴대폰 홈 화면 설치 후에도 v17 경로로 다시 연다.
 - `test_v17_versioned_loader_v1.mjs`, v17 로컬 공개 접근성·키보드 회귀가 통과했다. 이는 로컬 실행 증거이며, Google 제공업체·Storage·Rules가 활성화되거나 실제 PC→휴대폰 데이터 이동을 입증한 것은 아니다.
 - v16, 기존 localStorage/IndexedDB 데이터, 공개 기본 링크는 변경하지 않았다. Google 지원 이메일 등록·제공업체 저장과 Storage 외부 설정은 아직 별도 관문이다.
+## 2026-07-23 · Firebase Google 인증 활성화·GitHub Pages 승인 도메인 확인 (추가)
+
+- 소유자의 명시 승인 뒤 Firebase Authentication에서 프로젝트 지원 이메일을 등록하고 Google 제공업체를 실제로 저장했다. 콘솔 로그인 방법 표에서 Google 상태가 “사용 설정됨”으로 확인됐다.
+- 승인된 도메인에 `hanksleekorea-boop.github.io`를 Custom으로 추가했고, 성공 고지를 확인했다. 이제 GitHub Pages 공개 주소는 Google OAuth 허용 목록에 있다.
+- Firebase Storage 화면은 현재 Spark 무료 요금제에서 “Storage 기능을 사용하려면 프로젝트의 요금제를 업그레이드하세요”라고 표시한다. 따라서 실제 노트·첨부 클라우드 백업/복원은 아직 사용할 수 없으며, Blaze 전환과 결제 수단 선택은 소유자의 별도 비용 승인 없이는 수행하지 않는다.
+- 이 상태에서 v17 공개 배포·Google 로그인 비전송 회귀까지는 진행할 수 있지만, “PC 데이터가 폰에서 복원됨”은 Storage가 준비되고 실제 백업·복원 검증을 통과할 때만 기록한다.
