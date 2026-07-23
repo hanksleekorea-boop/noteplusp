@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>노트플러스P v20</title><style>body{font-family:system-ui,sans-serif;margin:2rem;line-height:1.6;color:#243}a{color:#075}</style>
+<body><p>노트플러스P v20을 안전하게 준비하고 있습니다…</p><noscript>이 버전은 JavaScript가 필요합니다. <a href="노트앱_v19.html">v19 열기</a></noscript>
+<script>
+(async function loadVersionedApp(){
+  if(location.protocol==="file:"){document.body.innerHTML='<h1>로컬 파일에서는 Google Drive 로그인을 사용할 수 없습니다.</h1><p>기존 노트 데이터는 변경되지 않았습니다.</p><p><a href="https://hanksleekorea-boop.github.io/noteplusp/%EB%85%B8%ED%8A%B8%EC%95%B1_v20.html">공개 노트플러스P v20 열기</a></p>';return;}
+  const source="노트앱_v16.html",closeScriptTag="<"+"/script>";
+  const oldConfig='<script src="firebase-config.js">'+closeScriptTag,newConfig='<script src="google-drive-config-v18.js">'+closeScriptTag;
+  const oldCloud='<script type="module" src="noteplus-cloud-v3.js">'+closeScriptTag,newCloud='<script type="module" src="noteplus-drive-v20.js">'+closeScriptTag;
+  const oldManifest='<link rel="manifest" href="noteplus.webmanifest">',newManifest='<link rel="manifest" href="noteplus-v20.webmanifest">';
+  const oldWorker='navigator.serviceWorker.register("./sw.js")',newWorker='navigator.serviceWorker.register("./sw-v20.js")';
+  try{const response=await fetch(source,{cache:"no-store"});if(!response.ok)throw new Error("원본 앱을 불러오지 못했습니다 (HTTP "+response.status+")");const original=await response.text();if([oldConfig,oldCloud,oldManifest,oldWorker].some(part=>original.indexOf(part)<0))throw new Error("안전한 버전 연결 지점을 찾지 못했습니다");document.open();document.write(original.replace(oldConfig,newConfig).replace(oldCloud,newCloud).replace(oldManifest,newManifest).replace(oldWorker,newWorker));document.close();}
+  catch(error){document.body.innerHTML='<p>v20 준비에 실패했습니다. 기존 데이터는 변경되지 않았습니다.</p><p><a href="노트앱_v19.html">v19 열기</a></p><pre></pre>';document.querySelector("pre").textContent=String(error&&error.message||error);}
+}());
+</script></body></html>
