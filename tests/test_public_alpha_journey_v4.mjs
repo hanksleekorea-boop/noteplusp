@@ -6,7 +6,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const runtimePlaywright = "C:/Users/User/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/playwright-core@1.61.1/node_modules/playwright-core";
+const runtimePlaywright = process.env.NOTEPLUS_PLAYWRIGHT || "C:/Users/User/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright-core";
 let chromium;
 try {
   ({ chromium } = require("playwright-core"));
@@ -25,6 +25,25 @@ const edge = process.env.NOTEPLUS_BROWSER || "C:/Program Files (x86)/Microsoft/E
 const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "64832DEDEB76D7A469B6238F274042A27C894BCBAFD56E4B36B526FDBAE2E520";
 
 fs.mkdirSync(artifacts, { recursive: true });
+
+const cleanupWarnings = [];
+
+async function closeWithDeadline(label, close) {
+  let timer;
+  try {
+    const result = await Promise.race([
+      Promise.resolve().then(close).then(() => "closed"),
+      new Promise(resolve => {
+        timer = setTimeout(() => resolve("timeout"), 5000);
+      })
+    ]);
+    if (result === "timeout") cleanupWarnings.push(`${label} cleanup exceeded 5 seconds`);
+  } catch (error) {
+    cleanupWarnings.push(`${label} cleanup failed: ${error?.message || error}`);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 function sha256(bytes) {
   return crypto.createHash("sha256").update(bytes).digest("hex").toUpperCase();
@@ -101,7 +120,7 @@ async function verifyPersistentMobileJourney(browser) {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), true, "mobile page must not overflow horizontally");
   await page.screenshot({ path: artifactPath("public_alpha_mobile_persist_v4.png"), fullPage: true });
   assert.deepEqual(errors, [], errors.join("\n"));
-  await context.close();
+  await closeWithDeadline("persistent context", () => context.close());
   return { title, persistenceMode: "idb" };
 }
 
@@ -136,7 +155,7 @@ async function verifyHonestNoStorageFallback(browser) {
   assert.match(await page.locator("#edStatus").innerText(), /이번 세션/);
   await page.screenshot({ path: artifactPath("public_alpha_mobile_storage_blocked_v4.png"), fullPage: true });
   assert.deepEqual(errors, [], errors.join("\n"));
-  await context.close();
+  await closeWithDeadline("blocked-storage context", () => context.close());
   return { persistenceMode: "memory", honestDisclosure: true, inputRetained: true };
 }
 
@@ -151,8 +170,14 @@ try {
     release,
     persistent,
     fallback,
+    cleanupWarnings,
     knownNonBlocking: ["favicon.ico returns HTTP 404 (P2; app journey unaffected)"]
   }, null, 2));
 } finally {
-  await browser.close();
+  await closeWithDeadline("browser", () => browser.close());
 }
+
+// Some Windows browser builds keep a transport handle alive after close() has
+// already exceeded its deadline. All product assertions are complete here;
+// terminate only the disposable QA runner, never the user's browser profile.
+process.exit(0);

@@ -7,7 +7,7 @@ import {createRequire} from "node:module";
 import {fileURLToPath} from "node:url";
 
 const require = createRequire(import.meta.url);
-const runtimePlaywright = "C:/Users/User/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/playwright-core@1.61.1/node_modules/playwright-core";
+const runtimePlaywright = process.env.NOTEPLUS_PLAYWRIGHT || "C:/Users/User/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright-core";
 let chromium;
 try { ({chromium} = require("playwright-core")); } catch { ({chromium} = require(runtimePlaywright)); }
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
