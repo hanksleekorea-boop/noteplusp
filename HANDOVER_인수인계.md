@@ -714,3 +714,11 @@
 - 첨부 하나가 실패하면 manifest 및 current pointer를 전혀 쓰지 않는 모의 실행 회귀를 추가했다. 성공 경로도 모든 첨부가 끝난 뒤에만 manifest와 pointer를 쓰는 것을 확인했다. 5MB 이하 multipart/related, 초과 resumable 및 수동 Content-Length 부재 계약도 유지했다.
 - GitHub Pages v20 loader/module/worker/manifest는 모두 HTTP 200 및 `QA_V20_DRIVE_PARALLEL_20260723.md`의 SHA-256으로 확인됐다. 공개 v20 URL의 모바일 IDB 저장·재접속, 저장소 완전 차단 시 입력 유지·정직 고지도 통과했다.
 - 이 검증은 실제 Google Drive 쓰기·사용자 1,914노트/2,250첨부 전체 백업·휴대폰 복원을 통과로 바꾸지 않는다. 화면에 진행 중인 v19 백업은 새로고침·닫기·버전 전환하지 않으며 v20은 다음에 새로 시작하는 백업에만 적용된다.
+
+## 2026-07-30 · 전담 개발 제어 v6 적용·공개 v20 격리 회귀 (추가)
+
+- 전담 개발 에이전트 운영 프롬프트 v6.0을 현재 노트플러스P에 적용하고, 일정·처리량·분야별 고정 분모·관문·20/20 큐를 `PROJECT_CONTROL_v6_20260730.md`에 새 정본 증거로 분리했다. 최초 조건부 ETA 2026-07-25는 이미 경과했으며 실제 Drive·현행 휴대폰·파일럿 일정 부재 때문에 현재 달력 ETA는 미측정으로 정직하게 유지한다.
+- 공개 v20은 새 Chrome 컨텍스트에서 새 노트→IDB 저장→새로고침 복구, 390×844 무가로넘침, IndexedDB/localStorage 완전 차단 시 입력 유지·메모리 모드·정직 고지가 통과했다. 결과는 `QA_V20_PUBLIC_QR_ANON_20260730.md`와 두 최종 스크린샷에 기록했다.
+- v20 QR PNG·SVG를 생성하고 독립 외부 디코더가 정확한 공개 v20 URL을 반환함을 확인했다. resumable HTTP 500 뒤 서버 인정 offset 재개와 병렬 업로드 확정 순서도 통과했다.
+- 37개 브라우저 하네스의 Playwright 설치 버전 고정 경로를 환경변수+안정 런타임 fallback으로 교체하고 재발 방지 검사를 추가했다. 앱 정본·기존 사용자 데이터·기본 공개 v16은 변경하지 않았다.
+- commit `9611113`을 main에 push했다. 실제 Drive 전체 전송·v20 실제 Android·PC→휴대폰 복원·사람 3~5명은 계속 UNVERIFIED다.
