@@ -23,6 +23,7 @@ const publicUrl = process.env.NOTEPLUS_PUBLIC_URL || "https://hanksleekorea-boop
 const appFile = process.env.NOTEPLUS_APP_FILE || "%EB%85%B8%ED%8A%B8%EC%95%B1_v16.html";
 const edge = process.env.NOTEPLUS_BROWSER || "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
 const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "64832DEDEB76D7A469B6238F274042A27C894BCBAFD56E4B36B526FDBAE2E520";
+const expectedCloudVersion = process.env.NOTEPLUS_EXPECTED_CLOUD_VERSION || "";
 
 fs.mkdirSync(artifacts, { recursive: true });
 
@@ -49,8 +50,14 @@ function sha256(bytes) {
   return crypto.createHash("sha256").update(bytes).digest("hex").toUpperCase();
 }
 
+function candidateUrl() {
+  const url = new URL(appFile, publicUrl);
+  url.searchParams.set("qa", Date.now());
+  return url.href;
+}
+
 async function verifyRelease() {
-  const appUrl = new URL(appFile + "?qa=" + Date.now(), publicUrl);
+  const appUrl = candidateUrl();
   const response = await fetch(appUrl);
   assert.equal(response.status, 200, "public app must return HTTP 200");
   const bytes = Buffer.from(await response.arrayBuffer());
@@ -81,9 +88,12 @@ function watchPage(page, label) {
 async function openMobile(context, suffix) {
   const page = await context.newPage();
   const errors = watchPage(page, suffix);
-  await page.goto(publicUrl + "?qa=" + Date.now(), { waitUntil: "networkidle" });
+  await page.goto(candidateUrl(), { waitUntil: "networkidle" });
   await page.waitForFunction(() => window.storageReady && typeof window.storageReady.then === "function");
   await page.evaluate(() => window.storageReady);
+  if (expectedCloudVersion) {
+    await page.waitForFunction(version => window.noteplusCloud?.status?.().version === version, expectedCloudVersion);
+  }
   await page.locator("#mobileNav").waitFor({ state: "visible" });
   return { page, errors };
 }
@@ -167,6 +177,7 @@ try {
   console.log(JSON.stringify({
     ok: true,
     publicUrl,
+    candidateUrl: new URL(appFile, publicUrl).href,
     release,
     persistent,
     fallback,
