@@ -171,10 +171,11 @@ async function verifyHonestNoStorageFallback(browser) {
 
 const release = await verifyRelease();
 const browser = await chromium.launch({ executablePath: edge, headless: true });
+let report;
 try {
   const persistent = await verifyPersistentMobileJourney(browser);
   const fallback = await verifyHonestNoStorageFallback(browser);
-  console.log(JSON.stringify({
+  report = {
     ok: true,
     publicUrl,
     candidateUrl: new URL(appFile, publicUrl).href,
@@ -183,7 +184,7 @@ try {
     fallback,
     cleanupWarnings,
     knownNonBlocking: ["favicon.ico returns HTTP 404 (P2; app journey unaffected)"]
-  }, null, 2));
+  };
 } finally {
   await closeWithDeadline("browser", () => browser.close());
 }
@@ -191,4 +192,9 @@ try {
 // Some Windows browser builds keep a transport handle alive after close() has
 // already exceeded its deadline. All product assertions are complete here;
 // terminate only the disposable QA runner, never the user's browser profile.
+report.cleanupWarnings = cleanupWarnings;
+const serialized = JSON.stringify(report, null, 2);
+fs.writeFileSync(artifactPath("public_alpha_result_v4.json"), serialized + "\n");
+console.log(serialized);
+await new Promise(resolve => setTimeout(resolve, 10));
 process.exit(0);

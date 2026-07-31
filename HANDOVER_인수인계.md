@@ -722,3 +722,11 @@
 - v20 QR PNG·SVG를 생성하고 독립 외부 디코더가 정확한 공개 v20 URL을 반환함을 확인했다. resumable HTTP 500 뒤 서버 인정 offset 재개와 병렬 업로드 확정 순서도 통과했다.
 - 37개 브라우저 하네스의 Playwright 설치 버전 고정 경로를 환경변수+안정 런타임 fallback으로 교체하고 재발 방지 검사를 추가했다. 앱 정본·기존 사용자 데이터·기본 공개 v16은 변경하지 않았다.
 - commit `9611113`을 main에 push했다. 실제 Drive 전체 전송·v20 실제 Android·PC→휴대폰 복원·사람 3~5명은 계속 UNVERIFIED다.
+
+## 2026-07-31 · 전담 개발 v7 적용·v21 bounded Drive recovery 공개 (추가)
+
+- 반복 500·429·네트워크 오류와 308 Range 부재에서 v20이 무한 대기하거나 낙관적으로 다음 offset으로 이동할 수 있는 경로를 확인했다. v20은 보존하고 v21에서 최대 5회 backoff·Retry-After 상한·동일 offset 재시도·정직 고지·안전 중단으로 수정했다.
+- commit `20bda12`를 main에 push했고 v21 loader/module/worker/manifest/QR 5자원을 3회씩 무쿠키 요청해 모두 HTTP 200·로컬 SHA 일치를 확인했다. 새 격리 Chrome은 정확한 v21 URL과 `noteplus-drive-v21` runtime에서 IDB 저장·재접속·저장 차단 입력 유지·정직 고지를 통과했다.
+- H-01을 발견했다. 2026-07-30 v20 브라우저 검사는 loader 해시만 v20이고 실제 상호작용은 기본 v16이었다. v20 상호작용 PASS는 철회하고 HTTP·SHA·QR PASS만 유지한다. 후보 URL 단일 함수·runtime marker·음성 대조로 하네스를 고쳤다.
+- 현재 v21 후보 엄격 알파 관문은 2/5=40%다. 과거 v15 실기기 증거는 역사로 보존하지만 v21 D로 재사용하지 않는다. 실제 Drive 전체 백업·현행 Android·파일럿은 UNKNOWN이다.
+- 상세 증거는 `RELEASE_V21_20260731.md`, v7 제어판은 `PROJECT_CONTROL_v7_20260731.md`다.

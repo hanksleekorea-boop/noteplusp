@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "publicUrl": "https://hanksleekorea-boop.github.io/noteplusp/",
+  "candidateUrl": "https://hanksleekorea-boop.github.io/noteplusp/%EB%85%B8%ED%8A%B8%EC%95%B1_v21.html",
+  "release": {
+    "bytes": 2329,
+    "sha256": "66D3B03562F14A8023B45BE67066A4469840140BCD192B2DD7086F2A0F778127"
+  },
+  "persistent": {
+    "title": "제한 알파 저장 확인 alpha-1785466155183",
+    "persistenceMode": "idb"
+  },
+  "fallback": {
+    "persistenceMode": "memory",
+    "honestDisclosure": true,
+    "inputRetained": true
+  },
+  "cleanupWarnings": [],
+  "knownNonBlocking": [
+    "favicon.ico returns HTTP 404 (P2; app journey unaffected)"
+  ]
+}

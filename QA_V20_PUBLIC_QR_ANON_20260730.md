@@ -60,3 +60,9 @@
 - 공개 QR: https://hanksleekorea-boop.github.io/noteplusp/artifacts/noteplusp_v20_qr_20260730.png
 - 첫 404 뒤 Pages 전파를 기다려 다시 요청했고 HTTP 200·1,879바이트·SHA-256 `80770AB8DE2CA507BC411648AA93EB4460CFE42D232B2AB717D594E5C8BC7270`으로 로컬 PNG와 일치했다.
 - `QR_PUBLIC_STATUS=PASS`, `DOWNLOAD_STATUS=PASS`, `ANON_BROWSER_STATUS=PASS`.
+
+## 2026-07-31 · 브라우저 후보 귀속 정정 (append-only)
+
+- `test_public_alpha_journey_v4.mjs`의 당시 `verifyRelease()`는 v20 loader를 확인했지만 `openMobile()`은 `publicUrl` 기본 루트로 이동했다. 기본 루트가 v16이므로 2026-07-30의 모바일 저장·저장 차단 상호작용 스크린샷은 v20이 아니라 v16 증거다.
+- 따라서 이 문서의 v20 실제 격리 브라우저 렌더·저장·차단 PASS는 철회한다. v20 loader/module/worker/manifest 무쿠키 HTTP·SHA와 QR 디코딩 PASS는 유효하다.
+- 하네스는 `candidateUrl()` 단일 경로, 예상 cloud runtime marker, 기본 루트로 되돌린 음성 대조를 추가해 수정했다. 정확한 후보 상호작용 증거는 `RELEASE_V21_20260731.md`에서 새로 획득했다.
