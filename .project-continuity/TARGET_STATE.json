@@ -1,0 +1,35 @@
+{
+  "spec": "GITHUB_TARGET_V6",
+  "repo": {
+    "private": true,
+    "default_branch": "main",
+    "features": {"issues": true, "wiki": false, "discussions": false, "projects": false, "actions": true, "pages": false},
+    "merge": {"methods": ["squash"], "auto_merge": false, "delete_branch_on_merge": true}
+  },
+  "protection": {
+    "mode": "server",
+    "stage1": ["삭제 차단", "강제 push 차단", "PR 경유", "대화 해결"],
+    "stage2_after_first_green": ["성공 이력이 생긴 검사만 필수 지정", "최신 반영 조건 검토"],
+    "solo_dev_locks_forbidden": true
+  },
+  "actions": {
+    "token_permissions": "read-only",
+    "allowed_actions": "github_owned",
+    "pin_by_sha": true,
+    "timeout": true,
+    "concurrency_cancel": true,
+    "fork_pr_secrets": false,
+    "artifact_retention": "minimum_available_on_plan"
+  },
+  "supply_chain": {"dependency_graph": "enable_if_available_on_plan", "dependabot": "enable_if_available_on_plan", "paid_security_features": "forbidden_free_alternatives_only"},
+  "cost": {"budget": "0_or_unset_if_unsupported", "overage": false, "alerts": [90, 100]},
+  "docs": ["SECURITY.md", "CONTRIBUTING.md", ".github/PULL_REQUEST_TEMPLATE.md", ".github/ISSUE_TEMPLATE/bug.yml"],
+  "checks": {
+    "quick": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tools\\github_quick_check.ps1",
+    "full": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tools\\github_full_check.ps1",
+    "full_check_is_minimal_integrity": false
+  },
+  "coexist": {"local_hooks_preserved": true, "workstation_lock_respected": true},
+  "blocked_decisions": ["현재 공개 앱을 중단할 수 있는 private 전환", "현재 GitHub Pages 해제", "공개 저장소의 시험 PR·Issue 생성"]
+}
+
