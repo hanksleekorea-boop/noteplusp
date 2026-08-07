@@ -17,4 +17,3 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\github_quick_check.p
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\github_full_check.ps1
 ```
-

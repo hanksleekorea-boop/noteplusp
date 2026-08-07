@@ -32,4 +32,3 @@
   "coexist": {"local_hooks_preserved": true, "workstation_lock_respected": true},
   "blocked_decisions": ["현재 공개 앱을 중단할 수 있는 private 전환", "현재 GitHub Pages 해제", "공개 저장소의 시험 PR·Issue 생성"]
 }
-

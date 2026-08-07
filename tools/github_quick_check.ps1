@@ -23,4 +23,3 @@ foreach ($relative in $tests) {
 
 Write-Output "QUICK_RESULT tests=$($tests.Count) failed=$failed"
 if ($failed -ne 0) { exit 1 }
-

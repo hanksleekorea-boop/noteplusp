@@ -21,4 +21,3 @@ jobs:
       - name: Run quick checks
         shell: powershell
         run: .\tools\github_quick_check.ps1
-

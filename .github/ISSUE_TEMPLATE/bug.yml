@@ -30,4 +30,3 @@ body:
       label: 실제 결과
     validations:
       required: true
-

@@ -9,4 +9,3 @@
 - 원격 변경: 없음. 공개 상태·Pages·main·Issue·PR을 변경하지 않았다.
 
 상세 증거 원장은 Git에서 제외된 `.project-continuity/local/EVIDENCE.jsonl`에 둔다.
-
