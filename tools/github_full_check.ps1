@@ -8,10 +8,10 @@ if (-not [string]::IsNullOrWhiteSpace(($dirtyBefore -join "`n"))) {
     throw "전체 검사는 깨끗한 작업 폴더에서만 실행합니다."
 }
 
-$runtimeCandidates = @(
+$runtimeCandidates = @(@(
     $env:NOTEPLUS_PLAYWRIGHT,
     (Join-Path $env:USERPROFILE ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright-core")
-) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
+) | Where-Object { $_ -and (Test-Path -LiteralPath $_) })
 if ($runtimeCandidates.Count -eq 0) { throw "playwright-core 경로를 찾지 못했습니다. NOTEPLUS_PLAYWRIGHT를 지정하세요." }
 $env:NOTEPLUS_PLAYWRIGHT = $runtimeCandidates[0]
 
