@@ -39,6 +39,7 @@ $tests = @(
     "tests/test_v20_resumable_retry_v1.mjs",
     "tests/test_v21_drive_recovery_policy_v1.mjs",
     "tests/test_v21_loader_failure_safety_v1.mjs",
+    "tests/test_v21_worker_cache_isolation_v1.mjs",
     "tests/test_v21_release_contract_v1.mjs"
 )
 $generated = @(
