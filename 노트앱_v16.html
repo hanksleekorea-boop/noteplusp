@@ -3324,7 +3324,17 @@ document.addEventListener("click",function(e){
 });
 function registerPwa(){
   if(location.protocol!=="https:"&&location.hostname!=="localhost"&&location.hostname!=="127.0.0.1") return;
-  if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").then(function(){setBackupStatus("오프라인 실행 준비 완료");}).catch(function(){});
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.addEventListener("message",function(event){
+      if(!event.data||event.data.type!=="NOTEPLUS_UPDATE_READY"||document.getElementById("noteplusUpdateReady"))return;
+      var box=document.createElement("div"),text=document.createElement("span"),button=document.createElement("button");
+      box.id="noteplusUpdateReady";box.setAttribute("role","status");box.style.cssText="position:fixed;left:12px;right:12px;bottom:66px;z-index:1200;display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 14px;border:1px solid #0b6b2b;border-radius:10px;background:#effaf2;color:#174a28;box-shadow:0 8px 28px rgba(0,0,0,.18);font:700 13px/1.4 system-ui,sans-serif";
+      text.textContent="새 버전이 준비되었습니다. 기존 노트와 설정은 그대로 유지됩니다.";
+      button.type="button";button.textContent="안전하게 새로고침";button.style.cssText="border:0;border-radius:8px;padding:8px 12px;background:#0b6b2b;color:white;font-weight:800;cursor:pointer";button.onclick=function(){location.reload();};
+      box.appendChild(text);box.appendChild(button);document.body.appendChild(box);
+    });
+    navigator.serviceWorker.register("./sw.js").then(function(){setBackupStatus("오프라인 실행 준비 완료");}).catch(function(){});
+  }
 }
 var deferredInstallPrompt=null;
 window.addEventListener("beforeinstallprompt",function(event){event.preventDefault();deferredInstallPrompt=event;document.getElementById("installAppBtn").textContent="⊞ 홈 화면에 추가";});

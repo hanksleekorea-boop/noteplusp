@@ -17,7 +17,7 @@ function verifyRelease(files) {
   const manifest = JSON.parse(files.manifest);
   assert.equal(manifest.name,`노트플러스P ${version}`);
   assert.equal(manifest.start_url,`./노트앱_${version}.html`);
-  assert.ok(files.worker.includes(`noteplusp-${version}-shell-1`));
+  assert.match(files.worker,new RegExp(`noteplusp-${version}-shell-[0-9]+`));
   for (const required of [`노트앱_${version}.html`,`noteplus-drive-${version}.js`,`noteplus-${version}.webmanifest`]) assert.ok(files.worker.includes(required),`worker must cache ${required}`);
   assert.ok(files.module.includes(`const VERSION="noteplus-drive-${version}"`));
   for (const match of files.loader.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)) if (match[1]) new Function(match[1]);
