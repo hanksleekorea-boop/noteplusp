@@ -62,6 +62,29 @@ try {
   assert.equal(legacyResult.bannerDismissed, true);
   assert.equal(legacyResult.originalKeyRetained, true);
   assert.equal(legacyResult.idbStateCreated, true);
+
+  const rotatingResult = await legacyPage.evaluate(() => {
+    const groups = {schema1: 0, schema2: 0, schema3: 0, schema4: 0};
+    for (let index = 0; index < 50; index += 1) {
+      const schema = (index % 4) + 1;
+      const raw = {
+        schema,
+        notebooks: [`기존-${index % 5}`],
+        notes: [{id: `rotating_note_${index}`, title: `회전 사용자 ${index}`, body: `기존 본문 ${index}`, notebook: `기존-${index % 5}`, tags: [`그룹-${index % 7}`], created: 1700000000000 + index, updated: 1700000001000 + index, legacyColor: `color-${index}`}],
+        trash: index % 3 === 0 ? [{id: `rotating_trash_${index}`, title: `휴지통 ${index}`, body: "보존", notebook: "", tags: [], created: 1690000000000 + index, updated: 1690000001000 + index, deletedAt: 1690000002000 + index}] : [],
+        theme: index % 2 ? "dark" : "light",
+        preferences: {savedSearches: [], templates: [], snapshots: [], sync: {version: 1, deviceId: `legacy-device-${index}`, updatedAt: 1700000002000 + index, pendingOps: [], conflicts: [], legacyCursor: `cursor-${index}`}, legacyPlugin: {enabled: index % 2 === 0, value: index}},
+        legacyExtension: {source: `schema-${schema}`, index}
+      };
+      const migrated = window.migrateState(JSON.parse(JSON.stringify(raw)));
+      if (migrated.schema !== 5 || migrated.notes[0]?.title !== raw.notes[0].title || migrated.notes[0]?.legacyColor !== raw.notes[0].legacyColor || migrated.preferences?.legacyPlugin?.value !== index || migrated.preferences?.sync?.legacyCursor !== `cursor-${index}` || migrated.legacyExtension?.index !== index) throw new Error(`rotating persona ${index} was not preserved`);
+      groups[`schema${schema}`] += 1;
+    }
+    return {personas: 50, groups, unknownFieldsPreserved: true};
+  });
+  assert.equal(rotatingResult.personas, 50);
+  assert.deepEqual(rotatingResult.groups, {schema1: 13, schema2: 13, schema3: 12, schema4: 12});
+  assert.equal(rotatingResult.unknownFieldsPreserved, true);
   await legacyContext.close();
 
   const currentContext = await browser.newContext({locale: "ko-KR"});
@@ -97,7 +120,7 @@ try {
   assert.equal(currentResult.template, "보존 양식");
   await currentContext.close();
 
-  console.log(JSON.stringify({ok: true, contract: "v21-existing-user-upgrade-v1", legacy: {schemaUpgraded: true, notePreserved: true, trashPreserved: true, settingsPreserved: true, originalKeyRetained: true, durableStateCreated: true}, current: {stateSignaturePreserved: true, notePreserved: true, attachmentPreserved: true, settingsPreserved: true}, syntheticEvidenceOnly: true}, null, 2));
+  console.log(JSON.stringify({ok: true, contract: "v21-existing-user-upgrade-v1", legacy: {schemaUpgraded: true, notePreserved: true, trashPreserved: true, settingsPreserved: true, originalKeyRetained: true, durableStateCreated: true}, rotating: rotatingResult, current: {stateSignaturePreserved: true, notePreserved: true, attachmentPreserved: true, settingsPreserved: true}, syntheticEvidenceOnly: true}, null, 2));
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));
