@@ -10,12 +10,12 @@ $tests = @(
     "tests/test_v19_drive_upload_protocol_v1.mjs"
 )
 
-if ($tests.Count -eq 0) { throw "검사 목록이 비어 있습니다." }
+if ($tests.Count -eq 0) { throw "Test list is empty." }
 $node = (Get-Command node -ErrorAction Stop).Source
 $failed = 0
 foreach ($relative in $tests) {
     $path = Join-Path $root $relative
-    if (-not (Test-Path -LiteralPath $path)) { throw "검사 파일이 없습니다: $relative" }
+    if (-not (Test-Path -LiteralPath $path)) { throw "Test file is missing: $relative" }
     Write-Output "RUN $relative"
     & $node $path
     if ($LASTEXITCODE -ne 0) { $failed += 1 }
