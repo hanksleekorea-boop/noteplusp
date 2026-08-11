@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "publicUrl": "https://hanksleekorea-boop.github.io/noteplusp/",
+  "version": "v21",
+  "release": {
+    "bytes": 2329,
+    "sha256": "66D3B03562F14A8023B45BE67066A4469840140BCD192B2DD7086F2A0F778127"
+  },
+  "device": {
+    "viewport": {
+      "innerWidth": 360,
+      "innerHeight": 638,
+      "screenWidth": 360,
+      "screenHeight": 780,
+      "dpr": 2,
+      "scrollWidth": 360
+    }
+  },
+  "persistenceMode": "idb",
+  "noteReloaded": true,
+  "enexPdfReloaded": true,
+  "serviceWorker": {
+    "active": true,
+    "controlled": true,
+    "offlineReopen": true
+  },
+  "install": {
+    "buttonExists": true,
+    "mobilePathVerified": true,
+    "promptReady": true
+  },
+  "screenshot": {
+    "captured": false,
+    "method": "",
+    "error": "Not retained by default for privacy."
+  },
+  "cleanup": {
+    "qaCount": 0,
+    "enexCount": 0,
+    "signatureMatch": true
+  }
+}

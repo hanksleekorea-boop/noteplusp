@@ -1,5 +1,7 @@
 # 노트플러스P 제한 알파 최대 처리량 개발계획 v1
 
+> 상태: 이전 판 — 현재 단일 정본은 `PROJECT_PLAN_v10_5.md`이다.
+
 기준일: 2026-07-22
 
 공개 앱: https://hanksleekorea-boop.github.io/noteplusp/

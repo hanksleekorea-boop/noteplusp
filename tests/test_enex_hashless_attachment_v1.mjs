@@ -70,6 +70,12 @@ try {
   assert.deepEqual(preview, { notes: 1, attachments: 2, errors: 0, unchanged: before }, "hashless standard and download-only ENEX resources must be previewed without mutation");
   await page.locator("#importPreviewConfirm").click();
   await page.waitForFunction(expected => window.state.notes.some(note => note.title === expected), `Hashless attachment ${marker}`);
+  await page.waitForFunction(async expected => {
+    const note = window.state.notes.find(item => item.title === expected);
+    if ((note?.attachmentIds?.length || 0) !== 2) return false;
+    const metas = await Promise.all(note.attachmentIds.map(id => window.idbGet("attachment_meta", id)));
+    return metas.every(meta => typeof meta?.mime === "string" && meta.mime.length > 0);
+  }, `Hashless attachment ${marker}`);
   const stored = await page.evaluate(async expected => {
     const note = window.state.notes.find(item => item.title === expected);
     window.ui.selectedId = note?.id || null; window.render();

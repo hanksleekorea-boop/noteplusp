@@ -804,6 +804,14 @@ catch(e){ localAvailable=false; canPersist=false; }
 
 function escHtml(s){ var e=document.createElement("div"); e.textContent=s||""; return e.innerHTML; }
 function cloneState(st){ return JSON.parse(JSON.stringify(st)); }
+function preserveUnknownProperties(source,target){
+  if(!source||typeof source!=="object")return target;
+  Object.keys(source).forEach(function(key){
+    if(key==="__proto__"||key==="prototype"||key==="constructor"||Object.prototype.hasOwnProperty.call(target,key))return;
+    target[key]=source[key];
+  });
+  return target;
+}
 function validAttachmentId(id){ return typeof id==="string" && /^att_[a-z0-9_-]{6,100}$/i.test(id); }
 function normalizeAttachmentHash(value){value=String(value||"").trim().toUpperCase();return /^[A-F0-9]{64}$/.test(value)?value:"";}
 function sha256Blob(blob){
@@ -934,12 +942,14 @@ function migrateState(st){
   st.lastImportUndo=normalizeImportUndo(st.lastImportUndo);
   st.lastImportReport=normalizeImportReport(st.lastImportReport);
   var prefs=st.preferences&&typeof st.preferences==="object"?st.preferences:{};
-  st.preferences={
+  var oldSync=prefs.sync&&typeof prefs.sync==="object"?prefs.sync:{};
+  var normalizedSync=preserveUnknownProperties(oldSync,{version:1,deviceId:typeof oldSync.deviceId==="string"?oldSync.deviceId:uid(),updatedAt:Number(oldSync.updatedAt)||Date.now(),pendingOps:(Array.isArray(oldSync.pendingOps)?oldSync.pendingOps:[]).filter(function(item){return item&&typeof item.noteId==="string"&&Number.isFinite(Number(item.at));}).slice(-100),conflicts:(Array.isArray(oldSync.conflicts)?oldSync.conflicts:[]).filter(function(item){return item&&typeof item.noteId==="string"&&Number.isFinite(Number(item.at));}).slice(-30)});
+  st.preferences=preserveUnknownProperties(prefs,{
     savedSearches:(Array.isArray(prefs.savedSearches)?prefs.savedSearches:[]).filter(function(item){return item&&typeof item.name==="string"&&typeof item.query==="string";}).slice(-20).map(function(item){return {name:item.name.slice(0,60),query:item.query.slice(0,160)};}),
     templates:(Array.isArray(prefs.templates)?prefs.templates:[]).filter(function(item){return item&&typeof item.name==="string"&&typeof item.bodyHtml==="string";}).slice(-20).map(function(item){return {name:item.name.slice(0,60),title:typeof item.title==="string"?item.title.slice(0,300):"",bodyHtml:sanitizeExternalHtml(item.bodyHtml)};}),
-    sync:{version:1,deviceId:typeof (prefs.sync&&prefs.sync.deviceId)==="string"?prefs.sync.deviceId:uid(),updatedAt:Number(prefs.sync&&prefs.sync.updatedAt)||Date.now(),pendingOps:(Array.isArray(prefs.sync&&prefs.sync.pendingOps)?prefs.sync.pendingOps:[]).filter(function(item){return item&&typeof item.noteId==="string"&&Number.isFinite(Number(item.at));}).slice(-100),conflicts:(Array.isArray(prefs.sync&&prefs.sync.conflicts)?prefs.sync.conflicts:[]).filter(function(item){return item&&typeof item.noteId==="string"&&Number.isFinite(Number(item.at));}).slice(-30)},
+    sync:normalizedSync,
     snapshots:(Array.isArray(prefs.snapshots)?prefs.snapshots:[]).filter(function(item){return item&&Number.isFinite(Number(item.at))&&item.data&&typeof item.data==="object";}).slice(-5)
-  };
+  });
   st.schema=5;
   return st;
 }
@@ -3314,7 +3324,17 @@ document.addEventListener("click",function(e){
 });
 function registerPwa(){
   if(location.protocol!=="https:"&&location.hostname!=="localhost"&&location.hostname!=="127.0.0.1") return;
-  if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").then(function(){setBackupStatus("오프라인 실행 준비 완료");}).catch(function(){});
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.addEventListener("message",function(event){
+      if(!event.data||event.data.type!=="NOTEPLUS_UPDATE_READY"||document.getElementById("noteplusUpdateReady"))return;
+      var box=document.createElement("div"),text=document.createElement("span"),button=document.createElement("button");
+      box.id="noteplusUpdateReady";box.setAttribute("role","status");box.style.cssText="position:fixed;left:12px;right:12px;bottom:66px;z-index:1200;display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 14px;border:1px solid #0b6b2b;border-radius:10px;background:#effaf2;color:#174a28;box-shadow:0 8px 28px rgba(0,0,0,.18);font:700 13px/1.4 system-ui,sans-serif";
+      text.textContent="새 버전이 준비되었습니다. 기존 노트와 설정은 그대로 유지됩니다.";
+      button.type="button";button.textContent="안전하게 새로고침";button.style.cssText="border:0;border-radius:8px;padding:8px 12px;background:#0b6b2b;color:white;font-weight:800;cursor:pointer";button.onclick=function(){location.reload();};
+      box.appendChild(text);box.appendChild(button);document.body.appendChild(box);
+    });
+    navigator.serviceWorker.register("./sw.js").then(function(){setBackupStatus("오프라인 실행 준비 완료");}).catch(function(){});
+  }
 }
 var deferredInstallPrompt=null;
 window.addEventListener("beforeinstallprompt",function(event){event.preventDefault();deferredInstallPrompt=event;document.getElementById("installAppBtn").textContent="⊞ 홈 화면에 추가";});
