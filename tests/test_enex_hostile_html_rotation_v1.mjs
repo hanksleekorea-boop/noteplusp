@@ -11,7 +11,7 @@ let chromium;try{({chromium}=require("playwright-core"));}catch{({chromium}=requ
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"..");
 const server=http.createServer((request,response)=>{const pathname=decodeURIComponent(new URL(request.url,"http://127.0.0.1").pathname);const target=path.resolve(root,"."+(pathname==="/"?"/노트앱_v16.html":pathname));if(!target.startsWith(root+path.sep)&&target!==root)return response.writeHead(403).end();fs.readFile(target,(error,bytes)=>{if(error)return response.writeHead(404).end();response.writeHead(200,{"content-type":"text/html; charset=utf-8","cache-control":"no-store"});response.end(bytes);});});
 await new Promise(resolve=>server.listen(0,"127.0.0.1",resolve));
-const browser=await chromium.launch({executablePath:process.env.NOTEPLUS_BROWSER||"C:/Program Files (x86)\Microsoft\Edge\Application\msedge.exe".replace("\\Microsoft","/Microsoft").replaceAll("\\","/"),headless:true});
+const browser=await chromium.launch({executablePath:process.env.NOTEPLUS_BROWSER||"C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",headless:true});
 try{
   const page=await browser.newPage();const hostileRequests=[];page.on("request",request=>{if(request.url().includes("evil.invalid"))hostileRequests.push(request.url());});
   await page.addInitScript(()=>{window.__hostileExecuted=0;});
