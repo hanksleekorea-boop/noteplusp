@@ -21,6 +21,8 @@ $tests = @(
     "tests/test_enex_duplicate_attachment_protection_v1.mjs",
     "tests/test_enex_hashless_attachment_v1.mjs",
     "tests/test_enex_streaming_parser_v1.mjs",
+    "tests/test_enex_streaming_memory_boundary_v1.mjs",
+    "tests/test_enex_hostile_html_rotation_v1.mjs",
     "tests/test_firebase_activation_packet_v1.mjs",
     "tests/test_firebase_config_v17_v1.mjs",
     "tests/test_google_cloud_security_static_v1.mjs",
