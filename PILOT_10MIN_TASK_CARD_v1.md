@@ -1,6 +1,6 @@
 # 노트플러스P 제한 알파 · 비개발자 10분 파일럿 카드 v1
 
-공개 앱: https://hanksleekorea-boop.github.io/noteplusp/
+공개 앱: https://hanksleekorea-boop.github.io/noteplusp/%EB%85%B8%ED%8A%B8%EC%95%B1_v21.html
 
 현재 검증 버전: v21
 
