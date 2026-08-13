@@ -27,7 +27,7 @@
   "install": {
     "buttonExists": true,
     "mobilePathVerified": true,
-    "promptReady": true
+    "promptReady": false
   },
   "screenshot": {
     "captured": false,
