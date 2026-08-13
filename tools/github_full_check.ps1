@@ -22,6 +22,7 @@ $tests = @(
     "tests/test_enex_hashless_attachment_v1.mjs",
     "tests/test_enex_streaming_parser_v1.mjs",
     "tests/test_enex_streaming_memory_boundary_v1.mjs",
+    "tests/test_enex_abort_retry_cleanup_v1.mjs",
     "tests/test_enex_hostile_html_rotation_v1.mjs",
     "tests/test_firebase_activation_packet_v1.mjs",
     "tests/test_firebase_config_v17_v1.mjs",
@@ -46,6 +47,7 @@ $tests = @(
     "tests/test_v21_worker_cache_isolation_v1.mjs",
     "tests/test_v21_release_contract_v1.mjs",
     "tests/test_v21_responsive_layout_v1.mjs",
+    "tests/test_v21_pc_mobile_browser_matrix_v1.mjs",
     "tests/test_v21_offline_save_idempotency_v1.mjs",
     "tests/test_virtual_persona_snapshot_safety_v1.mjs"
 )

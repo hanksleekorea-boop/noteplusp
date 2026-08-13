@@ -2777,12 +2777,18 @@ function setEnexProgress(percent,label,show){
   box.setAttribute("aria-valuenow",String(value));
 }
 function setEnexCancelVisible(show){ document.getElementById("enexCancel").hidden=!show; }
+function releaseEnexJob(job){
+  if(!job) return;
+  if(activeEnexJob===job) activeEnexJob=null;
+  var readers=(job.readers||[]).slice();
+  if(job.readers) job.readers.length=0;
+  readers.forEach(function(reader){try{reader.abort();}catch(ignore){}});
+}
 function cancelActiveEnexJob(){
   var job=activeEnexJob;
   if(!job||job.cancelled) return;
   var remaining=enexBatchSession?enexBatchSession.queue.length:0;
-  job.cancelled=true; activeEnexJob=null;
-  (job.readers||[]).slice().forEach(function(reader){try{reader.abort();}catch(ignore){}});
+  job.cancelled=true; releaseEnexJob(job);
   setEnexCancelVisible(false);
   clearEnexBatchSession();
   restoreEnexBannerAfterNoChange();
