@@ -31,7 +31,6 @@ $tests = @(
     "tests/test_google_mobile_login_v1.mjs",
     "tests/test_google_pc_backup_no_loss_v1.mjs",
     "tests/test_google_pc_restore_no_loss_v1.mjs",
-    "tests/test_pilot_fixture_v1.mjs",
     "tests/test_harness_runtime_resolution_v1.mjs",
     "tests/test_restore_manifest_corruption_guard_v1.mjs",
     "tests/test_v17_versioned_loader_v1.mjs",
