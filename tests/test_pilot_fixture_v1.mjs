@@ -15,8 +15,8 @@ const root = path.resolve(here, "..");
 const artifacts = path.join(root, "artifacts");
 const fixturePath = path.join(root, "pilot-assets", "노트플러스P_파일럿_샘플.enex");
 const publicUrl = process.env.NOTEPLUS_PUBLIC_URL || "https://hanksleekorea-boop.github.io/noteplusp/";
-const version = process.env.NOTEPLUS_VERSION || "v12";
-const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "9B92306737ED0E97726DB05183F884C94A5AC5D514B7279613A4BB820D2746F3";
+const version = process.env.NOTEPLUS_VERSION || "v21";
+const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "66D3B03562F14A8023B45BE67066A4469840140BCD192B2DD7086F2A0F778127";
 const edge = process.env.NOTEPLUS_BROWSER || "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
 const appUrl = new URL(`${encodeURIComponent(`노트앱_${version}.html`)}?pilot=${Date.now()}`, publicUrl).href;
 const fixture = fs.readFileSync(fixturePath);
@@ -61,7 +61,7 @@ try {
   assert.equal(imported.attachmentName, "노트플러스P_파일럿_확인.pdf");
   assert.equal(imported.attachmentMime, "application/pdf");
   assert.equal(imported.blobSize, 69);
-  await page.screenshot({ path: path.join(artifacts, "pilot_10min_sample_import_v1.png"), fullPage: true });
+  if (process.env.NOTEPLUS_WRITE_ARTIFACTS === "1") await page.screenshot({ path: path.join(artifacts, "pilot_10min_sample_import_v1.png"), fullPage: true });
   console.log(JSON.stringify({ ok: true, publicUrl, release: { bytes: release.length, sha256: expectedSha }, fixture: { bytes: fixture.length, sha256: sha256(fixture) }, preview: { files: 1, notes: 1, attachments: 1 }, imported }, null, 2));
   await context.close();
 } finally {
