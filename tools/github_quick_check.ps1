@@ -4,6 +4,7 @@ param()
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $tests = @(
+    "tests/test_firebase_activation_packet_v1.mjs",
     "tests/test_v21_release_contract_v1.mjs",
     "tests/test_v21_drive_recovery_policy_v1.mjs",
     "tests/test_v20_parallel_upload_execution_v1.mjs",
