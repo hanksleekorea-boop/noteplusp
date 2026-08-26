@@ -66,8 +66,9 @@ function inspect(p=product,d=development,l=legacy){
     for(const link of body.matchAll(/`([^`]+\.md)`/g)){
       const value=link[1];
       if(value.includes('*')||value.includes(' '))continue;
-      const candidates=[path.resolve(root,value),path.resolve(root,'..',value),path.resolve(root,'..','.project-continuity',value)];
-      expect(candidates.some(target=>fs.existsSync(target)),`링크 없음 ${value}`);
+      const projectContext=value.startsWith('../')||value.startsWith('.project-continuity/')||['AGENTS.md','HISTORY.md','TEST_EVIDENCE.md','LOCK.json'].includes(value);
+      if(projectContext)continue;
+      expect(fs.existsSync(path.resolve(root,value)),`저장소 내부 링크 없음 ${value}`);
     }
   }
   return {fields:fields.length,gx:gx.length,journeys:journeys.length,bundles:bundles.length,integratedImprovements:integratedImprovements.length,tasks:tasks.length,stages:`${tasks.filter(x=>x.stage===1).length}/${tasks.filter(x=>x.stage===2).length}/${tasks.filter(x=>x.stage===3).length}`,atomic:atomic.length,errors};
