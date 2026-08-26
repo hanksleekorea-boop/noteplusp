@@ -68,6 +68,7 @@ $tests = @(
     "tests/test_v22_attachment_stream_v1.mjs",
     "tests/test_v22_safety_boundaries_v1.mjs",
     "tests/test_v22_accessibility_v1.mjs",
+    "tests/test_v22_android_talkback_preflight_v1.mjs",
     "tests/test_v22_commercial_pages_v1.mjs",
     "tests/test_v22_release_evidence_audit_v1.mjs",
     "tests/test_v22_storage_health_v1.mjs",
