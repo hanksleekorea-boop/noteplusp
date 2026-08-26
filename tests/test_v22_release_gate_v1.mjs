@@ -9,4 +9,5 @@ assert.equal(evaluateGate(owner,evidence,()=>false,now).releaseAllowed,false);
 assert.equal(evaluateGate({...owner,operator:null},evidence,()=>true,now).releaseAllowed,false);
 assert.equal(evaluateGate(owner,evidence,()=>true,now+31*86400000).releaseAllowed,false);
 const missingCount=structuredClone(evidence);delete missingCount.checks.threeNonDeveloperPilots.participants;assert.equal(evaluateGate(owner,missingCount,()=>true,now).releaseAllowed,false);
+const auditBlocked=evaluateGate(owner,evidence,()=>true,now,{auditPassed:false});assert.equal(auditBlocked.releaseAllowed,false);assert.ok(auditBlocked.blockers.includes('EVIDENCE:audit'));
 console.log('PASS release-gate logic positive synthetic fixture and 11 blocking controls including legacy-version return; not actual release approval');
