@@ -8,6 +8,7 @@ $tests = @(
     "tests/test_v22_release_contract_v1.mjs",
     "tests/test_v22_release_gate_v1.mjs",
     "tests/test_v22_commercial_pages_v1.mjs",
+    "tests/test_v22_release_evidence_audit_v1.mjs",
     "tests/test_firebase_activation_packet_v1.mjs",
     "tests/test_v21_release_contract_v1.mjs",
     "tests/test_v21_drive_recovery_policy_v1.mjs",
