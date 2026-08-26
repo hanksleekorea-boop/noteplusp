@@ -1,5 +1,7 @@
 # 노트플러스P 통합 개발계획 v10.5
 
+> **2026-08-24 정본 변경:** 이 문서는 과거 결정·검사 근거 보존용이다. 새 제품 방향은 `PRODUCT_PLAN_v11_ADOPTED.md`, 실제 작업 순서는 `DEVELOPMENT_PLAN_v11_3STAGE.md`를 따른다. 서로 충돌하면 v11 문서가 우선한다.
+
 > 상태: 단일 정본 · 채택일 2026-08-10  
 > 현재 공개 후보: v21 · 상위 완료 조건: 루트 `.project-continuity/COMPLETION.md`  
 > 대체 문서: `LIMITED_ALPHA_PLAN_v1.md`, `ALPHA_ACCELERATION_PLAN_v1.md`, `ONBOARDING_REDESIGN_PLAN.md`는 이전 판 참고 자료다.
