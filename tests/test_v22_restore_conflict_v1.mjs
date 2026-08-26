@@ -20,5 +20,21 @@ try{
  assert.equal(await page.evaluate(()=>state.notes[0].body),'remote backup');
  assert.equal(await page.evaluate(()=>state.preferences.conflictVaultV1.some(c=>c.localCopy.body!=='remote backup'&&c.remoteCopy.body==='remote backup')),true);
  await ready(page,h.origin+'/노트앱_v22.html');assert.equal(await page.evaluate(()=>state.notes[0].body),'remote backup');
- await context.close();console.log('PASS v22 100 conflict pairs, explicit authorization, cancel unchanged, durable both versions and vault UI');
+ const edges=await page.evaluate(()=>{
+  const result={};let local=cloneState(state),remote=cloneState(state),id=local.notes[0].id;
+  const localNote=local.notes.shift();localNote.deletedAt=Date.now();local.trash.push(localNote);remote.notes[0].body='remote modified against local trash';remote.notes[0].bodyHtml=remote.notes[0].body;remote.notes[0].updated+=1;
+  let diff=v22MergeConflicts(local,remote,'both'),vault=remote.preferences.conflictVaultV1.at(-1);result.localTrash=diff.changed.length===1&&vault.localTrash===true&&vault.remoteTrash===false&&remote.trash.some(n=>n.id===id)&&!remote.notes.some(n=>n.id===id);
+  local=cloneState(state);remote=cloneState(state);id=local.notes[0].id;const remoteNote=remote.notes.shift();remoteNote.body='remote trash copy';remoteNote.bodyHtml=remoteNote.body;remoteNote.updated+=2;remoteNote.deletedAt=Date.now();remote.trash.push(remoteNote);
+  diff=v22MergeConflicts(local,remote,'both');vault=remote.preferences.conflictVaultV1.at(-1);result.remoteTrash=diff.changed.length===1&&vault.localTrash===false&&vault.remoteTrash===true&&remote.notes.some(n=>n.id===id)&&!remote.trash.some(n=>n.id===id);
+  local=cloneState(state);remote=cloneState(state);local.notes[0].safeExtension={side:'local'};remote.notes[0].safeExtension={side:'remote'};diff=v22MergeConflicts(local,remote,'both');vault=remote.preferences.conflictVaultV1.at(-1);result.unknownField=diff.changed.length===1&&vault.localCopy.safeExtension.side==='local'&&vault.remoteCopy.safeExtension.side==='remote';
+  const invalids=[];
+  for(const mutate of [
+   data=>{data.notes[0].id='';},
+   data=>{data.trash.push(cloneState(data.notes[0]));},
+   data=>{data.notes[0].updated=Date.now()+3600000;}
+  ]){local=cloneState(state);remote=cloneState(state);mutate(remote);const before=JSON.stringify(local);try{v22MergeConflicts(local,remote,'both');invalids.push(false);}catch{invalids.push(JSON.stringify(local)===before);}}
+  result.invalidRejected=invalids.every(Boolean);return result;
+ });
+ assert.deepEqual(edges,{localTrash:true,remoteTrash:true,unknownField:true,invalidRejected:true});
+ await context.close();console.log('PASS v22 100 conflict pairs, trash-vs-edit, unknown fields, invalid input rejection, explicit authorization, durable vault UI');
 }finally{await h.close();}

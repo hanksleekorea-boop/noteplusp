@@ -898,7 +898,7 @@ function mergeImportUndoBatches(baseRaw,addedRaw){
 function cleanReportText(value,max){return String(value===undefined||value===null?"":value).replace(/[\u0000-\u001f\u007f]/g," ").trim().slice(0,max||300);}
 function normalizeImportReport(raw){
   if(!raw||typeof raw!=="object")return null;
-  var outcomes={"in-progress":1,completed:1,partial:1,failed:1,undone:1};
+  var outcomes={"in-progress":1,completed:1,partial:1,failed:1,undone:1,cancelled:1};
   var fileStatuses={pending:1,analyzed:1,empty:1,"zero-notes":1,"read-failed":1,"parse-failed":1,oversize:1};
   var verdictStatuses={"in-progress":1,complete:1,review:1,failed:1};
   function count(value){return Math.max(0,Math.min(10000000,Math.floor(Number(value)||0)));}
@@ -1423,6 +1423,7 @@ function hideImportPreview(returnFocus){
 }
 function cancelPendingEnexImport(){
   if(!pendingEnexImport){hideImportPreview(true);return;}
+  markCurrentEnexCancelled("사용자가 적용 전에 취소함");
   pendingEnexImport=null; hideImportPreview(true);
   var remaining=enexBatchSession?enexBatchSession.queue.length:0;clearEnexBatchSession();
   restoreEnexBannerAfterNoChange();
@@ -1602,7 +1603,7 @@ function refreshEnexReportActions(){
   var available=!!normalizeImportReport(state.lastImportReport);
   ["enexReportHtml","enexReportJson"].forEach(function(id){var button=document.getElementById(id);button.classList.toggle("show",available);button.hidden=!available;});
 }
-function importReportOutcomeLabel(outcome){return outcome==="completed"?"완료":outcome==="partial"?"일부 경고와 함께 완료":outcome==="failed"?"실패":outcome==="undone"?"전체 되돌림":"진행 중";}
+function importReportOutcomeLabel(outcome){return outcome==="completed"?"완료":outcome==="partial"?"일부 경고와 함께 완료":outcome==="failed"?"실패":outcome==="undone"?"전체 되돌림":outcome==="cancelled"?"사용자 취소":"진행 중";}
 function importReportFilename(report,extension){var stamp=new Date(report.completedAt||report.startedAt||Date.now()).toISOString().replace(/[:.]/g,"-");return "noteplusp_import_report_"+stamp+"."+extension;}
 function importReportHtml(report){
   function row(label,value){return "<tr><th>"+escHtml(label)+"</th><td>"+escHtml(String(value))+"</td></tr>";}
@@ -2760,12 +2761,19 @@ function saveCurrentEnexReport(report){
   report=normalizeImportReport(report);if(!report)return null;
   activeEnexReport=report;if(enexBatchSession)enexBatchSession.report=report;state.lastImportReport=report;refreshEnexReportActions();return report;
 }
+function markCurrentEnexCancelled(reason){
+  var report=currentEnexReport();if(!report)return null;
+  report.outcome="cancelled";report.completedAt=Date.now();report.coverageMessage=cleanReportText(reason||"사용자가 취소함",1000);
+  report.completenessVerdict={status:"failed",title:"사용자 취소",message:"적용되지 않은 작업입니다. 기존 자료는 그대로입니다.",reasons:[report.coverageMessage]};
+  return saveCurrentEnexReport(report);
+}
 function reportHasProblems(report){return !!(report.rejectedFiles.length||report.failedFiles.length||report.attachmentErrorCount||report.persistenceLimited);}
 function mergeImportFileResults(current,updates){
   var result=(current||[]).slice();(updates||[]).forEach(function(update){var found=-1;for(var i=0;i<result.length;i++){if(result[i].name===update.name){found=i;break;}}if(found>=0)result[found]=update;else result.push(update);});return result;
 }
 function reportCompletenessVerdict(report){
   if(report.outcome==="in-progress")return {status:"in-progress",title:"분석 중",message:"모든 자동 묶음이 끝나면 완전성 판정을 확정합니다.",reasons:[]};
+  if(report.outcome==="cancelled")return {status:"failed",title:"사용자 취소",message:"적용되지 않은 작업입니다. 기존 자료는 그대로입니다.",reasons:[report.coverageMessage||"사용자가 취소함"]};
   var extra=[];
   if(report.persistenceLimited)extra.push("일부 첨부가 현재 세션에만 유지됨");
   if(report.importedNoteCount<report.foundNoteCount)extra.push("발견한 노트 "+report.foundNoteCount+"개 중 "+report.importedNoteCount+"개만 추가·병합됨");
@@ -2856,7 +2864,7 @@ function cancelActiveEnexJob(){
   var job=activeEnexJob;
   if(!job||job.cancelled) return;
   var remaining=enexBatchSession?enexBatchSession.queue.length:0;
-  job.cancelled=true; releaseEnexJob(job);
+  job.cancelled=true; markCurrentEnexCancelled("사용자가 분석 중 취소함");releaseEnexJob(job);
   setEnexCancelVisible(false);
   clearEnexBatchSession();
   restoreEnexBannerAfterNoChange();
@@ -3078,6 +3086,7 @@ function sanitizeAllNoteHtml(st){
   if(prefs){
     (Array.isArray(prefs.templates)?prefs.templates:[]).forEach(function(item){if(item&&typeof item==="object")item.bodyHtml=sanitizeExternalHtml(item.bodyHtml||"");});
     (Array.isArray(prefs.snapshots)?prefs.snapshots:[]).forEach(function(item){if(item&&typeof item==="object")sanitizeSnapshotNoteHtml(item.data);});
+    (Array.isArray(prefs.conflictVaultV1)?prefs.conflictVaultV1:[]).forEach(function(item){if(item&&typeof item==="object"){sanitizeStoredNoteHtml(item.localCopy);sanitizeStoredNoteHtml(item.remoteCopy);}});
   }
   return st;
 }
@@ -3494,21 +3503,21 @@ document.querySelectorAll('button[title]').forEach(function(button){if(!button.h
 function v22ValidStatusTime(value){return Number.isFinite(value)&&value>0&&value<=Date.now();}
 try{var v22SavedStatus=JSON.parse(localStorage.getItem('noteplusp_v22_sync_status')||'{}');if(v22ValidStatusTime(v22SavedStatus.lastLocalSaveAt))v22Status.lastLocalSaveAt=v22SavedStatus.lastLocalSaveAt;if(v22ValidStatusTime(v22SavedStatus.lastBackupAt)&&/^s5_[a-f0-9]{40}$/.test(v22SavedStatus.lastBackupId||'')){v22Status.lastBackupAt=v22SavedStatus.lastBackupAt;v22Status.lastBackupId=v22SavedStatus.lastBackupId;}}catch(ignore){}
 function v22SaveStatus(){try{localStorage.setItem('noteplusp_v22_sync_status',JSON.stringify({lastLocalSaveAt:v22Status.lastLocalSaveAt,lastBackupAt:v22Status.lastBackupAt,lastBackupId:v22Status.lastBackupId}));}catch(ignore){}v22RenderStatus();}
-function v22RecordBackup(pointer,expectedId){var at=Date.parse(pointer&&pointer.committedAt);if(!pointer||!/^s5_[a-f0-9]{40}$/.test(pointer.snapshotId||'')||pointer.snapshotId!==expectedId||!v22ValidStatusTime(at)||at<v22Status.lastBackupAt)throw new Error('백업 완료 정보의 식별자 또는 시각을 확인하지 못했습니다. 이전 완료 기록을 유지합니다.');v22Status.lastBackupAt=at;v22Status.lastBackupId=pointer.snapshotId;v22SaveStatus();}
+function v22RecordBackup(pointer,expectedId){var at=Date.parse(pointer&&pointer.committedAt);if(!pointer||!/^s5_[a-f0-9]{40}$/.test(pointer.snapshotId||'')||pointer.snapshotId!==expectedId||!v22ValidStatusTime(at)||at<v22Status.lastBackupAt)throw new Error('백업 완료 정보의 식별자 또는 시각을 확인하지 못했습니다. 이전 완료 기록을 유지합니다.');if(pointer.snapshotId===v22Status.lastBackupId&&at===v22Status.lastBackupAt)return false;if(at===v22Status.lastBackupAt)throw new Error('같은 시각의 다른 백업은 완료로 확정하지 않았습니다. 이전 완료 기록을 유지합니다.');v22Status.lastBackupAt=at;v22Status.lastBackupId=pointer.snapshotId;v22SaveStatus();return true;}
 function v22StatusView(){
  var cloud=cloudUiState||{},phase=cloud.phase,message=String(cloud.message||''),offline=!navigator.onLine;
  var errorCode=phase!=='error'?null:/401|로그인이 필요|권한이 만료/.test(message)?'AUTH':/403|폴더 권한/.test(message)?'PERMISSION':/429|요청이 많/.test(message)?'RATE_LIMIT':/507|저장공간이 부족/.test(message)?'QUOTA':/5\d\d|응답하지|응답 지연/.test(message)?'SERVICE':'UNKNOWN';
- var busy=cloudSnapshotInFlight||['uploading','downloading','preparing','verifying','committing','authenticating'].includes(phase);
+ var busy=cloudSnapshotInFlight||['uploading','retrying','downloading','preparing','verifying','committing','authenticating'].includes(phase);
  var cloudState=offline?'offline':phase==='error'?'error':busy?phase:cloud.user?'idle':cloud.configured?'signed-out':'disabled';
  var actions={AUTH:'Google에 다시 로그인하세요. 이전 완료 백업은 그대로입니다.',PERMISSION:'Drive 앱 전용 폴더 권한을 확인하세요.',RATE_LIMIT:'잠시 기다린 뒤 백업을 다시 시도하세요. 완료 표시 전에는 새 백업이 아닙니다.',QUOTA:'Drive 공간을 확인하고 로컬 전체 내보내기를 보관하세요.',SERVICE:'서비스 응답을 기다린 뒤 다시 시도하세요.',UNKNOWN:'로컬 자료를 내보낸 뒤 Drive 화면의 안내를 확인하세요.'};
- return Object.assign({},v22Status,{cloudState:cloudState,errorCode:errorCode,pendingCount:(Number.isFinite(v22Status.pendingCount)?Math.max(0,Math.floor(v22Status.pendingCount)):0)+(busy?1:0)+(v22ImportCommitPending?1:0),conflictCount:v22VaultItems(state).filter(function(x){return !x.resolvedAt;}).length,action:offline?'인터넷이 끊겼습니다. 로컬 편집은 가능하며, 다시 연결되면 직접 백업하세요.':errorCode?actions[errorCode]:cloud.user?'백업 버튼을 눌러야 이 기기의 변경이 Drive에 저장됩니다.':'Google 연결은 선택입니다. 로컬 노트와 전체 내보내기는 계속 사용할 수 있습니다.'});
+ return Object.assign({},v22Status,{cloudState:cloudState,errorCode:errorCode,pendingCount:(Number.isFinite(v22Status.pendingCount)?Math.max(0,Math.floor(v22Status.pendingCount)):0)+(busy?1:0)+(v22ImportCommitPending?1:0),conflictCount:v22VaultItems(state).filter(function(x){return !x.resolvedAt;}).length,action:offline?'인터넷이 끊겼습니다. 로컬 편집은 가능하며, 다시 연결되면 직접 백업하세요.':phase==='retrying'?'Drive가 같은 위치부터 자동으로 다시 시도 중입니다. 이전 완료 백업은 그대로입니다.':errorCode?actions[errorCode]:cloud.user?'백업 버튼을 눌러야 이 기기의 변경이 Drive에 저장됩니다.':'Google 연결은 선택입니다. 로컬 노트와 전체 내보내기는 계속 사용할 수 있습니다.'});
 }
 function v22RenderStatus(){
  if(!document.getElementById('v22LocalStatus'))return;
  var s=v22StatusView(),local=v22ImportCommitPending||(s.pendingCount&&s.localState==='saving')?'이 기기에 저장 중':s.localState==='error'?'저장 실패 — 탭을 닫지 말고 전체 내보내기를 확인하세요':s.localState==='limited'?'영구 저장 미확인 — 탭을 닫기 전에 전체 내보내기 필요':persistenceMode==='idb'?'이 기기 저장소 준비됨':persistenceMode==='local'?'브라우저 제한 저장 — 첨부는 별도 확인 필요':'임시 보관 — 탭을 닫기 전에 전체 내보내기 필요';
  document.getElementById('v22StatusSummary').textContent=local+(!navigator.onLine?' · 오프라인':'');
  document.getElementById('v22LocalStatus').textContent='로컬: '+local+(s.lastLocalSaveAt?' · 마지막 완료 '+new Date(s.lastLocalSaveAt).toLocaleString():' · 이번 버전 저장 완료 기록 없음');
- document.getElementById('v22CloudStatus').textContent='Drive: '+({offline:'오프라인',error:'문제 확인 필요',idle:'연결됨',disabled:'연결 설정 필요','signed-out':'로그인하지 않음',uploading:'첨부 업로드 중',verifying:'검증 중',committing:'백업 확정 중',downloading:'복원 정보 확인 중',preparing:'백업 준비 중',authenticating:'로그인 중'}[s.cloudState]||'확인 중');
+ document.getElementById('v22CloudStatus').textContent='Drive: '+({offline:'오프라인',error:'문제 확인 필요',idle:'연결됨',disabled:'연결 설정 필요','signed-out':'로그인하지 않음',uploading:'첨부 업로드 중',retrying:'같은 위치부터 재시도 중',verifying:'검증 중',committing:'백업 확정 중',downloading:'복원 정보 확인 중',preparing:'백업 준비 중',authenticating:'로그인 중'}[s.cloudState]||'확인 중');
  document.getElementById('v22BackupTime').textContent='이 기기의 마지막 완료 백업: '+(s.lastBackupAt?new Date(s.lastBackupAt).toLocaleString()+' · '+s.lastBackupId:'확인된 기록 없음');
  document.getElementById('v22PendingStatus').textContent='진행 중 작업 '+s.pendingCount+'개 · 미해결 충돌 '+s.conflictCount+'개';
  document.getElementById('v22StatusAction').textContent=s.action;
@@ -3532,7 +3541,7 @@ window.addEventListener('online',v22RenderStatus);window.addEventListener('offli
 </dialog>
 <dialog id="v22ConflictDialog" class="v22-dialog" aria-labelledby="v22ConflictTitle"><h2 id="v22ConflictTitle">충돌 금고</h2><p>양쪽 본문과 첨부는 해결 전 자동 삭제하지 않습니다. 지금 보이는 노트와 별도로 보관됩니다.</p><div id="v22ConflictItems"></div><button type="button" id="v22ConflictClose">닫기</button></dialog>
 <script>
-function v22VersionIndex(data){var map=new Map();(data.notes||[]).forEach(function(n){map.set(n.id,{note:n,trash:false});});(data.trash||[]).forEach(function(n){map.set(n.id,{note:n,trash:true});});return map;}
+function v22VersionIndex(data){var map=new Map(),latest=Date.now()+300000;function add(n,trash){if(!n||typeof n.id!=='string'||!n.id.trim()||map.has(n.id))throw new Error('중복 또는 잘못된 노트 식별자');var updated=Number(n.updated);if(!Number.isFinite(updated)||updated<=0||updated>latest)throw new Error('노트 수정 시각을 확인할 수 없습니다. 자료를 변경하지 않았습니다.');map.set(n.id,{note:n,trash:trash});}(data.notes||[]).forEach(function(n){add(n,false);});(data.trash||[]).forEach(function(n){add(n,true);});return map;}
 function v22VaultItems(data){var value=data.preferences&&data.preferences.conflictVaultV1;return Array.isArray(value)?value.filter(function(c){return c&&typeof c.conflictId==='string'&&c.localCopy&&c.remoteCopy;}):[];}
 function v22SwapState(expected,next){return new Promise(function(resolve,reject){var tx=noteDb.transaction('app_state','readwrite'),store=tx.objectStore('app_state'),get=store.get('root');get.onsuccess=function(){if(!get.result||stateSignature(migrateState(get.result))!==expected||stateSignature(state)!==expected){tx.abort();return;}store.put(cloneState(next),'root');};tx.oncomplete=resolve;tx.onabort=function(){reject(new Error('다른 편집 또는 저장 실패가 감지되어 원본을 덮어쓰지 않았습니다.'));};tx.onerror=function(){reject(tx.error||new Error('저장 실패'));};});}
 function v22RestoreDiff(local,remote){
@@ -3581,13 +3590,14 @@ async function v22BuildCertificate(){
  var report=normalizeImportReport(state.lastImportReport),undo=normalizeImportUndo(state.lastImportUndo),signature=stateSignature(state),certificate={format:'noteplusp-migration-certificate-v1',checkedAt:Date.now(),status:'검사 불가',basis:'현재 이관 기록과 현재 저장본 대조; 외부 인증 아님',bodyIncluded:false};
  if(v22ImportCommitPending){certificate.reason='첨부와 노트를 아직 저장 중입니다. 완료 후 다시 검사하세요.';return certificate;}
  if(!report)return certificate;
- Object.assign(certificate,{reportFingerprint:await sha256Text(report.id),outcome:report.outcome,fileCount:report.sourceFiles.length,found:report.foundNoteCount,imported:report.importedNoteCount,newNotes:report.newNoteCount,merged:report.mergedNoteCount,skipped:report.skippedNoteCount,attachmentErrors:report.attachmentErrorCount,notebookCount:report.notebookNames.length,missingNotes:0,changedNotes:0,attachmentsChecked:0,attachmentBytes:0,missingAttachments:0,hashMismatches:0,sizeMismatches:0,hashUnavailable:0});
- if(report.outcome==='undone'||report.outcome==='failed'){certificate.status='적용 안 됨';return certificate;}
+ Object.assign(certificate,{reportFingerprint:await sha256Text(report.id),outcome:report.outcome,fileCount:report.sourceFiles.length,selectedFiles:report.selectedFileCount,processedFiles:report.processedFileCount,importedFiles:report.importedFileCount,failedFiles:report.failedFiles.length,rejectedFiles:report.rejectedFiles.length,plannedBatches:report.plannedBatchCount,completedBatches:report.completedBatchCount,found:report.foundNoteCount,imported:report.importedNoteCount,newNotes:report.newNoteCount,merged:report.mergedNoteCount,skipped:report.skippedNoteCount,attachmentErrors:report.attachmentErrorCount,notebookCount:report.notebookNames.length,missingNotes:0,changedNotes:0,attachmentsChecked:0,attachmentBytes:0,missingAttachments:0,hashMismatches:0,sizeMismatches:0,hashUnavailable:0});
+ if(report.outcome==='undone'||report.outcome==='failed'||report.outcome==='cancelled'){certificate.status='적용 안 됨';return certificate;}
  if(!undo||undo.reportId!==report.id||report.outcome==='in-progress'){certificate.reason='이관 기록과 현재 되돌리기 기록을 연결할 수 없거나 아직 진행 중입니다.';return certificate;}
  var index=v22VersionIndex(state),ids=undo.noteIds.concat((undo.mergedNotes||[]).map(function(n){return n.id;}));
  ids.forEach(function(id){var item=index.get(id);if(!item)certificate.missingNotes++;else if(undo.noteUpdated[id]&&Number(item.note.updated)!==Number(undo.noteUpdated[id]))certificate.changedNotes++;});
  for(var id of undo.attachmentIds){var item=await getAttachmentRecord(id);if(!item||!(item.blob instanceof Blob)){certificate.missingAttachments++;continue;}certificate.attachmentsChecked++;certificate.attachmentBytes+=item.blob.size;if(item.blob.size!==Number(item.meta.size))certificate.sizeMismatches++;var expected=normalizeAttachmentHash(item.meta.sha256);if(!expected)certificate.hashUnavailable++;else if(expected!==await sha256Blob(item.blob))certificate.hashMismatches++;}
- certificate.countMismatch=ids.length!==report.importedNoteCount||undo.attachmentIds.length!==report.attachmentCount;
+ certificate.fileCountMismatch=report.selectedFileCount!==report.sourceFiles.length||report.fileResults.length!==report.sourceFiles.length||report.processedFileCount>report.selectedFileCount||report.importedFileCount>report.processedFileCount;
+ certificate.countMismatch=ids.length!==report.importedNoteCount||undo.attachmentIds.length!==report.attachmentCount||certificate.fileCountMismatch;
  certificate.status=certificate.missingNotes||certificate.changedNotes||certificate.missingAttachments||certificate.hashMismatches||certificate.sizeMismatches||certificate.hashUnavailable||certificate.attachmentErrors||certificate.countMismatch||report.persistenceLimited||report.outcome!=='completed'||report.skippedNoteCount>0?'주의 필요':'일치';
  if(signature!==stateSignature(state)){certificate.status='검사 불가';certificate.reason='대조 중 노트가 변경됐습니다. 다시 검사하세요.';}return certificate;
 }
