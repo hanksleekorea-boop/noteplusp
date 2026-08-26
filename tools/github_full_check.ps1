@@ -3,7 +3,9 @@ param()
 
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$dirtyBefore = & git -C $root status --porcelain
+$gitSafe = "safe.directory=$($root -replace '\\','/')"
+$dirtyBefore = & git -c $gitSafe -C $root status --porcelain
+if ($LASTEXITCODE -ne 0) { throw "전체 검사 전 Git 상태를 확인하지 못했습니다." }
 if (-not [string]::IsNullOrWhiteSpace(($dirtyBefore -join "`n"))) {
     throw "전체 검사는 깨끗한 작업 폴더에서만 실행합니다."
 }
@@ -90,10 +92,12 @@ try {
         if ($LASTEXITCODE -ne 0) { $failed += 1 }
     }
 } finally {
-    & git -C $root restore --source=HEAD -- $generated
+    & git -c $gitSafe -C $root restore --source=HEAD -- $generated
+    if ($LASTEXITCODE -ne 0) { throw "검사 생성물을 원상복구하지 못했습니다." }
 }
 
-$dirtyAfter = & git -C $root status --porcelain
+$dirtyAfter = & git -c $gitSafe -C $root status --porcelain
+if ($LASTEXITCODE -ne 0) { throw "전체 검사 뒤 Git 상태를 확인하지 못했습니다." }
 if (-not [string]::IsNullOrWhiteSpace(($dirtyAfter -join "`n"))) {
     throw "검사 뒤 작업 폴더가 깨끗하지 않습니다."
 }
