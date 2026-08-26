@@ -18,8 +18,8 @@ function unique(matches) {
   return [...new Set(matches)];
 }
 
-expect(/상태:\s*\*\*ADOPTED —/.test(product), '제품기획서 상태가 ADOPTED가 아닙니다.');
-expect(/상태:\s*\*\*ADOPTED EXECUTION PLAN\*\*/.test(development), '개발계획서 상태가 ADOPTED EXECUTION PLAN이 아닙니다.');
+expect(/상태:\s*\*\*SUPERSEDED BY `PRODUCT_PLAN_v12_ADOPTED\.md`/.test(product), 'v11 제품기획서에 v12 대체 표식이 없습니다.');
+expect(/상태:\s*\*\*SUPERSEDED BY `DEVELOPMENT_PLAN_v12_3STAGE\.md`/.test(development), 'v11 개발계획서에 v12 대체 표식이 없습니다.');
 
 const improvements = unique([...product.matchAll(/^### (P11-IMP-\d{3})\b/gm)].map((match) => match[1]));
 const requirements = unique([...product.matchAll(/^\| (P11-REQ-\d{3}) \|/gm)].map((match) => match[1]));
@@ -76,4 +76,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`PLAN_V11_PASS fields=${benchmarkRows.length} improvements=${improvements.length} requirements=${requirements.length} tasks=${tasks.length} stages=12/8/8`);
+console.log(`PLAN_V11_HISTORY_PASS fields=${benchmarkRows.length} improvements=${improvements.length} requirements=${requirements.length} tasks=${tasks.length} stages=12/8/8 supersededBy=v12`);

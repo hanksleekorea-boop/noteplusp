@@ -1,11 +1,13 @@
 # 노트플러스P 채택 제품기획서 v11
 
-> 상태: **ADOPTED — 다음 개발의 제품 정본**  
+> 상태: **SUPERSEDED BY `PRODUCT_PLAN_v12_ADOPTED.md` — 결정 이력과 과거 증거용**  
 > 채택일: 2026-08-24 (Asia/Bangkok)  
 > 대상 제품: 공개 v21을 보존하면서 개발할 다음 후보 v22  
 > 대체 범위: `PROJECT_PLAN_v10_5.md`의 제품 방향·우선순위·완료 정의를 대체한다. 과거 검사 증거와 기존 사용자 보호 규칙은 계속 유효하다.  
 > 비교 근거: `../.world-class-analysis/20260824T065748Z/`  
-> 실행 계획: `DEVELOPMENT_PLAN_v11_3STAGE.md`
+> 후속 정본: `PRODUCT_PLAN_v12_ADOPTED.md`  
+> 과거 실행 계획: `DEVELOPMENT_PLAN_v11_3STAGE.md`  
+> 현재 실행 정본: `DEVELOPMENT_PLAN_v12_3STAGE.md`
 
 ## 1. 채택 결정
 
