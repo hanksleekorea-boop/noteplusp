@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+ <title>노트플러스P v22 상용화 진척 대시보드</title>
+ <style>
+  :root{font-family:system-ui,sans-serif;color:#173428;background:#f4f7f5}body{max-width:1120px;margin:auto;padding:24px}h1,h2{line-height:1.25}.hero,.card{background:#fff;border:1px solid #c8d9cf;border-radius:16px;padding:20px;margin:14px 0;box-shadow:0 3px 12px #17342812}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.metric{font-size:1.8rem;font-weight:800}.ok{color:#087a3e}.warn{color:#985b00}.blocked{color:#b42318}.bar{height:18px;background:#e4ebe7;border-radius:99px;overflow:hidden}.bar span{display:block;width:58.3%;height:100%;background:#16844b}table{border-collapse:collapse;width:100%}th,td{text-align:left;vertical-align:top;border-bottom:1px solid #dbe5df;padding:9px}a{color:#075f36}li{margin:.45rem 0}.small{color:#52675c;font-size:.93rem}code{overflow-wrap:anywhere}@media(max-width:600px){body{padding:12px}table{font-size:.9rem}}
+ </style>
+</head>
+<body>
+ <header class="hero"><h1>노트플러스P v22 상용화 진척 대시보드</h1><p>기준: 2026-08-26 · 개발 후보 <code>ee1131134260fa45027fa3805e6ff804141c1cd4</code> · 공개 main은 변경하지 않음</p><div class="bar" aria-label="1단계 카드 12개 중 7개 완료"><span></span></div><p><strong>1단계 카드 7/12 완료(58.3%)</strong> — 카드 크기가 달라 제품 전체 완성률과 같은 수치가 아닙니다.</p></header>
+ <section class="grid" aria-label="핵심 수치">
+  <article class="card"><div class="metric ok">56/56</div><p>로컬 전체 자동검사 PASS</p></article>
+  <article class="card"><div class="metric ok">9/9</div><p>GitHub 빠른 검사 PASS</p></article>
+  <article class="card"><div class="metric warn">3/7</div><p>실제 출시 증거 PASS</p></article>
+  <article class="card"><div class="metric blocked">11</div><p>출시 차단 조건</p></article>
+ </section>
+ <section class="card"><h2>지금 사용 가능한 공개판</h2><ul>
+  <li><a href="https://hanksleekorea-boop.github.io/noteplusp/">PC 기본 공개 주소</a> — HTTP 200, 현재 main 기본판 유지</li>
+  <li><a href="https://hanksleekorea-boop.github.io/noteplusp/%EB%85%B8%ED%8A%B8%EC%95%B1_v21.html">모바일·PC v21 공개 앱</a> — HTTP 200</li>
+  <li><a href="https://hanksleekorea-boop.github.io/noteplusp/artifacts/noteplusp_v21_qr.png">v21 공개 QR</a> — HTTP 200</li>
+  <li><a href="https://github.com/hanksleekorea-boop/noteplusp/pull/7">v22 개발 PR #7</a> — 초안, 최신 GitHub 검사 PASS</li>
+ </ul><p class="small">v22 공개 주소는 404입니다. 출시 조건을 통과하기 전 main과 Pages를 전환하지 않았습니다.</p></section>
+ <section class="card"><h2>완료·진행 카드</h2><table><thead><tr><th>상태</th><th>카드</th><th>사용자에게 보이는 결과</th></tr></thead><tbody>
+  <tr><td class="ok">완료 7</td><td>S1-001/002/003/005/006/007/009</td><td>기존 자료 보존, 첫 사용, 상태/오류, 충돌 복구, 이관 대조, 전체 ZIP, 대형 자료, 저장 안전</td></tr>
+  <tr><td class="warn">진행 1</td><td>S1-004</td><td>Galaxy 기본 저장·오프라인·설치 PASS, 실제 Drive 양방향 왕복 미완료</td></tr>
+  <tr><td class="blocked">외부 4</td><td>S1-008/010/011/012</td><td>TalkBack, 운영자 실값, 실제 사람/운영 훈련, 최종 공개 판정</td></tr>
+ </tbody></table></section>
+ <section class="card"><h2>확인된 증거</h2><ul>
+  <li>Galaxy S21+: 411px, IndexedDB 저장·재열기, ENEX+PDF, 서비스워커, 오프라인 재실행, 설치 경로 PASS. 시험 자료 0개와 원래 탭 복구.</li>
+  <li>혼합 대형 자료: 신규 10,000노트, 1,024첨부, 정확히 1GiB, 6종 파일, 누락·크기/지문값 불일치·중복 ID 0.</li>
+  <li>가상 사용자 상태 1,000종: 이관 전후 상태·복구 지점·미리보기 불변 PASS. 실제 사람 1,000명의 조사 결과는 아님.</li>
+  <li>저장 건강: 영구 보관 권한, 사용량/한도, 전체 반출, 다른 기기 사본을 정상·주의·위험으로 구분.</li>
+  <li>자료 흐름: 이 기기 기본, 사용자가 직접 누른 Google appData 이동, 다른 사람/AI 제공자 자동 전송 없음, 무료 전체 반출.</li>
+ </ul></section>
+ <section class="card"><h2>출시를 막는 11개와 풀리는 조건</h2><ol>
+  <li>운영 주체 — 실제 법적/사업 운영자 명칭 입력</li><li>지원 연락 — 실제 수신 가능한 주소 입력</li><li>개인정보 문의 — 실제 수신 가능한 담당 경로 입력</li><li>관할 — 실제 운영 관할 확정</li><li>장애 책임자 — 실제 담당자 지정</li><li>지원 응답 목표 — 실제 운영 가능한 시간 확정</li><li>이용조건 검토 — 운영자 검토일과 승인 기록</li>
+  <li>PC↔Android Drive — OAuth 등록 HTTPS 원점에서 실제 계정 왕복 후 원상복구 증거</li><li>TalkBack — 실제 기기에서 핵심 과업 완료</li><li>비개발자 3명 — 실제 3명이 핵심 과업 완료</li><li>운영 훈련 — 실제 운영자 관찰 아래 장애·복구 훈련 완료</li>
+ </ol></section>
+ <section class="card"><h2>다음 실행 우선순위 20</h2><ol>
+  <li>OAuth 등록 HTTPS 후보 원점 결정</li><li>v22 후보의 비공개/제한 공개 방식 결정</li><li>PC 합성 자료 Drive 백업</li><li>Android 변화량 미리보기</li><li>Android 복원·재열기</li><li>Android 오프라인 수정</li><li>Android에서 Drive 재백업</li><li>PC 역방향 미리보기·복원</li><li>양쪽 원래 상태 복구</li><li>Drive 증거 파일 서명·검토</li>
+  <li>TalkBack 핵심 과업 실제 실행</li><li>대화창 대비·확대 최종 점검</li><li>운영 주체 실제 값 입력</li><li>지원/개인정보 연락 입력</li><li>관할·이용조건 검토</li><li>장애 책임자·응답시간 입력</li><li>비개발자 3명 시험</li><li>운영 장애·복구 훈련</li><li>출시 조건 재검사</li><li>승인 뒤 v22 main 병합·Pages·QR 최종 검증</li>
+ </ol></section>
+ <section class="card"><h2>사용자 없이 단독 실행 가능한 우선순위 20</h2><ol>
+  <li>Drive 실제 시험 스크립트 유지보수</li><li>OAuth 원점 오류 안내 화면 보강</li><li>TalkBack 자동 접근성 트리 보조검사 확장</li><li>대화창 색 대비 자동검사 추가</li><li>360~1920px 확대 경계 추가</li><li>저장 건강 경고 문구 음성 대조 추가</li><li>전체 ZIP 손상 표본 확대</li><li>암호화 백업 왕복 자동검사 추가</li><li>Drive 401/403/429/5xx 조합 확대</li><li>복원 중 브라우저 종료 복구 검사</li>
+  <li>1GiB 취소·재개 별도 증거 강화</li><li>Office/음성 파일 실제 디코더 표본 추가</li><li>오래된 v16~v21 복귀 검사 유지</li><li>서비스워커 갱신 실패 검사 확대</li><li>무료 권리 문구 교차검사 확대</li><li>운영 문서 빈값 차단 음성 대조</li><li>출시 증거 파일 미래 시각 차단 강화</li><li>대시보드 자동 생성 도구화</li><li>전체 56개 주기 재실행</li><li>개발 PR 보안·변경 검토</li>
+ </ol><p class="small">이 목록은 실제 계정·사람·법적 운영값을 가짜로 만들지 않는 범위입니다.</p></section>
+</body></html>
