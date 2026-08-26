@@ -83,4 +83,6 @@ node tools/check_release_gate_v22.mjs
 - 코드 보관소: `hanksleekorea-boop/noteplusp`, 실제 public. 인증 계정과 admin/push 확인.
 - 개발 작업 갈래: `codex/v22-stage1`. main 직접 변경·강제 변경 없음.
 - 공개 main 기준: `21bb9321be5da26412df564937ef56bed325c474`. v21·PC 기본 주소 유지.
-- 원격 반영 상태: 검사 후 초안 검토 요청으로 반영 예정. 상용 후보 병합·Pages 전환은 하지 않는다.
+- 원격 반영 상태: 제품 코드 `328d624`와 검사 기록 문서 `d6f0034`를 정상 gh 로그인으로 반영하고 각 저장 기록 및 tree의 로컬·원격 정확한 일치를 확인했다. [초안 PR 7](https://github.com/hanksleekorea-boop/noteplusp/pull/7) 생성. 이후 이 상태 문서는 별도 문서 저장 기록으로 추가한다. 상용 후보 병합·Pages 전환은 하지 않는다.
+- 전송 경로: Git HTTPS DLL은 실행 정책 차단, 연결 앱은 쓰기 403이었다. 보안 정책을 변경하지 않고 기존 gh 로그인으로 [GitHub 공식 Git Data API](https://docs.github.com/en/rest/git/commits)를 사용했다. 기존 갈래를 강제 변경하지 않고 전체 파일 묶음 및 저장 기록 지문을 대조했다.
+- 공개 상태: 2026-08-26 PC·v21·QR·worker 4/4 HTTP 200. 원격 main `21bb9321be5da26412df564937ef56bed325c474` 유지.
