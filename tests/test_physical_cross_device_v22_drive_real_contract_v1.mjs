@@ -4,7 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const source=fs.readFileSync(path.join(root,'tests','test_physical_cross_device_v22_drive_real_v1.mjs'),'utf8');
-for(const required of ['NOTEPLUS_PC_V22_URL','NOTEPLUS_ANDROID_V22_URL','NOTEPLUS_PC_CDP','NOTEPLUS_ANDROID_CDP','evaluatePreflight','assert.equal(preflight.result','capturePriorDrive','prior completed Drive snapshot','restoreLocal(pc.cdp','restoreLocal(android.cdp','priorDrivePointerRestored','PC to Android to PC'])assert.ok(source.includes(required),`missing cross-device safety contract: ${required}`);
+for(const required of ['NOTEPLUS_PC_V22_URL','NOTEPLUS_ANDROID_V22_URL','NOTEPLUS_PC_CDP','NOTEPLUS_ANDROID_CDP','cdpEndpointReady','pcCdpReady','androidCdpReady','evaluatePreflight','assert.equal(preflight.result','capturePriorDrive','prior completed Drive snapshot','restoreLocal(pc.cdp','restoreLocal(android.cdp','priorDrivePointerRestored','PC to Android to PC'])assert.ok(source.includes(required),`missing cross-device safety contract: ${required}`);
 assert.match(source,/if\(priorDrive&&!priorRestored\).*uploadSnapshot/s);
 assert.match(source,/assert\.notEqual\(secondBackupId,firstBackupId\)/);
 console.log('PASS v22 real cross-device Drive runner requires READY preflight, prior-pointer restoration, PC/Android local restoration, and bidirectional verified changes');

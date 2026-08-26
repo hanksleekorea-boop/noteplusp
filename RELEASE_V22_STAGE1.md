@@ -56,7 +56,7 @@
 ## 출시까지 남은 관문
 
 - 실제 승인된 시험 출처에서 PC→Android→PC Drive 왕복 및 원상 복구. `origin_mismatch`가 나오면 앱은 등록 HTTPS 주소 재시도 또는 OAuth 운영자의 허용 JavaScript 원점 추가가 필요함과 로컬 자료/이전 완료 백업 불변을 안내한다.
-- 실제 Drive 자료를 건드리기 전 `node tools/check_v22_cross_device_drive_preflight.mjs`가 PC·Android v22 HTTPS 주소, ADB 기기, OAuth client 프로젝트 조회를 모두 `READY`로 확인해야 한다. URL·기기·권한을 하나라도 확인하지 못하면 `BLOCKED`이며 실제 계정 시험을 시작하지 않는다.
+- 실제 Drive 자료를 건드리기 전 `node tools/check_v22_cross_device_drive_preflight.mjs`가 PC·Android v22 HTTPS 주소, PC·Android Chrome 원격 디버그 연결, ADB 기기, OAuth client 프로젝트 조회를 모두 `READY`로 확인해야 한다. URL·브라우저 연결·기기·권한을 하나라도 확인하지 못하면 `BLOCKED`이며 실제 계정 시험을 시작하지 않는다.
 - 사전점검 뒤에는 PC와 Android 각각 Chrome 원격 디버그 주소를 연결하고 `NOTEPLUS_PC_V22_URL`, `NOTEPLUS_ANDROID_V22_URL`, `NOTEPLUS_PC_CDP`, `NOTEPLUS_ANDROID_CDP`를 지정해 `node tests/test_physical_cross_device_v22_drive_real_v1.mjs`를 실행한다. 이 도구는 기존 Drive 포인터가 없으면 새 시험 포인터를 남기지 않고 중단하며, PC→Android→PC의 노트·첨부 SHA-256·Android 수정 왕복을 확인한 뒤 이전 Drive 포인터와 두 기기의 원래 로컬 상태를 복구한다.
 - 실제 Android의 기본 저장·재열기·오프라인·설치 경로는 PASS. TalkBack 핵심 과업은 별도 미완료.
 - 이전 연결 Galaxy에는 Samsung TalkBack이 설치됐으나 접근성 서비스와 터치 탐색이 비활성 상태였다. 현재 ADB 기기는 0대다. 새 `tools/android_talkback_preflight_v22.mjs`는 재연결 뒤 설치·구성·설정을 읽기만 하며, 어떤 설정도 바꾸지 않고 실제 TalkBack 과업 PASS로 기록하지 않는다.

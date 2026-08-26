@@ -3,7 +3,7 @@ import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {evaluatePreflight} from '../tools/check_v22_cross_device_drive_preflight.mjs';
+import {cdpEndpointReady,evaluatePreflight} from '../tools/check_v22_cross_device_drive_preflight.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const artifact=path.join(root,'artifacts','physical_cross_device_v22_drive_real_v1.json');
@@ -39,10 +39,11 @@ async function createSeed(cdp){return cdp.evaluate(`(async()=>{const now=Date.no
 async function backup(cdp){await cdp.evaluate("document.querySelector('#cloudBackupBtn').click();true");await poll(()=>cdp.evaluate('!cloudSnapshotInFlight&&Boolean(v22Status.lastBackupId)'),180000);return cdp.evaluate('v22Status.lastBackupId');}
 async function restoreRemote(cdp){await cdp.evaluate(`(async()=>{const empty=cloneState(state);empty.notes=[];empty.trash=[];empty.lastImportUndo=null;empty.lastImportReport=null;empty.preferences.snapshots=[];empty.preferences.conflictVaultV1=[];state=migrateState(empty);await persist();render();return true;})()`);await cdp.evaluate("document.querySelector('#cloudRestoreBtn').click();true");await poll(()=>cdp.evaluate('Boolean(pendingCloudRestore)&&!cloudSnapshotInFlight'),180000);await cdp.evaluate("document.querySelector('#cloudRestoreBtn').click();true");await poll(()=>cdp.evaluate("Boolean(document.querySelector('[data-v22-restore=\"remote\"]')?.getClientRects().length)"),30000);await cdp.evaluate("document.querySelector('[data-v22-restore=\"remote\"]').click();true");await poll(()=>cdp.evaluate(`!cloudSnapshotInFlight&&state.notes.some(note=>note.title===${JSON.stringify(marker)}||note.title===${JSON.stringify(marker+'-ANDROID')})`),180000);}
 
-const preflight=evaluatePreflight({clientId:clientId(),pcUrl,androidUrl,adbOutput:commandText('adb',['devices','-l']),cloudProjectNumbers:projects()});
+const pcCdp=process.env.NOTEPLUS_PC_CDP||'http://127.0.0.1:9223',androidCdp=process.env.NOTEPLUS_ANDROID_CDP||'http://127.0.0.1:9222';
+const preflight=evaluatePreflight({clientId:clientId(),pcUrl,androidUrl,adbOutput:commandText('adb',['devices','-l']),cloudProjectNumbers:projects(),pcCdpReady:await cdpEndpointReady(pcCdp),androidCdpReady:await cdpEndpointReady(androidCdp)});
 assert.equal(preflight.result,'READY',`cross-device preflight blocked: ${preflight.blockers.join(',')}`);
-const pcEndpoint=new BrowserEndpoint(process.env.NOTEPLUS_PC_CDP||'http://127.0.0.1:9223','PC');
-const androidEndpoint=new BrowserEndpoint(process.env.NOTEPLUS_ANDROID_CDP||'http://127.0.0.1:9222','Android');
+const pcEndpoint=new BrowserEndpoint(pcCdp,'PC');
+const androidEndpoint=new BrowserEndpoint(androidCdp,'Android');
 const pc=await pcEndpoint.main(),android=await androidEndpoint.main();let pcSnapshot,androidSnapshot,attachmentId='',priorDrive=false,priorRestored=false,pcRestored=false,androidRestored=false;
 try{
  await openApp(pc.cdp,pcUrl);await openApp(android.cdp,androidUrl);pcSnapshot=await localSnapshot(pc.cdp);androidSnapshot=await localSnapshot(android.cdp);await signIn(pcEndpoint,pc.cdp);priorDrive=await capturePriorDrive(pc.cdp);assert.equal(priorDrive,true,'A prior completed Drive snapshot is required so this test can restore it without leaving a synthetic pointer');
