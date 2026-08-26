@@ -49,7 +49,23 @@ $tests = @(
     "tests/test_v21_responsive_layout_v1.mjs",
     "tests/test_v21_pc_mobile_browser_matrix_v1.mjs",
     "tests/test_v21_offline_save_idempotency_v1.mjs",
-    "tests/test_virtual_persona_snapshot_safety_v1.mjs"
+    "tests/test_virtual_persona_snapshot_safety_v1.mjs",
+    "tests/test_v22_release_contract_v1.mjs",
+    "tests/test_v22_release_browser_v1.mjs",
+    "tests/test_v22_onboarding_first_value_v1.mjs",
+    "tests/test_v22_existing_user_onboarding_guard_v1.mjs",
+    "tests/test_v22_existing_personas_v1.mjs",
+    "tests/test_v22_sync_status_v1.mjs",
+    "tests/test_v22_restore_conflict_v1.mjs",
+    "tests/test_v22_migration_certificate_v1.mjs",
+    "tests/test_v22_portable_roundtrip_v1.mjs",
+    "tests/test_v22_large_stream_v1.mjs",
+    "tests/test_v22_library_10000_v1.mjs",
+    "tests/test_v22_attachment_stream_v1.mjs",
+    "tests/test_v22_safety_boundaries_v1.mjs",
+    "tests/test_v22_accessibility_v1.mjs",
+    "tests/test_v22_commercial_pages_v1.mjs",
+    "tests/test_v22_release_gate_v1.mjs"
 )
 $generated = @(
     "artifacts/cloud_restore_preflight_v16.png",

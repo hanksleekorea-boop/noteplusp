@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "candidate": "v22",
+  "checks": {
+    "androidPhysical": {"status":"NOT_RUN","method":"physical-device","evidence":null,"checkedAt":null},
+    "drivePcAndroidRoundtrip": {"status":"NOT_RUN","method":"real-account-device","evidence":null,"checkedAt":null},
+    "talkBack": {"status":"NOT_RUN","method":"physical-device","evidence":null,"checkedAt":null},
+    "threeNonDeveloperPilots": {"status":"NOT_RUN","method":"human-users","participants":0,"evidence":null,"checkedAt":null},
+    "representativeLargeLibrary": {"status":"NOT_RUN","method":"attachment-rich-dataset","evidence":null,"checkedAt":null},
+    "operationsDrill": {"status":"NOT_RUN","method":"operator-observed","evidence":null,"checkedAt":null}
+  }
+}

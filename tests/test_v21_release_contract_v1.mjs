@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)),"..");
 const versions = fs.readdirSync(root).map(name=>/^노트앱_v(\d+)\.html$/.exec(name)).filter(Boolean).map(match=>Number(match[1])).sort((a,b)=>b-a);
 assert.ok(versions.length,"a versioned app loader must exist");
-const versionNumber = versions[0], version = `v${versionNumber}`;
+const versionNumber = 21, version = `v${versionNumber}`;
 const read = name => fs.readFileSync(path.join(root,name),"utf8");
 
 function verifyRelease(files) {
