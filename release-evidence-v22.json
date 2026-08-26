@@ -3,11 +3,11 @@
   "candidate": "v22",
   "checks": {
     "legacyVersionReturn": {"status":"PASS","method":"cross-version-browser","evidence":"RELEASE_V22_STAGE1.md","checkedAt":"2026-08-26T12:14:03+07:00"},
-    "androidPhysical": {"status":"NOT_RUN","method":"physical-device","evidence":null,"checkedAt":null},
+    "androidPhysical": {"status":"PASS","method":"physical-device","evidence":"artifacts/physical_android_alpha_v22.json","checkedAt":"2026-08-26T09:29:21.674Z"},
     "drivePcAndroidRoundtrip": {"status":"NOT_RUN","method":"real-account-device","evidence":null,"checkedAt":null},
     "talkBack": {"status":"NOT_RUN","method":"physical-device","evidence":null,"checkedAt":null},
     "threeNonDeveloperPilots": {"status":"NOT_RUN","method":"human-users","participants":0,"evidence":null,"checkedAt":null},
-    "representativeLargeLibrary": {"status":"NOT_RUN","method":"attachment-rich-dataset","evidence":null,"checkedAt":null},
+    "representativeLargeLibrary": {"status":"PASS","method":"attachment-rich-dataset","evidence":"artifacts/v22_mixed_large_library_v1.json","checkedAt":"2026-08-26T09:40:51.615Z"},
     "operationsDrill": {"status":"NOT_RUN","method":"operator-observed","evidence":null,"checkedAt":null}
   }
 }

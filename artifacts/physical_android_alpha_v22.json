@@ -1,0 +1,69 @@
+{
+  "candidate": "v22",
+  "cardId": "S1-004",
+  "method": "physical-device",
+  "environment": "Galaxy S21+ / Android Chrome; device and account identifiers omitted",
+  "checkedAt": "2026-08-26T09:29:21.674Z",
+  "result": "PASS",
+  "sourceHead": "b5e869a4b20973aa381155a6b80f21c78d607721",
+  "checks": [
+    "411px mobile layout without horizontal overflow",
+    "IndexedDB note save and reload",
+    "ENEX note plus PDF attachment reload",
+    "service worker active and controlling",
+    "offline reopen with saved data",
+    "mobile install path reachable",
+    "synthetic test data removed",
+    "original state signature restored",
+    "original Chrome tab restored"
+  ],
+  "limitations": [
+    "Local USB-forwarded candidate origin, not public v22",
+    "Google Drive cross-device roundtrip not included",
+    "TalkBack task completion not included",
+    "Install prompt readiness is browser-controlled and was not observed"
+  ],
+  "ok": true,
+  "publicUrl": "http://127.0.0.1:18799/",
+  "version": "v22",
+  "release": {
+    "bytes": 2230,
+    "sha256": "B472C5103DC84CE70DC8195C98B3CD77F066C33FBDB8839BE6052A7ADC4D8D03"
+  },
+  "device": {
+    "viewport": {
+      "innerWidth": 411,
+      "innerHeight": 781,
+      "screenWidth": 412,
+      "screenHeight": 915,
+      "dpr": 2.625,
+      "scrollWidth": 411
+    }
+  },
+  "persistenceMode": "idb",
+  "noteReloaded": true,
+  "enexPdfReloaded": true,
+  "serviceWorker": {
+    "active": true,
+    "controlled": true,
+    "offlineReopen": true
+  },
+  "install": {
+    "buttonExists": true,
+    "mobilePathVerified": true,
+    "promptReady": false
+  },
+  "screenshot": {
+    "captured": false,
+    "method": "",
+    "error": "Not retained by default for privacy."
+  },
+  "cleanup": {
+    "qaCount": 0,
+    "enexCount": 0,
+    "signatureMatch": true,
+    "testDataRemoved": true,
+    "originalStateRestored": true,
+    "originalTabRestored": true
+  }
+}

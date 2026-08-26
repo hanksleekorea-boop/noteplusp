@@ -69,6 +69,8 @@ $tests = @(
     "tests/test_v22_safety_boundaries_v1.mjs",
     "tests/test_v22_accessibility_v1.mjs",
     "tests/test_v22_commercial_pages_v1.mjs",
+    "tests/test_v22_storage_health_v1.mjs",
+    "tests/test_v22_data_flow_notice_v1.mjs",
     "tests/test_v22_release_gate_v1.mjs",
     "tests/test_v22_device_compare_v1.mjs"
     "tests/test_v22_legacy_vault_boundary_v1.mjs"
