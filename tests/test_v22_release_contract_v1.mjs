@@ -6,7 +6,9 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const read=name=>fs.readFileSync(path.join(root,name),'utf8');
 function verify(loader,core,worker,manifest,module){
   assert.match(core,/NOTEPLUS_CORE_V22/);
-  assert.match(core,/var DB_NAME="noteplusp_schema5"/);
+  assert.match(core,/var DB_NAME="noteplusp_v22_schema5"/);
+  assert.match(core,/var FALLBACK_KEY="notes_app_v22_schema5_fallback"/);
+  assert.match(core,/db.transaction\(names,'readonly'\)/);
   assert.match(loader,/source="노트앱_core_v22.html"/);
   assert.match(loader,/scope:"\.\/노트앱_v22.html"/);
   assert.match(loader,/noteplus-drive-v22.js/);

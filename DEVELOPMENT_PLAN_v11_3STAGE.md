@@ -107,7 +107,7 @@ node .\tests\test_v22_release_contract_v1.mjs
   2. v22 loader는 core v22·Drive v22·manifest v22·worker v22의 정확한 연결점을 확인한 뒤에만 화면을 연다.
   3. 연결점 누락·HTTP 실패 시 기존 자료 무변경 안내와 v21 이동 링크를 제공한다.
   4. worker 저장 이름을 v21과 분리하고 v21 저장 영역을 삭제하지 않는다.
-- 자료 변화: 없음. 기존 IndexedDB 키를 그대로 읽되 쓰기 변환은 하지 않는다.
+- 자료 변화: §7.3 안전성 보완이 이 초기 결정을 대체한다. 기존 저장소는 읽기 전용으로 복사하고 v22 전용 저장소에만 쓴다.
 - 화면 상태: 준비 중, 실패, v21로 돌아가기.
 - 자동 검사: 새 파일 연결, 정확한 runtime marker, 이전 모듈 연결 실패, worker 격리, 기존 저장 키 불변.
 - 일부러 틀린 입력: core 404, 연결 문자열 누락, v21 모듈 오연결, 잘못된 manifest 시작 주소.
@@ -613,7 +613,7 @@ S3-001~S3-004 → S3-005 → S3-006 → S3-007 → S3-008
 
 - 공통 브라우저 검사: `tests/v22_test_harness.mjs`, `tests/test_v22_release_browser_v1.mjs`, `tests/test_v22_existing_personas_v1.mjs`, `tests/test_v22_safety_boundaries_v1.mjs`.
 - S1-001: `tests/test_v21_release_contract_v1.mjs`는 검사 대상을 최신 숫자 추측 대신 v21로 고정한다. v21 제품 파일은 변경하지 않는다.
-- S1-003: 실제 검사명은 `tests/test_v22_sync_status_v1.mjs`. 기기별 마지막 저장 상태는 노트 지문값을 불필요하게 바꾸지 않도록 별도 `noteplusp_v22_sync_status` 키에 보관한다. 노트·첨부 자체는 기존 IndexedDB다.
+- S1-003: 실제 검사명은 `tests/test_v22_sync_status_v1.mjs`. 기기별 마지막 저장 상태는 노트 지문값을 불필요하게 바꾸지 않도록 별도 `noteplusp_v22_sync_status` 키에 보관한다. 노트·첨부는 §7.3의 v22 전용 IndexedDB다.
 - S1-005: 두 계획 검사 파일을 `tests/test_v22_restore_conflict_v1.mjs`에 통합했다. 첨부 참조는 충돌 금고까지 확장하고 해결 뒤에도 양쪽 보존본을 자동 삭제하지 않는다.
 - S1-006/007: `tests/test_v22_import_commit_barrier_v1.mjs`는 가져오기 첨부 확정 전 일반 저장을 대기시키는 계약이다. `tests/test_v22_large_stream_v1.mjs`, `tests/test_v22_attachment_stream_v1.mjs`, `tests/test_v22_large_durable_import_v1.mjs`는 읽기/첨부/실제 영구 저장을 분리한다.
 - S1-009: `noteplus-portable-v22.js`와 `tests/test_v22_portable_roundtrip_v1.mjs`를 추가했다. ZIP은 외부 의존성 없이 무압축·CRC·경로·크기·첨부 지문을 검사한다. 암호화 ZIP이 아니며 최대 2GiB다. 기존 JSON/암호화 백업 경로를 유지한다.
@@ -626,3 +626,14 @@ S3-001~S3-004 → S3-005 → S3-006 → S3-007 → S3-008
 다음 첫 행동은 최신 코드의 전체 검사를 마친 후 `RELEASE_V22_STAGE1.md`의 미완료 관문을 순서대로 확인하는 것이다. S1-003/005/006/009는 구현 완료와 최종 증거 검토를 구분한다. S1-004는 실제 기기 조작이 가능한 승인된 시험 환경에서 실행한다. 운영자·실사용자 정보가 없는 상태에서 S1-012를 DONE으로 바꾸지 않는다.
 
 Drive 호환 보완: v22 완료 포인터는 `noteplusp-v22-current.json`에 쓰고 기존 v18~v21 포인터는 변경하지 않는다. v22 포인터가 없을 때만 이전 포인터를 읽는다. 충돌 금고 전용 첨부를 v22 manifest에 포함하고 복원 ID 충돌 시 금고 참조까지 같이 바꾼다. v21은 새로운 충돌 금고를 해석하는 복구 도구가 아니므로 v22 전체 ZIP을 보관한 뒤 복귀한다.
+
+### 7.3 저장소 분리 안전성 교정 — 기존 공유 저장소 결정 대체
+
+- 발견: v21의 첨부 정리는 v22 충돌 금고를 참조하지 않는다. 같은 저장소를 계속 공유하면 이전 버전에서 새 금고 첨부를 정리할 수 있다. 합성 재현으로 확인했고 실제 사용자 자료는 삭제하지 않았다.
+- 결정: v22의 DB는 `noteplusp_v22_schema5`, 보조 키는 `notes_app_v22_schema5_fallback`. 이전 `noteplusp_schema5`와 보조 키는 읽기 전용 원본이다. 기존 v21 제품 파일은 수정하지 않는다.
+- 실행: 새 저장소가 비어 있을 때만 이전 DB의 상태·첨부·이관 기록을 단일 읽기 전용 작업으로 읽는다. 첨부 참조·크기·지문값과 여유 공간을 확인하고 새 DB의 한 원자적 쓰기 작업으로 확정한다. 이미 새 상태가 있으면 복사를 건너뛴다.
+- 실패: 손상·첨부 누락·용량 부족·다른 창의 새 상태 선점은 원본 무변경, 새 상태 미확정, 보조 키 쓰기 금지, 닫을 수 없는 안전 안내와 재시도/이전 버전 링크로 처리한다. 원본 DB를 자동 삭제하지 않는다.
+- 사용자 의미: 초기 복사 후 두 버전의 편집은 자동으로 서로 반영되지 않는다. 서로 다른 시점의 복사본이며 버전 복귀는 최신 v22 편집을 v21로 동기화하는 기능이 아니다. 상태 센터와 실제 기기 절차에 이를 명시한다.
+- 추가 파일: `tests/test_v22_legacy_vault_boundary_v1.mjs`, `tests/test_v22_large_legacy_copy_v1.mjs`. 앞 검사는 정상 복사·각 버전 독립 편집·이전 정리 영향 없음·재열기·손상/용량 부족 차단을 확인한다. 뒤 검사는 3GiB RAM/5GiB 디스크 확인 후 별도 실행하는 1GiB·1만 노트 복사 시험이다.
+- 출시 조건: `release-evidence-v22.json`의 `legacyVersionReturn` 증거까지 확인한다. 부분 합성 검사를 실제 Android 전수 검증으로 바꾸어 기록하지 않는다.
+- 이관 보고서 보완: 원문 파일명·노트북명·보고서 ID 대신 수량과 보고서 지문값만 공유하며 실제 첨부 바이트를 합산한다. 상태 센터는 잘못된 완료 ID, 미래/역행 시각, 음수/NaN 대기 수와 숫자가 들어간 정상 문구를 검사한다.

@@ -69,6 +69,7 @@ $tests = @(
     "tests/test_v22_commercial_pages_v1.mjs",
     "tests/test_v22_release_gate_v1.mjs",
     "tests/test_v22_device_compare_v1.mjs"
+    "tests/test_v22_legacy_vault_boundary_v1.mjs"
 )
 $generated = @(
     "artifacts/cloud_restore_preflight_v16.png",

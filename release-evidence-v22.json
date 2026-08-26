@@ -2,6 +2,7 @@
   "schema": 1,
   "candidate": "v22",
   "checks": {
+    "legacyVersionReturn": {"status":"PASS","method":"cross-version-browser","evidence":"RELEASE_V22_STAGE1.md","checkedAt":"2026-08-26T12:14:03+07:00"},
     "androidPhysical": {"status":"NOT_RUN","method":"physical-device","evidence":null,"checkedAt":null},
     "drivePcAndroidRoundtrip": {"status":"NOT_RUN","method":"real-account-device","evidence":null,"checkedAt":null},
     "talkBack": {"status":"NOT_RUN","method":"physical-device","evidence":null,"checkedAt":null},
