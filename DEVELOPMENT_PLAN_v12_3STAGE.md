@@ -361,7 +361,7 @@ node .\tests\test_v22_release_contract_v1.mjs
 
 ### S1-008 — 접근성 출시 차단 장치
 
-- 상태: **WAITING-EXTERNAL** — Edge·Chrome 화면 5종/키보드 검사 PASS, TalkBack 및 전수 대비 검증 미완료
+- 상태: **WAITING-EXTERNAL** — Edge·Chrome 화면 5종/키보드 검사 PASS. main 랜드마크·건너뛰기 링크·숨김 영역 초점·상태/안내 대화상자 키보드 흐름도 자동 검증한다. TalkBack 및 전수 대비 검증은 미완료
 - 요구사항: P11-REQ-008
 - 사용자 결과: 키보드·TalkBack·확대 사용자도 모든 핵심 과업을 끝낸다.
 - 선행 작업: S1-002, S1-003, S1-005, S1-006

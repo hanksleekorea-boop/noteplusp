@@ -24,6 +24,9 @@
     -webkit-font-smoothing:antialiased;
   }
   .app{display:flex; flex-direction:column; height:100vh;}
+  .skip-link{position:fixed;left:12px;top:-80px;z-index:10000;padding:10px 14px;border-radius:8px;background:#173428;color:#fff;font-weight:800;transition:top .15s ease;}
+  .skip-link:focus{top:12px;}
+  .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
   /* ── 상태 스트립 (저장 불가 환경 고지) ── */
   .persist-strip{
@@ -517,7 +520,9 @@
 </style>
 </head>
 <body>
+<a class="skip-link" id="v22SkipLink" href="#main">주요 작업 영역으로 건너뛰기</a>
 <div class="app">
+  <h1 class="visually-hidden">노트플러스P</h1>
   <div class="persist-strip" id="banner" role="status" aria-live="polite" aria-atomic="true"><span id="persistMessage">저장소를 준비하고 있습니다…</span><button class="persist-retry" id="persistRetry" type="button">저장 다시 시도</button></div>
   <div style="display:flex;align-items:center;gap:8px;padding:4px 12px;border-bottom:1px solid var(--line);flex-shrink:0">
     <button id="v22StatusOpen" type="button" style="min-height:44px;padding:6px 12px;background:var(--bg);color:var(--ink);border:1px solid #708378;border-radius:8px">저장·백업 상태</button>
@@ -544,7 +549,7 @@
   <input type="file" id="enexFile" accept=".enex,application/xml,text/xml" multiple style="display:none;">
   <input type="file" id="enexFolder" accept=".enex,application/xml,text/xml" webkitdirectory directory multiple style="display:none;">
 
-  <div class="main" id="main">
+  <main class="main" id="main" tabindex="-1">
     <!-- 사이드바 -->
     <div class="sidebar">
       <div class="side-logo"><span class="el">🐘</span><span class="word">노트</span></div>
@@ -679,7 +684,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </main>
   <nav class="mobile-nav" id="mobileNav" aria-label="모바일 탐색">
     <button type="button" data-mobile-view="side" aria-label="노트북과 태그">☰<br>정리</button>
     <button type="button" data-mobile-view="list" aria-label="노트 목록">☷<br>목록</button>
