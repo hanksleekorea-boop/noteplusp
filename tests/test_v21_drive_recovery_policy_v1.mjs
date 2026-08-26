@@ -75,6 +75,8 @@ await assert.rejects(() => persistent.api.uploadResumable("persistent.bin",blob,
 assert.equal(persistentCalls,2+2*recoveryLimit,"init + bounded failed chunks and probes must terminate");
 assert.deepEqual(persistent.delays,Array.from({length:recoveryLimit},(_,index)=>Math.min(30000,1000*2**index)));
 
+assert.match(rate.api.friendlyError(new Error("origin_mismatch")),/등록된 HTTPS 주소/);
+assert.match(rate.api.friendlyError(new Error("origin_mismatch")),/로컬 데이터와 이전 완료 백업은 그대로/);
 assert.match(rate.api.friendlyError(new Error("Drive HTTP 401")),/다시 로그인/);
 assert.match(rate.api.friendlyError(new Error("Drive HTTP 403")),/권한/);
 assert.match(rate.api.friendlyError(new Error("Drive HTTP 429")),/요청이 많아/);
