@@ -11,6 +11,7 @@ $tests = @(
     "tests/test_v22_release_evidence_audit_v1.mjs",
     "tests/test_v22_android_talkback_preflight_v1.mjs",
     "tests/test_v22_cross_device_drive_preflight_v1.mjs",
+    "tests/test_physical_cross_device_v22_drive_real_contract_v1.mjs",
     "tests/test_firebase_activation_packet_v1.mjs",
     "tests/test_v21_release_contract_v1.mjs",
     "tests/test_v21_drive_recovery_policy_v1.mjs",
