@@ -96,7 +96,7 @@ node .\tests\test_v22_release_contract_v1.mjs
 
 ### S1-001 — v22 안전 개발 틀과 보호 계약
 
-- 상태: **READY**
+- 상태: **DONE-A+B** — 분리 계약·실패 안전·v21 왕복 보존 확인, 2026-08-26
 - 요구사항: P11-REQ-025, P11-REQ-026
 - 사용자 결과: 새 후보 실패가 현재 v21과 기존 자료에 영향을 주지 않는다.
 - 선행 작업: 없음
@@ -117,7 +117,7 @@ node .\tests\test_v22_release_contract_v1.mjs
 
 ### S1-002 — 두 갈래 첫 성공과 안전 온보딩
 
-- 상태: **PLANNED**
+- 상태: **DONE-A+B+S** — 시작·건너뜀·재열기·기존 사용자·저장 차단·1,000종 판단 조건 확인. 실제 사용자 증거 아님.
 - 요구사항: P11-REQ-001
 - 사용자 결과: 처음 온 사람이 3분 안에 새 노트 또는 ENEX 미리보기까지 간다.
 - 선행 작업: S1-001
@@ -138,7 +138,7 @@ node .\tests\test_v22_release_contract_v1.mjs
 
 ### S1-003 — 통합 저장·동기화 상태 센터
 
-- 상태: **PLANNED**
+- 상태: **IN-PROGRESS** — 화면·오류 코드·오프라인·완료 시각·첨부 저장 대기 구현, 추가 경계 검사는 실행 보고서 참조
 - 요구사항: P11-REQ-002
 - 사용자 결과: 지금 자료가 어디까지 안전한지와 다음 행동을 한곳에서 이해한다.
 - 선행 작업: S1-002
@@ -177,7 +177,7 @@ node .\tests\test_v22_release_contract_v1.mjs
 
 ### S1-005 — 복원 미리보기와 충돌 금고
 
-- 상태: **PLANNED**
+- 상태: **IN-PROGRESS** — 100종 양쪽 보존·취소·개별 보존본 적용·다른 탭 변경 차단 구현; 외부 왕복과 추가 결함 검증 별도
 - 요구사항: P11-REQ-005, P11-REQ-006
 - 사용자 결과: 복원 전 변화를 알고 충돌한 두 버전을 모두 보존한다.
 - 선행 작업: S1-003; 실제 기기 완료는 필요 없으나 S1-004 계약을 깨면 안 됨
@@ -197,7 +197,7 @@ node .\tests\test_v22_release_contract_v1.mjs
 
 ### S1-006 — 이관 무결성 인증서
 
-- 상태: **PLANNED**
+- 상태: **IN-PROGRESS** — 최근 이관 기록 대조·JSON 보고서·손상 검출 구현. 외부 서비스 전체 자료에 대한 제3자 인증이 아님.
 - 요구사항: P11-REQ-004, P11-REQ-025
 - 사용자 결과: 가져온 것과 빠진 것을 직접 확인하고 보고서를 보관한다.
 - 선행 작업: S1-002
@@ -216,7 +216,7 @@ node .\tests\test_v22_release_contract_v1.mjs
 
 ### S1-007 — 1GB·1만 노트 대형 자료 안전성
 
-- 상태: **PLANNED**
+- 상태: **DONE-A+B** — 16개 파일 순차 이관으로 1만 노트·1GiB 첨부 1,024개 저장/재열기/지문 대조 PASS. Android·혼합 형식·동시 다중 파일 성능은 별도 미확인.
 - 요구사항: P11-REQ-007
 - 사용자 결과: 대형 자료에서도 화면이 멈추지 않고 취소·재시도가 안전하다.
 - 선행 작업: S1-006
@@ -235,7 +235,7 @@ node .\tests\test_v22_release_contract_v1.mjs
 
 ### S1-008 — 접근성 출시 차단 장치
 
-- 상태: **PLANNED**
+- 상태: **WAITING-EXTERNAL** — Edge·Chrome 화면 5종/키보드 검사 PASS, TalkBack 및 전수 대비 검증 미완료
 - 요구사항: P11-REQ-008
 - 사용자 결과: 키보드·TalkBack·확대 사용자도 모든 핵심 과업을 끝낸다.
 - 선행 작업: S1-002, S1-003, S1-005, S1-006
@@ -254,7 +254,7 @@ node .\tests\test_v22_release_contract_v1.mjs
 
 ### S1-009 — 전체 왕복 내보내기·보존·삭제 권리
 
-- 상태: **PLANNED**
+- 상태: **IN-PROGRESS** — ZIP 전체 왕복·휴지통 첨부·안전 필드·손상 경로 차단·삭제 취소 구현 및 자동 검사 PASS
 - 요구사항: P11-REQ-009, P11-REQ-010
 - 사용자 결과: 서비스에 갇히지 않고 전체 자료를 옮기고 삭제 전 복구 가능성을 안다.
 - 선행 작업: S1-005, S1-006
@@ -310,7 +310,7 @@ node .\tests\test_v22_release_contract_v1.mjs
 
 ### S1-012 — v22 무료 상용판 출시 후보
 
-- 상태: **PLANNED**
+- 상태: **WAITING-EXTERNAL** — 코드 후보와 차단 검사 준비. 실제 기기·운영·사용자 증거 미충족으로 공개 승격 금지.
 - 요구사항: P11-REQ-025, P11-REQ-026
 - 사용자 결과: 검증된 v22를 공개하고 문제가 생기면 v21로 돌아간다.
 - 선행 작업: S1-001~S1-011 전부 완료
@@ -601,6 +601,28 @@ S3-001~S3-004 → S3-005 → S3-006 → S3-007 → S3-008
 
 ## 6. 지금 시작할 작업
 
-`S1-001 — v22 안전 개발 틀과 보호 계약`만 READY다. 이를 완료하기 전 S1-002 이후 제품 기능을 구현하지 않는다.
+2026-08-26 실행 갱신: S1-001 보호 계약을 통과한 뒤 S1-002 이후 독립 개발을 진행했다. 첫 두 카드는 완료 증거가 있고 나머지는 구현·자동 확인과 실제 출시 완료를 구별한다. 최신 수치·실패 기록은 `RELEASE_V22_STAGE1.md`를 따른다.
 
 실제 Android가 필요한 첫 작업은 `S1-004`이며, AI는 시험 자료·대조 도구·원상 복구 절차까지만 독립 준비할 수 있다.
+
+## 7. 2026-08-26 승인된 실행 보완
+
+사용자가 모든 안과 개발·검사를 승인하고 외부 병목 외의 작업을 먼저 진행하도록 지시했다. 따라서 보호 계약 후 개별 카드의 독립 로컬 구현을 허용하며, 원래 출시 조건은 낮추지 않는다. 외부 쓰기 권한은 GitHub 로그인·push 권한 확인 뒤 개발 작업 갈래와 초안 검토 요청에 한정하여 사용한다. main/Pages 승격은 실제 출시 조건을 통과한 뒤다.
+
+### 7.1 파일 범위 추가 승인 기록
+
+- 공통 브라우저 검사: `tests/v22_test_harness.mjs`, `tests/test_v22_release_browser_v1.mjs`, `tests/test_v22_existing_personas_v1.mjs`, `tests/test_v22_safety_boundaries_v1.mjs`.
+- S1-001: `tests/test_v21_release_contract_v1.mjs`는 검사 대상을 최신 숫자 추측 대신 v21로 고정한다. v21 제품 파일은 변경하지 않는다.
+- S1-003: 실제 검사명은 `tests/test_v22_sync_status_v1.mjs`. 기기별 마지막 저장 상태는 노트 지문값을 불필요하게 바꾸지 않도록 별도 `noteplusp_v22_sync_status` 키에 보관한다. 노트·첨부 자체는 기존 IndexedDB다.
+- S1-005: 두 계획 검사 파일을 `tests/test_v22_restore_conflict_v1.mjs`에 통합했다. 첨부 참조는 충돌 금고까지 확장하고 해결 뒤에도 양쪽 보존본을 자동 삭제하지 않는다.
+- S1-006/007: `tests/test_v22_import_commit_barrier_v1.mjs`는 가져오기 첨부 확정 전 일반 저장을 대기시키는 계약이다. `tests/test_v22_large_stream_v1.mjs`, `tests/test_v22_attachment_stream_v1.mjs`, `tests/test_v22_large_durable_import_v1.mjs`는 읽기/첨부/실제 영구 저장을 분리한다.
+- S1-009: `noteplus-portable-v22.js`와 `tests/test_v22_portable_roundtrip_v1.mjs`를 추가했다. ZIP은 외부 의존성 없이 무압축·CRC·경로·크기·첨부 지문을 검사한다. 암호화 ZIP이 아니며 최대 2GiB다. 기존 JSON/암호화 백업 경로를 유지한다.
+- S1-004/011: `tools/compare_device_export_v22.mjs`, `tests/test_v22_device_compare_v1.mjs`, Android·접근성·파일럿·운영 훈련 문서를 추가한다. 준비 문서는 실행 증거가 아니다.
+- S1-010/012: `commercial-owner-v22.json`, `release-evidence-v22.json`, `tools/build_trust_center_v22.mjs`, `tools/check_release_gate_v22.mjs`, `tests/test_v22_release_gate_v1.mjs`, 신뢰 센터 6개 HTML. 운영자 미입력은 null로 유지하고 정책 페이지는 초안임을 명시한다.
+- 공통 실행기에는 v22 검사를 추가한다. 대형 1GiB 영구 저장은 3GiB 메모리·5GiB 디스크 확인 후 `NOTEPLUS_LARGE_E2E=1`로 별도 실행한다. 합성 일반 브라우저 프로필은 프로젝트 바깥 개인 프로필이 아니라 `.project-continuity/local/` 아래 새 전용 폴더를 만든다. 기존 사용자 프로필을 사용하지 않는다.
+
+### 7.2 다음 실행 하나
+
+다음 첫 행동은 최신 코드의 전체 검사를 마친 후 `RELEASE_V22_STAGE1.md`의 미완료 관문을 순서대로 확인하는 것이다. S1-003/005/006/009는 구현 완료와 최종 증거 검토를 구분한다. S1-004는 실제 기기 조작이 가능한 승인된 시험 환경에서 실행한다. 운영자·실사용자 정보가 없는 상태에서 S1-012를 DONE으로 바꾸지 않는다.
+
+Drive 호환 보완: v22 완료 포인터는 `noteplusp-v22-current.json`에 쓰고 기존 v18~v21 포인터는 변경하지 않는다. v22 포인터가 없을 때만 이전 포인터를 읽는다. 충돌 금고 전용 첨부를 v22 manifest에 포함하고 복원 ID 충돌 시 금고 참조까지 같이 바꾼다. v21은 새로운 충돌 금고를 해석하는 복구 도구가 아니므로 v22 전체 ZIP을 보관한 뒤 복귀한다.

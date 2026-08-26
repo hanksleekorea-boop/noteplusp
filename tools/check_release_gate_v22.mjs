@@ -6,12 +6,12 @@ export function evaluateGate(owner,evidence,readEvidence=()=>false,now=Date.now(
  const blockers=[];
  for(const key of ['operator','supportContact','privacyContact','jurisdiction','incidentOwner'])if(typeof owner[key]!=='string'||!owner[key].trim())blockers.push('OWNER:'+key);
  if(!Number.isFinite(owner.supportResponseHours)||owner.supportResponseHours<=0)blockers.push('OWNER:supportResponseHours');
- if(owner.termsReviewed!==true||!Number.isFinite(Date.parse(owner.reviewedAt)))blockers.push('OWNER:termsReview');
+ if(owner.termsReviewed!==true||!Number.isFinite(Date.parse(owner.reviewedAt))||Date.parse(owner.reviewedAt)>now)blockers.push('OWNER:termsReview');
  const methods={androidPhysical:'physical-device',drivePcAndroidRoundtrip:'real-account-device',talkBack:'physical-device',threeNonDeveloperPilots:'human-users',representativeLargeLibrary:'attachment-rich-dataset',operationsDrill:'operator-observed'};
  if(evidence.schema!==1||evidence.candidate!=='v22')blockers.push('EVIDENCE:schema');
  for(const [key,method] of Object.entries(methods)){
   const c=evidence.checks?.[key],date=Date.parse(c?.checkedAt);
-  if(!c||c.status!=='PASS'||c.method!==method||!Number.isFinite(date)||date>now||now-date>30*86400000||!c.evidence||!readEvidence(c.evidence)||(key==='threeNonDeveloperPilots'&&c.participants<3))blockers.push('EVIDENCE:'+key);
+  if(!c||c.status!=='PASS'||c.method!==method||!Number.isFinite(date)||date>now||now-date>30*86400000||!c.evidence||!readEvidence(c.evidence)||(key==='threeNonDeveloperPilots'&&(!Number.isInteger(c.participants)||c.participants<3)))blockers.push('EVIDENCE:'+key);
  }
  return {candidate:'v22',releaseAllowed:blockers.length===0,blockers,notice:'A gate checks declared evidence, not its truth; reviewer must inspect referenced reports. No automatic deployment.'};
 }

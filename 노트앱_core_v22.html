@@ -1068,6 +1068,7 @@ function writeFallbackState(){
   }catch(e){ setPersistenceMode("memory",e&&e.name?e.name:""); return false; }
 }
 function persist(){
+  if(v22ImportCommitPending)return v22ImportCommitPending.then(function(){return persist();});
   state.schema=5;
   if(noteDb){
     return writeStateAndAttachments([],[],null).then(function(){ setPersistenceMode("idb"); return true; }).catch(function(e){
@@ -2302,13 +2303,16 @@ function blobToBase64(blob){
 function rememberAttachments(items){
   (items||[]).forEach(function(item){ if(item&&item.meta&&validAttachmentId(item.meta.id)) volatileAttachments[item.meta.id]=item; });
 }
+var v22ImportCommitPending=null;
 function saveImportedBundle(items){
   items=Array.isArray(items)?items:[];rememberAttachments(items);
-  return ensureAttachmentHashes(items).then(function(prepared){
+  var operation=ensureAttachmentHashes(items).then(function(prepared){
     rememberAttachments(prepared);
-    if(noteDb)return writeStateAndAttachments(prepared,[],null).then(function(){setPersistenceMode("idb");return true;}).catch(function(){writeFallbackState();return false;});
+    if(noteDb)return writeStateAndAttachments(prepared,[],null).then(function(){setPersistenceMode("idb");prepared.forEach(function(item){delete volatileAttachments[item.meta.id];});return true;}).catch(function(){writeFallbackState();return false;});
     return persist().then(function(){return false;});
   });
+  if(noteDb){v22ImportCommitPending=operation.finally(function(){v22ImportCommitPending=null;if(typeof v22RenderStatus==='function')v22RenderStatus();});if(typeof v22RenderStatus==='function')v22RenderStatus();return v22ImportCommitPending;}
+  return operation;
 }
 function collectExportAttachments(){
   var ids=Object.keys(referencedAttachmentIdsIncludingSnapshots());
@@ -2324,9 +2328,11 @@ function collectExportAttachments(){
 
 document.getElementById("exportBtn").onclick=function(){
   hideBackupFallback();
+  var exportBefore=stateSignature(state),exportSnapshot=cloneState(state);
   setBackupStatus("노트와 첨부를 백업 파일로 준비 중…");
   collectExportAttachments().then(function(attachments){
-    var bundle=cloneState(state); bundle.attachments=attachments;
+    if(exportBefore!==stateSignature(state))throw new Error('내보내는 중 자료가 변경됐습니다. 저장한 뒤 다시 시도하세요.');
+    var bundle=exportSnapshot; bundle.attachments=attachments;
     var json=JSON.stringify(bundle,null,2);
     try{
       var blob=new Blob([json],{type:"application/json"});
@@ -2415,11 +2421,13 @@ function setCloudUi(detail){
 window.addEventListener("noteplus-cloud-state",function(event){setCloudUi(event.detail||{});});
 function cloudErrorText(error){try{if(window.noteplusCloud&&typeof window.noteplusCloud.friendlyError==="function")return window.noteplusCloud.friendlyError(error);}catch(ignore){}return String(error&&error.message?error.message:error||"알 수 없는 오류");}
 function sha256Text(text){return sha256Blob(new Blob([String(text)],{type:"application/json"}));}
+function v22CloudOwnerMap(data){var owners=Object.create(null);function visit(note){if(!note||typeof note.id!=='string')throw new Error('노트 소유 정보 오류');normalizeAttachmentIds(note.attachmentIds).forEach(function(id){if(!owners[id])owners[id]=[];if(!owners[id].includes(note.id))owners[id].push(note.id);});}(data.notes||[]).concat(data.trash||[]).forEach(visit);var vault=data.preferences&&data.preferences.conflictVaultV1;if(vault!==undefined&&!Array.isArray(vault))throw new Error('충돌 보관 형식 오류');(vault||[]).forEach(function(c){if(!c||!c.localCopy||!c.remoteCopy)throw new Error('충돌 보관본 누락');visit(c.localCopy);visit(c.remoteCopy);sanitizeStoredNoteHtml(c.localCopy);sanitizeStoredNoteHtml(c.remoteCopy);});return owners;}
 async function prepareCloudSnapshot(){
+  if(v22ImportCommitPending)throw new Error('첨부 저장 완료 후 백업하세요.');
   if(persistenceMode!=="idb"||!noteDb)throw new Error("현재 영속 저장소가 준비되지 않아 클라우드 백업을 시작하지 않았습니다.");
   if(!(window.crypto&&window.crypto.subtle))throw new Error("이 브라우저에서는 백업 무결성 검사를 지원하지 않습니다.");
   var before=stateSignature(state),snapshot=cloneSnapshotData();sanitizeAllNoteHtml(snapshot);
-  var owners=attachmentOwnerMap(),ids=Object.keys(owners),attachments=[],manifestAttachments=[];
+  var owners=v22CloudOwnerMap(snapshot),ids=Object.keys(owners),attachments=[],manifestAttachments=[];
   for(var i=0;i<ids.length;i++){
     setCloudUi({phase:"preparing",message:"로컬 첨부 검증 "+(i+1)+" / "+ids.length});
     var id=ids[i],item=await getAttachmentRecord(id);
@@ -2433,7 +2441,7 @@ async function prepareCloudSnapshot(){
   }
   if(stateSignature(state)!==before)throw new Error("백업 준비 중 노트가 변경되어 안전하게 중단했습니다. 다시 백업해 주세요.");
   var contentSha256=await sha256Text(JSON.stringify({schema:5,state:snapshot,attachments:manifestAttachments}));
-  var snapshotId="s5_"+contentSha256.slice(0,40).toLowerCase(),manifest={format:"noteplusp-cloud-snapshot-v1",schema:5,appVersion:"v16",snapshotId:snapshotId,contentSha256:contentSha256,createdAt:new Date().toISOString(),counts:{noteCount:(snapshot.notes||[]).length+(snapshot.trash||[]).length,activeNoteCount:(snapshot.notes||[]).length,trashNoteCount:(snapshot.trash||[]).length,attachmentCount:attachments.length},state:snapshot,attachments:manifestAttachments};
+  var snapshotId="s5_"+contentSha256.slice(0,40).toLowerCase(),manifest={format:"noteplusp-cloud-snapshot-v1",schema:5,appVersion:"v22",snapshotId:snapshotId,contentSha256:contentSha256,createdAt:new Date().toISOString(),counts:{noteCount:(snapshot.notes||[]).length+(snapshot.trash||[]).length,activeNoteCount:(snapshot.notes||[]).length,trashNoteCount:(snapshot.trash||[]).length,attachmentCount:attachments.length},state:snapshot,attachments:manifestAttachments};
   var manifestText=JSON.stringify(manifest);
   return {snapshotId:snapshotId,manifestText:manifestText,manifestSha256:await sha256Text(manifestText),attachments:attachments,counts:manifest.counts};
 }
@@ -2448,7 +2456,7 @@ document.getElementById("googleSignOutBtn").onclick=async function(){
 function validateCloudRestorePreview(bundle){
   var manifest=bundle&&bundle.manifest;if(!manifest||manifest.format!=="noteplusp-cloud-snapshot-v1"||Number(manifest.schema)!==5||!manifest.state||!Array.isArray(manifest.attachments))throw new Error("클라우드 백업 형식이 올바르지 않습니다.");
   var restored=migrateState(cloneState(manifest.state));if(!restored)throw new Error("클라우드 노트 상태를 읽을 수 없습니다.");sanitizeAllNoteHtml(restored);
-  var owners={};restored.notes.concat(restored.trash||[]).forEach(function(note){normalizeAttachmentIds(note.attachmentIds).forEach(function(id){if(!owners[id])owners[id]=[];owners[id].push(note.id);});});
+  var owners=v22CloudOwnerMap(restored);
   var descriptors={},totalBytes=0;
   manifest.attachments.forEach(function(item){
     if(!item||!validAttachmentId(item.id)||descriptors[item.id]||!validAttachmentMime(item.mime)||!Number.isFinite(Number(item.size))||Number(item.size)<0||!normalizeAttachmentHash(item.sha256))throw new Error("클라우드 첨부 목록 검증에 실패했습니다.");
@@ -2481,6 +2489,7 @@ async function checkCloudRestorePreflight(preview){
 }
 function remapRestoredAttachment(stateToRestore,oldId,newId){
   stateToRestore.notes.concat(stateToRestore.trash||[]).forEach(function(note){note.attachmentIds=normalizeAttachmentIds(note.attachmentIds).map(function(id){return id===oldId?newId:id;});});
+  v22VaultItems(stateToRestore).forEach(function(c){[c.localCopy,c.remoteCopy].forEach(function(note){note.attachmentIds=normalizeAttachmentIds(note.attachmentIds).map(function(id){return id===oldId?newId:id;});});});
 }
 async function chooseCloudRestoreId(descriptor,index){
   var existing=await getAttachmentRecord(descriptor.id);
@@ -2506,6 +2515,7 @@ async function restoreVerifiedCloudSnapshot(preview){
       if(!choice.reuse){
         setCloudUi({phase:"downloading",message:"클라우드 첨부 검증 "+(i+1)+" / "+descriptors.length+" · "+formatBytes(processedBytes)+" / "+formatBytes(preview.totalBytes)});
         var blob=await window.noteplusCloud.downloadAttachment(preview.bundle.manifest.snapshotId,source,preview.bundle.accountUid);
+        if(!(blob instanceof Blob)||blob.size!==source.size||await sha256Blob(blob)!==source.sha256)throw new Error('다운로드 첨부의 크기 또는 지문값 불일치');
         var meta={id:choice.id,noteId:source.noteId,name:source.name,mime:source.mime,size:source.size,created:source.created,sha256:source.sha256};
         batch.push({meta:meta,blob:blob});addedIds.push(choice.id);
         if(batch.length>=10){await writeAttachmentBatch(batch);rememberAttachments(batch);batch=[];}
@@ -3439,6 +3449,7 @@ storageReady.then(function(){if(v22ShouldShowWelcome(v22FreshProfile,state.prefe
  <h2 id="v22StatusTitle">내 자료는 지금 어디에 있나요?</h2>
  <p id="v22LocalStatus"></p><p id="v22CloudStatus"></p><p id="v22BackupTime"></p><p id="v22PendingStatus"></p><p id="v22StatusAction"></p>
  <p>백업은 자동 실시간 동기화가 아닙니다. 다른 기기에서는 백업 확인 후 복원을 선택하세요. 로그인만으로 자료를 전송하지 않습니다.</p>
+ <p>v22의 새 완료 백업은 이전 버전의 완료 백업과 별도로 보관합니다. v22 백업이 없을 때만 이전 백업을 읽습니다. 이전 앱으로 돌아가기 전 전체 자료 ZIP도 보관하세요.</p>
  <button id="v22GoCloud" type="button">Drive 연결·백업 화면</button><button id="v22StatusClose" type="button">닫기</button>
 </dialog>
 <script>
@@ -3452,11 +3463,11 @@ function v22StatusView(){
  var busy=cloudSnapshotInFlight||['uploading','downloading','preparing','verifying','committing','authenticating'].includes(phase);
  var cloudState=offline?'offline':phase==='error'?'error':busy?phase:cloud.user?'idle':cloud.configured?'signed-out':'disabled';
  var actions={AUTH:'Google에 다시 로그인하세요. 이전 완료 백업은 그대로입니다.',PERMISSION:'Drive 앱 전용 폴더 권한을 확인하세요.',RATE_LIMIT:'잠시 기다린 뒤 백업을 다시 시도하세요. 완료 표시 전에는 새 백업이 아닙니다.',QUOTA:'Drive 공간을 확인하고 로컬 전체 내보내기를 보관하세요.',SERVICE:'서비스 응답을 기다린 뒤 다시 시도하세요.',UNKNOWN:'로컬 자료를 내보낸 뒤 Drive 화면의 안내를 확인하세요.'};
- return Object.assign({},v22Status,{cloudState:cloudState,errorCode:errorCode,pendingCount:Math.max(0,v22Status.pendingCount)+(busy?1:0),conflictCount:v22VaultItems(state).filter(function(x){return !x.resolvedAt;}).length,action:offline?'인터넷이 끊겼습니다. 로컬 편집은 가능하며, 다시 연결되면 직접 백업하세요.':errorCode?actions[errorCode]:cloud.user?'백업 버튼을 눌러야 이 기기의 변경이 Drive에 저장됩니다.':'Google 연결은 선택입니다. 로컬 노트와 전체 내보내기는 계속 사용할 수 있습니다.'});
+ return Object.assign({},v22Status,{cloudState:cloudState,errorCode:errorCode,pendingCount:Math.max(0,v22Status.pendingCount)+(busy?1:0)+(v22ImportCommitPending?1:0),conflictCount:v22VaultItems(state).filter(function(x){return !x.resolvedAt;}).length,action:offline?'인터넷이 끊겼습니다. 로컬 편집은 가능하며, 다시 연결되면 직접 백업하세요.':errorCode?actions[errorCode]:cloud.user?'백업 버튼을 눌러야 이 기기의 변경이 Drive에 저장됩니다.':'Google 연결은 선택입니다. 로컬 노트와 전체 내보내기는 계속 사용할 수 있습니다.'});
 }
 function v22RenderStatus(){
  if(!document.getElementById('v22LocalStatus'))return;
- var s=v22StatusView(),local=s.pendingCount&&s.localState==='saving'?'이 기기에 저장 중':persistenceMode==='idb'?'이 기기 저장소 준비됨':persistenceMode==='local'?'브라우저 제한 저장 — 첨부는 별도 확인 필요':'임시 보관 — 탭을 닫기 전에 전체 내보내기 필요';
+ var s=v22StatusView(),local=v22ImportCommitPending||(s.pendingCount&&s.localState==='saving')?'이 기기에 저장 중':persistenceMode==='idb'?'이 기기 저장소 준비됨':persistenceMode==='local'?'브라우저 제한 저장 — 첨부는 별도 확인 필요':'임시 보관 — 탭을 닫기 전에 전체 내보내기 필요';
  document.getElementById('v22StatusSummary').textContent=local+(!navigator.onLine?' · 오프라인':'');
  document.getElementById('v22LocalStatus').textContent='로컬: '+local+(s.lastLocalSaveAt?' · 마지막 완료 '+new Date(s.lastLocalSaveAt).toLocaleString():' · 이번 버전 저장 완료 기록 없음');
  document.getElementById('v22CloudStatus').textContent='Drive: '+({offline:'오프라인',error:'문제 확인 필요',idle:'연결됨',disabled:'연결 설정 필요','signed-out':'로그인하지 않음',uploading:'첨부 업로드 중',verifying:'검증 중',committing:'백업 확정 중',downloading:'복원 정보 확인 중',preparing:'백업 준비 중',authenticating:'로그인 중'}[s.cloudState]||'확인 중');
@@ -3530,6 +3541,7 @@ document.getElementById('v22ConflictClose').onclick=function(){v22CloseDialog(do
 var v22LastCertificate=null;
 async function v22BuildCertificate(){
  var report=normalizeImportReport(state.lastImportReport),undo=normalizeImportUndo(state.lastImportUndo),signature=stateSignature(state),certificate={format:'noteplusp-migration-certificate-v1',checkedAt:Date.now(),status:'검사 불가',basis:'현재 이관 기록과 현재 저장본 대조; 외부 인증 아님',bodyIncluded:false};
+ if(v22ImportCommitPending){certificate.reason='첨부와 노트를 아직 저장 중입니다. 완료 후 다시 검사하세요.';return certificate;}
  if(!report)return certificate;
  Object.assign(certificate,{reportId:report.id,outcome:report.outcome,files:report.sourceFiles.map(function(f){return {name:f.name,size:f.size};}),found:report.foundNoteCount,imported:report.importedNoteCount,newNotes:report.newNoteCount,merged:report.mergedNoteCount,skipped:report.skippedNoteCount,attachmentErrors:report.attachmentErrorCount,notebookCount:report.notebookNames.length,missingNotes:0,changedNotes:0,attachmentsChecked:0,missingAttachments:0,hashMismatches:0,sizeMismatches:0,hashUnavailable:0});
  if(report.outcome==='undone'||report.outcome==='failed'){certificate.status='적용 안 됨';return certificate;}

@@ -57,7 +57,9 @@ $tests = @(
     "tests/test_v22_existing_personas_v1.mjs",
     "tests/test_v22_sync_status_v1.mjs",
     "tests/test_v22_restore_conflict_v1.mjs",
+    "tests/test_v22_cloud_vault_roundtrip_v1.mjs",
     "tests/test_v22_migration_certificate_v1.mjs",
+    "tests/test_v22_import_commit_barrier_v1.mjs",
     "tests/test_v22_portable_roundtrip_v1.mjs",
     "tests/test_v22_large_stream_v1.mjs",
     "tests/test_v22_library_10000_v1.mjs",
@@ -65,7 +67,8 @@ $tests = @(
     "tests/test_v22_safety_boundaries_v1.mjs",
     "tests/test_v22_accessibility_v1.mjs",
     "tests/test_v22_commercial_pages_v1.mjs",
-    "tests/test_v22_release_gate_v1.mjs"
+    "tests/test_v22_release_gate_v1.mjs",
+    "tests/test_v22_device_compare_v1.mjs"
 )
 $generated = @(
     "artifacts/cloud_restore_preflight_v16.png",

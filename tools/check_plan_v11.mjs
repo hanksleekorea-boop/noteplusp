@@ -66,7 +66,9 @@ for (const requirement of allDevelopmentRequirements) {
 
 expect(development.includes('1단계 종료 조건 — 하나라도 빠지면 상용 완료 아님'), '1단계 상용 종료 조건이 없습니다.');
 expect(development.includes('개발 1단계 — 완전한 무료 상용판'), '1단계 무료 상용화 결정 문구가 없습니다.');
-expect(development.includes('`S1-001 — v22 안전 개발 틀과 보호 계약`만 READY'), '첫 실행 가능 카드가 S1-001로 고정되지 않았습니다.');
+expect(development.includes('## 7. 2026-08-26 승인된 실행 보완'), '실행 갱신과 추가 파일 범위 기록이 없습니다.');
+expect(development.includes('### 7.2 다음 실행 하나'), '다음 첫 행동이 없습니다.');
+expect(development.includes('운영자·실사용자 정보가 없는 상태에서 S1-012를 DONE으로 바꾸지 않는다.'), '실제 출시 증거 보호 조건이 없습니다.');
 
 if (failures.length > 0) {
   console.error(`PLAN_V11_FAIL ${failures.length}`);

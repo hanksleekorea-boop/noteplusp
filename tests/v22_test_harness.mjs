@@ -8,7 +8,7 @@ export const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'
 let chromium;
 try { ({chromium}=require('playwright-core')); }
 catch { ({chromium}=require(process.env.NOTEPLUS_PLAYWRIGHT||path.join(process.env.USERPROFILE,'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright-core'))); }
-export async function harness({browserPath,route}={}) {
+export async function harness({browserPath,route,persistentPath}={}) {
   const server=http.createServer((req,res)=>{
     const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
     if(route?.(pathname,req,res))return;
@@ -21,7 +21,9 @@ export async function harness({browserPath,route}={}) {
     });
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  const browser=await chromium.launch({executablePath:browserPath||process.env.NOTEPLUS_BROWSER||'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true});
+  const options={executablePath:browserPath||process.env.NOTEPLUS_BROWSER||'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true};
+  const persistent=persistentPath?await chromium.launchPersistentContext(persistentPath,options):null;
+  const browser=persistent?{newContext:async()=>persistent,newPage:()=>persistent.newPage(),close:()=>persistent.close()}:await chromium.launch(options);
   const origin=`http://127.0.0.1:${server.address().port}`;
   return {browser,origin,async close(){await browser.close();await new Promise(resolve=>server.close(resolve));}};
 }

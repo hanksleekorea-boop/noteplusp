@@ -8,4 +8,5 @@ for(const key of Object.keys(methods)){const copy=structuredClone(evidence);copy
 assert.equal(evaluateGate(owner,evidence,()=>false,now).releaseAllowed,false);
 assert.equal(evaluateGate({...owner,operator:null},evidence,()=>true,now).releaseAllowed,false);
 assert.equal(evaluateGate(owner,evidence,()=>true,now+31*86400000).releaseAllowed,false);
-console.log('PASS release-gate logic positive synthetic fixture and 9 blocking controls; not actual release approval');
+const missingCount=structuredClone(evidence);delete missingCount.checks.threeNonDeveloperPilots.participants;assert.equal(evaluateGate(owner,missingCount,()=>true,now).releaseAllowed,false);
+console.log('PASS release-gate logic positive synthetic fixture and 10 blocking controls; not actual release approval');

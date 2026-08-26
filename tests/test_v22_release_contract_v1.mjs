@@ -14,6 +14,9 @@ function verify(loader,core,worker,manifest,module){
   assert.equal(manifest.scope,'./노트앱_v22.html');
   assert.equal(manifest.start_url,'./노트앱_v22.html');
   assert.match(module,/const VERSION="noteplus-drive-v22"/);
+  assert.match(module,/uploadAndVerify\("noteplusp-v22-current.json"/);
+  assert.doesNotMatch(module,/uploadAndVerify\("noteplusp-v18-current.json"/);
+  assert.match(module,/findByName\("noteplusp-v18-current.json"\)/);
   assert.match(worker,/key.startsWith\("noteplusp-v22-"\)/);
   assert.match(worker,/if\(!shellURLs.has\(url.href\)\)return/);
   assert.doesNotMatch(worker,/caches.match/);
