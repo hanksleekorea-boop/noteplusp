@@ -16,9 +16,10 @@ try{
   v22Status.localState='error';v22RenderStatus();const errorVisible=document.getElementById('v22LocalStatus').textContent.includes('저장 실패');v22Status.localState='saved';v22Status.lastBackupAt=0;v22Status.lastBackupId=null;v22SaveStatus();
   return {noNumericError,unknown,cancelNoCompletion,negative,nan,rejected,preserved,errorVisible};
  });assert.deepEqual(boundaries,{noNumericError:true,unknown:true,cancelNoCompletion:true,negative:true,nan:true,rejected:4,preserved:true,errorVisible:true});
- for(const [message,code] of [['HTTP 401','AUTH'],['HTTP 403','PERMISSION'],['HTTP 429','RATE_LIMIT'],['HTTP 507','QUOTA'],['HTTP 503','SERVICE']]){
+ for(const [message,code] of [['origin_mismatch','OAUTH_ORIGIN'],['HTTP 401','AUTH'],['HTTP 403','PERMISSION'],['HTTP 429','RATE_LIMIT'],['HTTP 507','QUOTA'],['HTTP 503','SERVICE']]){
   const s=await page.evaluate(message=>{setCloudUi({phase:'error',message});return v22StatusView();},message);assert.equal(s.errorCode,code);assert.ok(s.action.length>10);assert.equal(s.lastBackupAt,0);
  }
+ const oauthOriginAction=await page.evaluate(()=>{setCloudUi({phase:'error',message:'origin_mismatch'});return v22StatusView().action;});assert.match(oauthOriginAction,/등록된 HTTPS 주소/);assert.match(oauthOriginAction,/로컬 자료와 이전 완료 백업은 그대로/);
  const moduleRetry=await page.evaluate(async()=>{
   const hooks=window.noteplusDriveTestV22,beforeState=stateSignature(state),events=[],ranges=[],delays=[];
   if(!hooks)throw new Error('local Drive test hooks missing');
