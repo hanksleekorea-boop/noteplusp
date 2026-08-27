@@ -94,3 +94,9 @@ node tools/check_release_gate_v22.mjs
 - 원격 반영 상태: 제품 코드 `328d624`와 검사 기록 문서 `d6f0034`를 정상 gh 로그인으로 반영하고 각 저장 기록 및 tree의 로컬·원격 정확한 일치를 확인했다. [초안 PR 7](https://github.com/hanksleekorea-boop/noteplusp/pull/7) 생성. 이후 이 상태 문서는 별도 문서 저장 기록으로 추가한다. 상용 후보 병합·Pages 전환은 하지 않는다.
 - 전송 경로: Git HTTPS DLL은 실행 정책 차단, 연결 앱은 쓰기 403이었다. 보안 정책을 변경하지 않고 기존 gh 로그인으로 [GitHub 공식 Git Data API](https://docs.github.com/en/rest/git/commits)를 사용했다. 기존 갈래를 강제 변경하지 않고 전체 파일 묶음 및 저장 기록 지문을 대조했다.
 - 공개 상태: 2026-08-26 PC·v21·QR·worker 4/4 HTTP 200. 원격 main `21bb9321be5da26412df564937ef56bed325c474` 유지.
+# 2026-08-27 Google 계정·PWA 후보 보완
+
+- `630fa9c`는 기존 Google Drive OAuth 경계를 재사용해 비로그인 `Google로 로그인·무료 가입`과 로그인 후 `내 계정` 진입점을 추가했다. 이 앱의 표시 이름과 하루 목표는 이 기기 설정에만 저장하며, Google 계정 프로필·노트·첨부는 로그인 또는 설정 저장으로 바뀌지 않는다.
+- 화면의 Google 식별값은 마스킹한다. 새 비밀번호·가짜 가입·자동 Drive 업로드·자동 복원·계정 삭제 기능은 추가하지 않았다.
+- service worker 캐시는 `noteplusp-v22-shell-2`로 올렸고 v22 소유 캐시만 정리한다. OAuth·Drive·사용자별 응답은 계속 가로채거나 캐시하지 않는다.
+- 검증: 빠른 14/14, 전체 62/62, GitHub Actions verify quick 성공(실행 `33040330523`). 이는 실제 Google 로그인·PC↔Android Drive 왕복·TalkBack·비개발자 파일럿·운영 훈련을 대신하지 않는다.

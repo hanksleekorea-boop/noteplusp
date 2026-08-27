@@ -43,13 +43,13 @@
 | G1 구조 확정 | 통과 | 정적 PWA·기존 Google Drive OAuth·Pages 확인 |
 | G2 안전 설계 | 통과 | 토큰 신규 저장·자동 전송·자동 복원·계정 삭제 없음 |
 | G3 로컬 구현 | 통과 | 계정 진입점·로컬 설정·마스킹·PWA 캐시 판 구현 |
-| G4 로컬 검증 | 진행 | 빠른 14개 통과, 전체 검사는 깨끗한 커밋 뒤 실행 |
+| G4 로컬 검증 | 통과 | 빠른 14/14, 전체 62/62, GitHub Actions quick 통과 |
 | G5 외부 인증 설정 준비 | 보류 | 실제 OAuth 프로젝트 접근권과 등록 origin 확인 불가 |
 | G6 공개 전 확인 | 보류 | G5, 실제 Drive·Android·운영 증거가 남음 |
 | G7 공개 후 검증 | 보류 | v22는 아직 Pages 공개 승격하지 않음 |
 
 ## 실제 검증과 분리한 항목
 
-- 자동: 계정 경계 정적 검사, PWA 소유 캐시·OAuth/Drive 제외 규칙, 기존 빠른 검사.
+- 자동: 계정 경계 정적 검사, PWA 소유 캐시·OAuth/Drive 제외 규칙, 빠른 14/14, 전체 62/62, GitHub Actions quick 통과.
 - 실제 사용자 동작 필요: Google 로그인, 실제 표시 이름이 아닌 앱 로컬 설정 확인, Android/iPhone 카메라 QR 스캔, PC↔Android Drive 왕복.
 - 외부 설정 병목: `OAUTH_CONFIGURATION_REQUIRED`. 현재 Cloud CLI 활성 계정이 요청에 적힌 계정과 다르며, 기존 OAuth 클라이언트 프로젝트의 설정 변경 권한을 확인하지 못했다. 다른 Cloud 프로젝트는 변경하지 않았다.
