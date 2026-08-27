@@ -1,4 +1,4 @@
-const CACHE="noteplusp-v22-shell-1";
+const CACHE="noteplusp-v22-shell-2";
 const SHELL=["./노트앱_v22.html","./노트앱_core_v22.html","./google-drive-config-v18.js","./noteplus-drive-v22.js","./noteplus-portable-v22.js","./noteplus-v22.webmanifest","./icon.svg"];
 const shellURLs=new Set(SHELL.map(item=>new URL(item,self.location.href).href));
 self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));

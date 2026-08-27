@@ -2448,7 +2448,7 @@ function setCloudUi(detail){
   var account=document.getElementById("cloudAccount"),status=document.getElementById("cloudStatus"),signIn=document.getElementById("googleSignInBtn"),signOut=document.getElementById("googleSignOutBtn"),backup=document.getElementById("cloudBackupBtn"),restore=document.getElementById("cloudRestoreBtn");
   if(!account||!status||!signIn||!signOut||!backup||!restore)return;
   var user=cloudUiState.user||null,isAuthBusy=cloudUiState.phase==="authenticating"||cloudUiState.phase==="auth-returning",isReady=!!cloudUiState.configured&&cloudUiState.phase!=="error"&&!isAuthBusy,isMobile=!!cloudUiState.mobile;
-  account.textContent=user?(user.email||user.displayName||"연결된 Google 계정"):"로그인하지 않음";
+  account.textContent=user?v22MaskedCloudAccount(user):"로그인하지 않음";
   status.textContent=cloudUiState.message||"Google 연결 상태를 확인할 수 없습니다. 로컬 데이터는 유지됩니다.";
   status.className="cloud-status"+(cloudUiState.phase==="error"?" error":(user&&cloudUiState.phase==="ready"?" ready":""));
   signIn.hidden=!!user;signOut.hidden=!user;
@@ -2766,6 +2766,11 @@ function currentEnexReport(){return enexBatchSession&&enexBatchSession.report?en
 function saveCurrentEnexReport(report){
   report=normalizeImportReport(report);if(!report)return null;
   activeEnexReport=report;if(enexBatchSession)enexBatchSession.report=report;state.lastImportReport=report;refreshEnexReportActions();return report;
+}
+function v22MaskedCloudAccount(user){
+  var email=String(user&&user.email||""),name=String(user&&user.displayName||"").trim();
+  if(email.indexOf("@")>0){var parts=email.split("@"),local=parts[0];return (local.slice(0,1)+"•••@"+parts[1]).slice(0,120);}
+  return name?name.slice(0,80):"연결된 Google 계정";
 }
 function markCurrentEnexCancelled(reason){
   var report=currentEnexReport();if(!report)return null;
@@ -3658,6 +3663,49 @@ document.getElementById('v22PortablePick').onclick=function(){document.getElemen
 document.getElementById('v22PortableExport').onclick=async function(){if(v22PortableBusy)return;v22PortableBusy=true;var status=document.getElementById('v22PortableStatus');status.textContent='전체 자료와 첨부를 대조 중입니다…';try{var zip=await v22ExportPortable();downloadBlob(zip,'noteplusp-portable.zip');v22RecordFullExport('portable-zip',zip.size,Object.keys(referencedAttachmentIdsIncludingSnapshots()).length);status.textContent='전체 ZIP 내보내기 완료. 암호화되지 않은 파일을 안전하게 보관하세요.';}catch(e){status.textContent='내보내기 중단: '+e.message;}finally{v22PortableBusy=false;}};
 document.getElementById('storageBtn').onclick=async function(){var health=await v22StorageHealthView(),parts=['저장 건강 '+(health.risk==='ok'?'양호':health.risk==='blocked'?'위험':'주의'),'이 기기 '+(health.mode==='idb'?'IndexedDB':'제한 저장'),'영구 보관 '+(health.persisted===true?'허용':health.persisted===false?'미허용':'확인 불가')];if(health.quota)parts.push('사용 '+formatBytes(health.usage)+' / '+formatBytes(health.quota));parts.push(health.lastExportAt?'최근 전체 반출 '+fmtFull(health.lastExportAt)+' · '+health.lastExportType:'최근 전체 반출 없음');parts.push(health.lastBackupAt?'다른 기기용 Drive 완료 '+fmtFull(health.lastBackupAt):'다른 기기용 Drive 완료 사본 미확인');parts.push(health.action);setBackupStatus(parts.join(' · '));};
 document.getElementById('v22PortableFile').onchange=async function(e){var file=e.target.files[0];e.target.value='';if(!file||v22PortableBusy)return;v22PortableBusy=true;var status=document.getElementById('v22PortableStatus'),signature=stateSignature(state);try{if(!v22EmptyDestination())throw new Error('새 브라우저 프로필 또는 비어 있는 보관함에서 복원하세요.');status.textContent='ZIP 전체 내용을 읽기 전용으로 대조 중입니다…';var prepared=await v22ReadPortable(file);if(!window.confirm('노트 '+prepared.state.notes.length+'개 · 휴지통 '+prepared.state.trash.length+'개 · 첨부 '+prepared.items.length+'개를 이 빈 보관함에 복원할까요?')){status.textContent='복원 취소 — 자료 변경 없음';return;}await v22ApplyPortable(prepared,signature);status.textContent='전체 ZIP 복원 완료';}catch(error){status.textContent='복원 중단: '+error.message;}finally{v22PortableBusy=false;}};
+</script>
+<dialog id="v22AccountDialog" class="v22-dialog" aria-labelledby="v22AccountTitle">
+ <h2 id="v22AccountTitle">내 계정</h2>
+ <p id="v22AccountIdentity" role="status" aria-live="polite">Google 로그인 상태를 확인 중입니다.</p>
+ <p id="v22AccountAuthHelp">로그인만으로 노트나 첨부는 전송되지 않습니다. 백업 또는 복원을 직접 눌러야 합니다.</p>
+ <div id="v22AccountSignedOut"><button id="v22AccountSignIn" type="button">Google로 로그인·무료 가입</button></div>
+ <div id="v22AccountSignedIn" hidden><button id="v22AccountSignOut" type="button">로그아웃</button></div>
+ <hr>
+ <label for="v22AccountDisplayName">이 앱에서 쓸 표시 이름</label>
+ <input id="v22AccountDisplayName" type="text" maxlength="80" autocomplete="nickname" aria-describedby="v22AccountNameHelp">
+ <p id="v22AccountNameHelp">이 기기에만 저장됩니다. Google 계정의 이름이나 이메일은 바꾸지 않습니다.</p>
+ <button id="v22AccountSaveName" type="button">이름 저장</button>
+ <label for="v22AccountGoal">하루 목표</label>
+ <select id="v22AccountGoal"><option value="5">5분</option><option value="10">10분</option><option value="15">15분</option><option value="20">20분</option><option value="30">30분</option></select>
+ <p>표시 언어: 한국어 (현재 앱에서 지원하는 언어)</p>
+ <button id="v22AccountSaveGoal" type="button">목표 저장</button>
+ <p><button id="v22AccountBackup" type="button">수동 백업·복원 열기</button> <a href="privacy.html" target="_blank" rel="noopener">개인정보 처리방침</a> <a href="support.html" target="_blank" rel="noopener">도움말·계정 문의</a></p>
+ <p id="v22AccountResult" role="status" aria-live="polite"></p>
+ <button id="v22AccountClose" type="button">닫기</button>
+</dialog>
+<script>
+/* Account boundary: Google tokens remain inside the existing Drive adapter. These preferences never upload automatically. */
+var V22_ACCOUNT_SETTINGS_KEY='noteplusp-v22-account-settings-v1';
+function v22ReadAccountSettings(){try{var raw=localStorage.getItem(V22_ACCOUNT_SETTINGS_KEY),value=raw?JSON.parse(raw):{};return {displayName:typeof value.displayName==='string'?value.displayName.slice(0,80):'',dailyGoal:['5','10','15','20','30'].includes(String(value.dailyGoal))?String(value.dailyGoal):'10',schema:1};}catch(ignore){return {displayName:'',dailyGoal:'10',schema:1};}}
+function v22WriteAccountSettings(next){var value={schema:1,displayName:String(next.displayName||'').replace(/[\u0000-\u001f]/g,'').trim().slice(0,80),dailyGoal:['5','10','15','20','30'].includes(String(next.dailyGoal))?String(next.dailyGoal):'10'};localStorage.setItem(V22_ACCOUNT_SETTINGS_KEY,JSON.stringify(value));return value;}
+var v22AccountSettings=v22ReadAccountSettings(),v22AccountDialog=document.getElementById('v22AccountDialog'),v22AccountIdentity=document.getElementById('v22AccountIdentity'),v22AccountResult=document.getElementById('v22AccountResult');
+document.getElementById('v22AccountDisplayName').value=v22AccountSettings.displayName;document.getElementById('v22AccountGoal').value=v22AccountSettings.dailyGoal;
+function v22RenderAccount(detail){var cloud=detail&&typeof detail==='object'?detail:cloudUiState||{},user=cloud.user||null,busy=cloud.phase==='authenticating'||cloud.phase==='auth-returning',configured=cloud.configured!==false;
+ v22AccountIdentity.textContent=busy?'Google 로그인 상태를 확인하고 있습니다.':user?('연결됨: '+v22MaskedCloudAccount(user)):'로그인하지 않음';
+ document.getElementById('v22AccountSignedOut').hidden=!!user;document.getElementById('v22AccountSignedIn').hidden=!user;
+ var signIn=document.getElementById('v22AccountSignIn');signIn.disabled=busy||!configured;signIn.textContent=busy?'Google 로그인 확인 중…':'Google로 로그인·무료 가입';
+ document.getElementById('v22AccountSignOut').disabled=busy||!user;
+ if(cloud.phase==='error')v22AccountResult.textContent='연결 설정 또는 네트워크를 확인한 뒤 다시 시도하세요. 기존 로컬 자료는 그대로입니다.';
+}
+function v22OpenAccount(){v22RenderAccount(cloudUiState);v22ShowDialog(v22AccountDialog);}
+var v22AccountOpen=document.createElement('button');v22AccountOpen.type='button';v22AccountOpen.id='v22AccountOpen';v22AccountOpen.className='backup-btn';v22AccountOpen.textContent='내 계정';v22AccountOpen.setAttribute('aria-haspopup','dialog');v22AccountOpen.onclick=v22OpenAccount;document.getElementById('v22StatusOpen').after(v22AccountOpen);
+window.addEventListener('noteplus-cloud-state',function(event){v22RenderAccount(event.detail||{});});v22RenderAccount(cloudUiState);
+document.getElementById('v22AccountSignIn').onclick=function(){document.getElementById('googleSignInBtn').click();};
+document.getElementById('v22AccountSignOut').onclick=function(){document.getElementById('googleSignOutBtn').click();};
+document.getElementById('v22AccountSaveName').onclick=function(){try{v22AccountSettings=v22WriteAccountSettings({displayName:document.getElementById('v22AccountDisplayName').value,dailyGoal:document.getElementById('v22AccountGoal').value});document.getElementById('v22AccountDisplayName').value=v22AccountSettings.displayName;v22AccountResult.textContent='이 기기 표시 이름을 저장했습니다. Google 계정 정보와 노트는 변경하지 않았습니다.';}catch(error){v22AccountResult.textContent='이 기기 설정을 저장하지 못했습니다. 기존 노트는 그대로입니다.';}};
+document.getElementById('v22AccountSaveGoal').onclick=function(){try{v22AccountSettings=v22WriteAccountSettings({displayName:document.getElementById('v22AccountDisplayName').value,dailyGoal:document.getElementById('v22AccountGoal').value});v22AccountResult.textContent='하루 목표 '+v22AccountSettings.dailyGoal+'분을 이 기기에 저장했습니다.';}catch(error){v22AccountResult.textContent='하루 목표를 저장하지 못했습니다. 기존 노트는 그대로입니다.';}};
+document.getElementById('v22AccountBackup').onclick=function(){v22CloseDialog(v22AccountDialog);document.getElementById('v22DataOpen').click();};
+document.getElementById('v22AccountClose').onclick=function(){v22CloseDialog(v22AccountDialog);};
 </script>
 </body>
 </html>

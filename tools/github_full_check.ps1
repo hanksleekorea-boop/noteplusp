@@ -72,6 +72,7 @@ $tests = @(
     "tests/test_v22_cross_device_drive_preflight_v1.mjs",
     "tests/test_physical_cross_device_v22_drive_real_contract_v1.mjs",
     "tests/test_v22_commercial_pages_v1.mjs",
+    "tests/test_v22_account_boundary_v1.mjs",
     "tests/test_v22_release_evidence_audit_v1.mjs",
     "tests/test_v22_storage_health_v1.mjs",
     "tests/test_v22_encrypted_backup_roundtrip_v1.mjs",
