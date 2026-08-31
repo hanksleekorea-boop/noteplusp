@@ -4,6 +4,7 @@ param()
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $tests = @(
+    "tools/check_project_history.mjs",
     "tools/check_plan_v12_adopted.mjs",
     "tests/test_v22_account_boundary_v1.mjs",
     "tests/test_v22_release_contract_v1.mjs",

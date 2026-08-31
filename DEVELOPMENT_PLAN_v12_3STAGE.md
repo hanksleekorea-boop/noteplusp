@@ -17,14 +17,16 @@
 
 1. 루트 `AGENTS.md`와 전역 규칙을 읽는다.
 2. `.project-continuity/STATE.md`, `HISTORY.md`, `TEST_EVIDENCE.md`, `LOCK.json`을 확인한다.
-3. `tools/continuity.py --project-root . bootstrap --compact`를 실행한다.
-4. `git status --short --branch`로 기존 변경을 확인한다.
-5. 이 문서에서 상태가 `READY`이거나, `IN-PROGRESS` 카드의 명시된 다음 원자 작업 하나만 선택한다.
-6. 카드의 `허용 파일` 밖 파일을 바꾸지 않는다.
-7. 수정 전 지정된 단독 검사와 빠른 검사를 실행해 손대기 전 상태를 기록한다.
-8. 구현·단독 검사·일부러 틀린 입력 검사·빠른 검사 순으로 실행한다.
-9. 카드 완료 증거가 모두 있고 `release-evidence-v22.json`과 실제 파일이 일치할 때만 `DONE-*`로 바꾼다.
-10. 종료 전 연속성 기록과 체크포인트를 갱신한다.
+3. `PROJECT_EVOLUTION_HISTORY.md`와 `PROJECT_REUSE_ARCHIVE.md`에서 현재 방향·대체·보류 요소를 확인한다.
+4. `tools/continuity.py --project-root . bootstrap --compact`를 실행한다.
+5. `git status --short --branch`로 기존 변경을 확인한다.
+6. 이 문서에서 상태가 `READY`이거나, `IN-PROGRESS` 카드의 명시된 다음 원자 작업 하나만 선택한다.
+7. 카드의 `허용 파일` 밖 파일을 바꾸지 않는다. 역사 정본 갱신은 모든 기획·개발 카드의 공통 허용 파일이다.
+8. 수정 전 지정된 단독 검사와 빠른 검사를 실행해 손대기 전 상태를 기록한다.
+9. 구현·단독 검사·일부러 틀린 입력 검사·빠른 검사 순으로 실행한다.
+10. 카드 완료 증거가 모두 있고 `release-evidence-v22.json`과 실제 파일이 일치할 때만 `DONE-*`로 바꾼다.
+11. 제품 방향·판·공개 상태·저장 구조·폐기·보류·재도입이 바뀌면 같은 작업 단위에서 두 역사 문서를 갱신한다.
+12. 종료 전 `node tools/check_project_history.mjs`, 연속성 기록과 체크포인트를 갱신한다.
 
 ### 0.2 금지 행동
 
