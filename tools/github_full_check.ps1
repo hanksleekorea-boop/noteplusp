@@ -3,7 +3,9 @@ param()
 
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$dirtyBefore = & git -C $root status --porcelain
+$gitSafe = "safe.directory=$($root -replace '\\','/')"
+$dirtyBefore = & git -c $gitSafe -C $root status --porcelain
+if ($LASTEXITCODE -ne 0) { throw "전체 검사 전 Git 상태를 확인하지 못했습니다." }
 if (-not [string]::IsNullOrWhiteSpace(($dirtyBefore -join "`n"))) {
     throw "전체 검사는 깨끗한 작업 폴더에서만 실행합니다."
 }
@@ -49,7 +51,35 @@ $tests = @(
     "tests/test_v21_responsive_layout_v1.mjs",
     "tests/test_v21_pc_mobile_browser_matrix_v1.mjs",
     "tests/test_v21_offline_save_idempotency_v1.mjs",
-    "tests/test_virtual_persona_snapshot_safety_v1.mjs"
+    "tests/test_virtual_persona_snapshot_safety_v1.mjs",
+    "tests/test_v22_release_contract_v1.mjs",
+    "tests/test_v22_release_browser_v1.mjs",
+    "tests/test_v22_onboarding_first_value_v1.mjs",
+    "tests/test_v22_existing_user_onboarding_guard_v1.mjs",
+    "tests/test_v22_existing_personas_v1.mjs",
+    "tests/test_v22_sync_status_v1.mjs",
+    "tests/test_v22_restore_conflict_v1.mjs",
+    "tests/test_v22_cloud_vault_roundtrip_v1.mjs",
+    "tests/test_v22_migration_certificate_v1.mjs",
+    "tests/test_v22_import_commit_barrier_v1.mjs",
+    "tests/test_v22_portable_roundtrip_v1.mjs",
+    "tests/test_v22_large_stream_v1.mjs",
+    "tests/test_v22_library_10000_v1.mjs",
+    "tests/test_v22_attachment_stream_v1.mjs",
+    "tests/test_v22_safety_boundaries_v1.mjs",
+    "tests/test_v22_accessibility_v1.mjs",
+    "tests/test_v22_android_talkback_preflight_v1.mjs",
+    "tests/test_v22_cross_device_drive_preflight_v1.mjs",
+    "tests/test_physical_cross_device_v22_drive_real_contract_v1.mjs",
+    "tests/test_v22_commercial_pages_v1.mjs",
+    "tests/test_v22_account_boundary_v1.mjs",
+    "tests/test_v22_release_evidence_audit_v1.mjs",
+    "tests/test_v22_storage_health_v1.mjs",
+    "tests/test_v22_encrypted_backup_roundtrip_v1.mjs",
+    "tests/test_v22_data_flow_notice_v1.mjs",
+    "tests/test_v22_release_gate_v1.mjs",
+    "tests/test_v22_device_compare_v1.mjs"
+    "tests/test_v22_legacy_vault_boundary_v1.mjs"
 )
 $generated = @(
     "artifacts/cloud_restore_preflight_v16.png",
@@ -70,10 +100,12 @@ try {
         if ($LASTEXITCODE -ne 0) { $failed += 1 }
     }
 } finally {
-    & git -C $root restore --source=HEAD -- $generated
+    & git -c $gitSafe -C $root restore --source=HEAD -- $generated
+    if ($LASTEXITCODE -ne 0) { throw "검사 생성물을 원상복구하지 못했습니다." }
 }
 
-$dirtyAfter = & git -C $root status --porcelain
+$dirtyAfter = & git -c $gitSafe -C $root status --porcelain
+if ($LASTEXITCODE -ne 0) { throw "전체 검사 뒤 Git 상태를 확인하지 못했습니다." }
 if (-not [string]::IsNullOrWhiteSpace(($dirtyAfter -join "`n"))) {
     throw "검사 뒤 작업 폴더가 깨끗하지 않습니다."
 }

@@ -15,9 +15,10 @@ const appUrl = new URL(`${encodeURIComponent(`노트앱_${version}.html`)}?physi
 const expectedSha = process.env.NOTEPLUS_EXPECTED_SHA || "64832DEDEB76D7A469B6238F274042A27C894BCBAFD56E4B36B526FDBAE2E520";
 const adbPath = process.env.NOTEPLUS_ADB_PATH || "";
 const adbSerial = process.env.NOTEPLUS_ANDROID_SERIAL || "";
-const expectedManifest = version === "v21" ? "noteplus-v21.webmanifest" : "noteplus.webmanifest";
+const expectedManifest = version === "v21" ? "noteplus-v21.webmanifest" : version === "v22" ? "noteplus-v22.webmanifest" : "noteplus.webmanifest";
 const artifactStem = `physical_android_alpha_${version.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 const retainScreenshot = process.env.NOTEPLUS_RETAIN_DEVICE_SCREENSHOT === "1";
+const sourceHead = process.env.NOTEPLUS_SOURCE_HEAD || "";
 const marker = `physical-cdp-${Date.now()}`;
 const qaTitle = `실기기 저장 확인 ${marker}`;
 const enexTitle = `실기기 ENEX 확인 ${marker}`;
@@ -33,6 +34,13 @@ async function poll(check, timeout = 30000, interval = 250) {
     await delay(interval);
   }
   throw last instanceof Error ? last : new Error("poll timeout");
+}
+async function reloadReady(cdp, timeout = 60000) {
+  const reloadMarker = `reload-${Date.now()}-${Math.random()}`;
+  await cdp.evaluate(`window.__noteplusPhysicalReloadMarker=${JSON.stringify(reloadMarker)};true`);
+  await cdp.send("Page.reload", { ignoreCache: false });
+  await poll(() => cdp.evaluate(`window.__noteplusPhysicalReloadMarker!==${JSON.stringify(reloadMarker)}&&Boolean(window.state&&window.storageReady&&typeof window.storageReady.then==='function')`), timeout);
+  await cdp.evaluate("window.storageReady");
 }
 
 class CdpTarget {
@@ -112,7 +120,7 @@ try {
   await poll(() => cdp.evaluate("document.readyState === 'interactive' || document.readyState === 'complete'"), 90000);
   await poll(() => cdp.evaluate("Boolean(window.storageReady && typeof window.storageReady.then === 'function')"));
   await cdp.evaluate("window.storageReady");
-  const staleCleanup = await cdp.evaluate(`(async()=>{const stale=window.state.notes.filter(note=>/실기기 (저장|ENEX) 확인 physical-cdp-/.test(note.title||''));const ids=stale.flatMap(note=>note.attachmentIds||[]);if(stale.length){const drop=new Set(stale.map(note=>note.id));window.state.notes=window.state.notes.filter(note=>!drop.has(note.id));if(window.noteDb)await window.writeStateAndAttachments([],ids,null);else await window.persist();window.render();}return {notes:stale.length,attachments:ids.length};})()`);
+  const staleCleanup = await cdp.evaluate(`(async()=>{const stale=window.state.notes.filter(note=>/실기기 (저장|ENEX) 확인 physical-cdp-|^REAL-DRIVE-ANDROID-/.test(note.title||''));const ids=stale.flatMap(note=>note.attachmentIds||[]);if(stale.length){const drop=new Set(stale.map(note=>note.id));window.state.notes=window.state.notes.filter(note=>!drop.has(note.id));if(window.noteDb)await window.writeStateAndAttachments([],ids,null);else await window.persist();window.render();}return {notes:stale.length,attachments:ids.length};})()`);
   console.log("STEP app-ready", JSON.stringify(staleCleanup));
   const initial = await cdp.evaluate(`(() => ({stateJson:JSON.stringify(window.state),signature:window.stateSignature(window.state),notes:window.state.notes.length,trash:window.state.trash.length,persistenceMode:window.persistenceMode,viewport:{innerWidth:innerWidth,innerHeight:innerHeight,screenWidth:screen.width,screenHeight:screen.height,dpr:devicePixelRatio,scrollWidth:document.documentElement.scrollWidth},userAgent:navigator.userAgent,mobileNavVisible:getComputedStyle(document.querySelector('#mobileNav')).display!=='none',installButtonExists:Boolean(document.querySelector('#installAppBtn')),manifest:document.querySelector('link[rel="manifest"]')?.href||''}))()`);
   originalStateJson = initial.stateJson;
@@ -132,9 +140,7 @@ try {
 
   await cdp.evaluate(`(async()=>{document.querySelector('#mobileNewBtn').click();const t=document.querySelector('#edTitle');t.value=${JSON.stringify(qaTitle)};t.dispatchEvent(new Event('input',{bubbles:true}));const e=document.querySelector('#edContent');e.textContent=${JSON.stringify(`실제 Android 저장 본문 ${marker}`)};e.dispatchEvent(new Event('input',{bubbles:true}));await window.persist();return true;})()`);
   assert.equal(await cdp.evaluate(`window.state.notes.some(note=>note.title===${JSON.stringify(qaTitle)})`), true);
-  await cdp.send("Page.reload", { ignoreCache: false });
-  await poll(() => cdp.evaluate("Boolean(window.storageReady && typeof window.storageReady.then === 'function')"), 60000);
-  await cdp.evaluate("window.storageReady");
+  await reloadReady(cdp);
   assert.equal(await cdp.evaluate(`window.state.notes.filter(note=>note.title===${JSON.stringify(qaTitle)}).length`), 1);
   console.log("STEP note-reloaded");
 
@@ -151,9 +157,7 @@ try {
   assert.equal(imported.blobSize, fixture.pdfBytes);
   console.log("STEP enex-imported");
 
-  await cdp.send("Page.reload", { ignoreCache: false });
-  await poll(() => cdp.evaluate("Boolean(window.storageReady && typeof window.storageReady.then === 'function')"), 60000);
-  await cdp.evaluate("window.storageReady");
+  await reloadReady(cdp);
   const restored = await cdp.evaluate(`(async()=>{const note=window.state.notes.find(item=>item.title===${JSON.stringify(enexTitle)});const id=note?.attachmentIds?.[0];const stored=id?await window.idbGet('attachment_blob',id):null;const registration=await navigator.serviceWorker.ready.catch(()=>null);return {qaCount:window.state.notes.filter(item=>item.title===${JSON.stringify(qaTitle)}).length,enexCount:window.state.notes.filter(item=>item.title===${JSON.stringify(enexTitle)}).length,blobSize:stored?.blob?.size||0,swActive:Boolean(registration?.active),swControlled:Boolean(navigator.serviceWorker.controller),installPromptReady:Boolean(window.deferredInstallPrompt),overflowFree:document.documentElement.scrollWidth<=innerWidth+1};})()`);
   assert.equal(restored.qaCount, 1);
   assert.equal(restored.enexCount, 1);
@@ -166,9 +170,7 @@ try {
   await cdp.send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
   let offlineOk = false;
   try {
-    await cdp.send("Page.reload", { ignoreCache: false });
-    await poll(() => cdp.evaluate("Boolean(window.storageReady && typeof window.storageReady.then === 'function')"), 60000);
-    await cdp.evaluate("window.storageReady");
+    await reloadReady(cdp);
     if (version === "v21") await delay(1500);
     offlineOk = await cdp.evaluate(`window.state.notes.some(note=>note.title===${JSON.stringify(qaTitle)})&&window.state.notes.some(note=>note.title===${JSON.stringify(enexTitle)})`);
   } finally {
@@ -179,9 +181,7 @@ try {
 
   await cdp.evaluate(`(async()=>{window.state=window.migrateState(JSON.parse(${JSON.stringify(originalStateJson)}));window.sanitizeAllNoteHtml(window.state);if(window.noteDb)await window.writeStateAndAttachments([],${JSON.stringify(createdAttachmentIds)},null);else await window.persist();window.render();return true;})()`);
   cleaned = true;
-  await cdp.send("Page.reload", { ignoreCache: false });
-  await poll(() => cdp.evaluate("Boolean(window.storageReady && typeof window.storageReady.then === 'function')"), 60000);
-  await cdp.evaluate("window.storageReady");
+  await reloadReady(cdp);
   const cleanup = await cdp.evaluate(`({qaCount:window.state.notes.filter(note=>note.title===${JSON.stringify(qaTitle)}).length,enexCount:window.state.notes.filter(note=>note.title===${JSON.stringify(enexTitle)}).length,signatureMatch:window.stateSignature(window.state)===${JSON.stringify(originalSignature)}})`);
   assert.deepEqual(cleanup, { qaCount: 0, enexCount: 0, signatureMatch: true });
   console.log("STEP cleanup-verified");
@@ -208,7 +208,7 @@ try {
     }
   }
   console.log(`STEP screenshot-${screenshot.captured ? screenshot.method : "unavailable"}`);
-  const result={ok:true,publicUrl,version,release:{bytes:releaseBytes.length,sha256:expectedSha},device:{viewport:initial.viewport},persistenceMode:initial.persistenceMode,noteReloaded:true,enexPdfReloaded:true,serviceWorker:{active:restored.swActive,controlled:restored.swControlled,offlineReopen:offlineOk},install:{buttonExists:initial.installButtonExists,mobilePathVerified:true,promptReady:restored.installPromptReady},screenshot,cleanup};
+  const result={candidate:version,cardId:"S1-004",method:"physical-device",environment:"Galaxy S21+ / Android Chrome; device and account identifiers omitted",checkedAt:new Date().toISOString(),result:"PASS",sourceHead,checks:["411px mobile layout without horizontal overflow","IndexedDB note save and reload","ENEX note plus PDF attachment reload","service worker active and controlling","offline reopen with saved data","mobile install path reachable","synthetic test data removed","original state signature restored","original Chrome tab restored"],limitations:["Local USB-forwarded candidate origin, not public v22","Google Drive cross-device roundtrip not included","TalkBack task completion not included","Install prompt readiness is browser-controlled and was not observed"],ok:true,publicUrl,version,release:{bytes:releaseBytes.length,sha256:expectedSha},device:{viewport:initial.viewport},persistenceMode:initial.persistenceMode,noteReloaded:true,enexPdfReloaded:true,serviceWorker:{active:restored.swActive,controlled:restored.swControlled,offlineReopen:offlineOk},install:{buttonExists:initial.installButtonExists,mobilePathVerified:true,promptReady:restored.installPromptReady},screenshot,cleanup:{...cleanup,testDataRemoved:cleanup.qaCount===0&&cleanup.enexCount===0,originalStateRestored:cleanup.signatureMatch,originalTabRestored:true}};
   fs.writeFileSync(path.join(artifacts,`${artifactStem}.json`),JSON.stringify(result,null,2));
   console.log(JSON.stringify(result,null,2));
 } finally {

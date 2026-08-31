@@ -1,0 +1,89 @@
+{
+  "candidate": "v22",
+  "cardId": "S1-007",
+  "method": "attachment-rich-dataset",
+  "environment": "Disposable desktop Edge profile; deterministic synthetic data only",
+  "checkedAt": "2026-08-26T09:40:51.615Z",
+  "result": "PASS",
+  "sourceHead": "b5e869a4b20973aa381155a6b80f21c78d607721",
+  "checks": [
+    "10,000 imported notes plus one preserved existing note",
+    "1,024 attachments totaling exactly 1GiB",
+    "PDF, JPEG with orientation marker, PNG, audio, Office-shaped and generic binary families",
+    "Korean titles, bodies, tags, varied dates, internal-link text and duplicate filenames",
+    "IndexedDB reload",
+    "all attachment size and SHA-256 values matched",
+    "missing attachments 0",
+    "duplicate note IDs 0",
+    "reader leaks 0",
+    "existing state unchanged"
+  ],
+  "limitations": [
+    "Synthetic deterministic corpus, not personal production data",
+    "Desktop Edge only, not Android",
+    "Files are format-shaped safety fixtures, not full Office/media decoder conformance",
+    "16 ENEX files processed sequentially to bound memory"
+  ],
+  "fixture": {
+    "files": 16,
+    "notes": 10000,
+    "attachments": 1024,
+    "decodedBytes": 1073741824,
+    "variantCounts": {
+      "pdf": 171,
+      "jpeg-exif-orientation": 171,
+      "png": 171,
+      "audio": 171,
+      "office-shape": 170,
+      "generic": 170
+    },
+    "formats": [
+      "pdf",
+      "jpeg-exif-orientation",
+      "png",
+      "audio",
+      "office-shape",
+      "generic"
+    ],
+    "privacy": "deterministic synthetic only",
+    "inputMode": "16 files selected and processed sequentially to bound memory",
+    "storage": {
+      "quota": 10737833345,
+      "usage": 415105,
+      "usageDetails": {
+        "caches": 400896,
+        "indexedDB": 12682,
+        "serviceWorkerRegistrations": 1527
+      }
+    }
+  },
+  "imported": {
+    "notes": 10001,
+    "maxGap": 1227,
+    "durationMs": 114004,
+    "attachmentErrors": 0
+  },
+  "stored": {
+    "notes": 10001,
+    "attachments": 1024,
+    "bytes": 1073741824,
+    "mismatches": 0,
+    "duplicates": 0,
+    "mimes": [
+      "application/octet-stream",
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "audio/mpeg",
+      "image/jpeg",
+      "image/png"
+    ],
+    "duplicateNames": true,
+    "mode": "idb",
+    "readers": 0
+  },
+  "cleanup": {
+    "testDataRemoved": false,
+    "originalStateRestored": false,
+    "reason": "Disposable profile retained under continuity local evidence; no personal data"
+  }
+}

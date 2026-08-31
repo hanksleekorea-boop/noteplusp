@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import {harness,ready,root} from './v22_test_harness.mjs';
+const h=await harness();
+try{const context=await h.browser.newContext();const page=await context.newPage();await ready(page,h.origin+'/노트앱_v22.html');await page.locator('#v22SkipWelcome').click();
+ assert.equal((await page.evaluate(()=>v22BuildCertificate())).status,'검사 불가');
+ await page.locator('#enexFile').setInputFiles(path.join(root,'pilot-assets/노트플러스P_파일럿_샘플.enex'));
+ await page.locator('#importPreview').waitFor({state:'visible'});await page.locator('#importPreviewConfirm').click();
+ await page.waitForFunction(()=>state.lastImportReport?.completedAt&&state.lastImportUndo&&persistenceMode==='idb');
+ await page.waitForFunction(async()=>{const c=await v22BuildCertificate();return c.attachmentsChecked===1&&c.status==='일치';});
+ const result=await page.evaluate(async()=>{const before=stateSignature(state),c=await v22BuildCertificate();return {c,unchanged:before===stateSignature(state)};});
+ assert.equal(result.c.status,'일치');assert.equal(result.c.imported,1);assert.equal(result.c.attachmentsChecked,1);assert.equal(result.unchanged,true);assert.equal(JSON.stringify(result.c).includes('가져오기가 정상적으로 끝났습니다'),false);
+ const privacy=await page.evaluate(async()=>{const prior=cloneState(state),marker='PRIVATE-CERTIFICATE-MARKER';state.lastImportReport.id=marker;state.lastImportUndo.reportId=marker;state.lastImportReport.sourceFiles[0].name=marker+'.enex';state.lastImportReport.notebookNames=[marker];const c=await v22BuildCertificate();state=prior;return {leaked:JSON.stringify(c).includes(marker),bytes:c.attachmentBytes,files:c.fileCount,fingerprint:c.reportFingerprint};});assert.equal(privacy.leaked,false);assert.equal(privacy.bytes,69);assert.equal(privacy.files,1);assert.match(privacy.fingerprint,/^[A-F0-9]{64}$/);
+ const edges=await page.evaluate(async()=>{const prior=cloneState(state),results={};state.lastImportReport.importedNoteCount+=1;results.wrongCount=(await v22BuildCertificate()).countMismatch;state=cloneState(prior);state.lastImportReport.persistenceLimited=true;results.limited=(await v22BuildCertificate()).status;state=cloneState(prior);state.lastImportReport.outcome='undone';results.undone=(await v22BuildCertificate()).status;state=cloneState(prior);state.lastImportUndo.attachmentIds.push('att_missing_certificate');results.missing=(await v22BuildCertificate()).missingAttachments;state=cloneState(prior);const id=state.lastImportUndo.attachmentIds[0],item=await getAttachmentRecord(id),saved=cloneState(item.meta);item.meta.sha256='';volatileAttachments[id]=item;results.hashUnavailable=(await v22BuildCertificate()).hashUnavailable;item.meta=saved;delete volatileAttachments[id];state=prior;return results;});assert.deepEqual(edges,{wrongCount:true,limited:'주의 필요',undone:'적용 안 됨',missing:1,hashUnavailable:1});
+ const batchAndCancel=await page.evaluate(async()=>{
+  const original=cloneState(state),partial=cloneState(state.lastImportReport),marker='PRIVATE-CANCELLED-FILE';
+  partial.outcome='partial';partial.selectedFileCount=3;partial.processedFileCount=3;partial.importedFileCount=1;partial.plannedBatchCount=2;partial.completedBatchCount=2;
+  partial.sourceFiles=[{name:'one.enex',size:1},{name:'two.enex',size:2},{name:'three.enex',size:3}];
+  partial.fileResults=[{name:'one.enex',size:1,status:'analyzed'},{name:'two.enex',size:2,status:'zero-notes'},{name:'three.enex',size:3,status:'read-failed',reason:'읽기 실패'}];partial.failedFiles=['three.enex'];
+  state.lastImportReport=normalizeImportReport(partial);const multi=await v22BuildCertificate();
+  state=cloneState(original);const before=JSON.stringify({notes:state.notes,trash:state.trash,undo:state.lastImportUndo});
+  const cancelled=cloneState(state.lastImportReport);cancelled.id='cancel_'+Date.now();cancelled.outcome='in-progress';cancelled.sourceFiles=[{name:marker+'.enex',size:10}];cancelled.fileResults=[{name:marker+'.enex',size:10,status:'analyzed'}];cancelled.selectedFileCount=1;activeEnexReport=cancelled;state.lastImportReport=cancelled;pendingEnexImport={synthetic:true};cancelPendingEnexImport();
+  const cancelCertificate=await v22BuildCertificate(),after=JSON.stringify({notes:state.notes,trash:state.trash,undo:state.lastImportUndo});
+  const result={multiStatus:multi.status,selected:multi.selectedFiles,processed:multi.processedFiles,failed:multi.failedFiles,batches:multi.completedBatches+'/'+multi.plannedBatches,fileCountMismatch:multi.fileCountMismatch,cancelStatus:cancelCertificate.status,cancelOutcome:cancelCertificate.outcome,cancelPrivateLeak:JSON.stringify(cancelCertificate).includes(marker),noteDataUnchanged:before===after};
+  state=original;activeEnexReport=state.lastImportReport;pendingEnexImport=null;return result;
+ });
+ assert.deepEqual(batchAndCancel,{multiStatus:'주의 필요',selected:3,processed:3,failed:1,batches:'2/2',fileCountMismatch:false,cancelStatus:'적용 안 됨',cancelOutcome:'cancelled',cancelPrivateLeak:false,noteDataUnchanged:true});
+ await page.evaluate(async()=>{const id=state.lastImportUndo.attachmentIds[0],item=await getAttachmentRecord(id);item.blob=new Blob(['corrupt'],{type:item.meta.mime});await writeAttachmentBatch([item]);volatileAttachments[id]=item;});
+ const broken=await page.evaluate(()=>v22BuildCertificate());assert.equal(broken.status,'주의 필요');assert.equal(broken.hashMismatches,1);assert.equal(broken.sizeMismatches,1);
+ assert.equal(await page.evaluate(async()=>{try{await collectExportAttachments();return false;}catch(e){return true;}}),true);
+ await context.close();console.log('PASS v22 actual ENEX+PDF certificate, multi-file counts, cancellation audit, privacy, corruption detection and export fail-closed');
+}finally{await h.close();}

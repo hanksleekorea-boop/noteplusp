@@ -1,5 +1,7 @@
 # NEXT_PRIORITIES — 노트플러스P
 
+> **보관 문서:** 이 목록은 v5 시기의 과거 기록이다. 2026-08-24 이후 우선순위는 `PRODUCT_PLAN_v11_ADOPTED.md`와 `DEVELOPMENT_PLAN_v11_3STAGE.md`의 S1 → S2 → S3 카드만 사용한다.
+
 최종 갱신: 2026-07-18 · 정본 앱: 노트앱_v5.html · 공개 앱: https://hanksleekorea-boop.github.io/noteplusp/ · 프레임워크: v7.2
 
 ## 지금 상태 한 줄

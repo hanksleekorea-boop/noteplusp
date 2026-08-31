@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {evaluatePreflight} from '../tools/check_v22_cross_device_drive_preflight.mjs';
+
+const clientId='539219859603-vcng6rem5s6ti9aqe3f0ni8u0q4k0d3j.apps.googleusercontent.com';
+const ready=evaluatePreflight({clientId,pcUrl:'https://hanksleekorea-boop.github.io/noteplusp/v22/',androidUrl:'https://hanksleekorea-boop.github.io/noteplusp/v22/',adbOutput:'List of devices attached\nR3CR106852H\tdevice product:x model:y\n',cloudProjectNumbers:['539219859603'],pcCdpReady:true,androidCdpReady:true});
+assert.deepEqual(ready,{schema:1,candidate:'v22',method:'cross-device-preflight',result:'READY',noDataWritten:true,clientProjectNumber:'539219859603',origins:{pc:'https://hanksleekorea-boop.github.io',android:'https://hanksleekorea-boop.github.io'},adbOnlineDeviceCount:1,cloudProjectAccessChecked:true,cdpEndpoints:{pc:true,android:true},blockers:[],nextAction:'Run tests/test_physical_cross_device_v22_drive_real_v1.mjs.'});
+const blocked=evaluatePreflight({clientId,pcUrl:'http://127.0.0.1:18799/노트앱_v22.html',androidUrl:'',adbOutput:'List of devices attached\n',cloudProjectNumbers:['111']});
+assert.equal(blocked.result,'BLOCKED');assert.deepEqual(blocked.blockers,['PC_V22_HTTPS_URL_REQUIRED','ANDROID_V22_HTTPS_URL_REQUIRED','PC_CDP_ENDPOINT_UNAVAILABLE','ANDROID_CDP_ENDPOINT_UNAVAILABLE','ANDROID_DEVICE_UNAVAILABLE','OAUTH_PROJECT_ACCESS_UNAVAILABLE']);assert.equal(blocked.noDataWritten,true);assert.equal(blocked.adbOnlineDeviceCount,0);
+const unverified=evaluatePreflight({clientId,pcUrl:'https://hanksleekorea-boop.github.io/noteplusp/v22/',androidUrl:'https://hanksleekorea-boop.github.io/noteplusp/v22/',adbOutput:'List of devices attached\nR3CR106852H\tdevice\n',cloudProjectNumbers:null,pcCdpReady:true,androidCdpReady:true});
+assert.equal(unverified.result,'BLOCKED');assert.deepEqual(unverified.blockers,['OAUTH_PROJECT_ACCESS_UNVERIFIED']);
+console.log('PASS v22 cross-device Drive preflight blocks unavailable CDP, local origins, absent Android, and inaccessible OAuth project before data changes');

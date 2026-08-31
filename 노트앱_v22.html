@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>노트플러스P v22</title><style>body{font-family:system-ui,sans-serif;margin:2rem;line-height:1.6;color:#243}a{color:#075}</style>
+<body><p role="status">노트플러스P v22를 안전하게 준비하고 있습니다…</p><noscript>JavaScript가 필요합니다. <a href="노트앱_v21.html">v21 열기</a></noscript>
+<script>
+(async function loadVersionedApp(){
+  if(location.protocol==="file:"){document.body.innerHTML='<h1>웹 주소에서 열어 주세요.</h1><p>기존 자료는 변경되지 않았습니다.</p><a href="https://hanksleekorea-boop.github.io/noteplusp/">현재 공개 앱 열기</a>';return;}
+  const source="노트앱_core_v22.html",closeScriptTag="<"+"/script>";
+  const bindings=[
+    ['<script src="firebase-config.js">'+closeScriptTag,'<script src="google-drive-config-v18.js">'+closeScriptTag],
+    ['<script type="module" src="noteplus-cloud-v3.js">'+closeScriptTag,'<script type="module" src="noteplus-drive-v22.js">'+closeScriptTag],
+    ['<link rel="manifest" href="noteplus.webmanifest">','<link rel="manifest" href="noteplus-v22.webmanifest">'],
+    ['navigator.serviceWorker.register("./sw.js")','navigator.serviceWorker.register("./sw-v22.js",{scope:"./노트앱_v22.html"})']
+  ];
+  try {
+    const response=await fetch(source,{cache:"no-store"});
+    if(!response.ok)throw new Error("원본 앱을 불러오지 못했습니다 (HTTP "+response.status+")");
+    let html=await response.text();
+    if(!html.includes('NOTEPLUS_CORE_V22'))throw new Error("v22 핵심 본체 확인 실패");
+    for(const [from,to] of bindings){if(html.split(from).length!==2)throw new Error("안전한 버전 연결 지점을 찾지 못했습니다");html=html.replace(from,to);}
+    document.open();document.write(html);document.close();
+  } catch(error){
+    document.body.innerHTML='<h1>v22 준비에 실패했습니다.</h1><p>기존 데이터는 변경되지 않았습니다.</p><p><a href="노트앱_v21.html">v21 열기</a></p><pre role="alert"></pre>';
+    document.querySelector("pre").textContent=String(error&&error.message||error);
+  }
+}());
+</script></body></html>
