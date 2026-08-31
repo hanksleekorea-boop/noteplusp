@@ -10,10 +10,10 @@ function verify(loader,core,worker,manifest,module){
   assert.match(core,/var FALLBACK_KEY="notes_app_v22_schema5_fallback"/);
   assert.match(core,/db.transaction\(names,'readonly'\)/);
   assert.match(loader,/source="노트앱_core_v22.html"/);
-  assert.match(loader,/scope:"\.\/노트앱_v22.html"/);
+  assert.match(loader,/scope:"\.\/"/);
   assert.match(loader,/noteplus-drive-v22.js/);
   assert.match(loader,/html.split\(from\).length!==2/);
-  assert.equal(manifest.scope,'./노트앱_v22.html');
+  assert.equal(manifest.scope,'./');
   assert.equal(manifest.start_url,'./노트앱_v22.html');
   assert.match(module,/const VERSION="noteplus-drive-v22"/);
   assert.match(module,/uploadAndVerify\("noteplusp-v22-current.json"/);

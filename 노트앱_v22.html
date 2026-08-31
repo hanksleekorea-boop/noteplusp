@@ -10,7 +10,7 @@
     ['<script src="firebase-config.js">'+closeScriptTag,'<script src="google-drive-config-v18.js">'+closeScriptTag],
     ['<script type="module" src="noteplus-cloud-v3.js">'+closeScriptTag,'<script type="module" src="noteplus-drive-v22.js">'+closeScriptTag],
     ['<link rel="manifest" href="noteplus.webmanifest">','<link rel="manifest" href="noteplus-v22.webmanifest">'],
-    ['navigator.serviceWorker.register("./sw.js")','navigator.serviceWorker.register("./sw-v22.js",{scope:"./노트앱_v22.html"})']
+    ['navigator.serviceWorker.register("./sw.js")','navigator.serviceWorker.register("./sw-v22.js",{scope:"./"})']
   ];
   try {
     const response=await fetch(source,{cache:"no-store"});

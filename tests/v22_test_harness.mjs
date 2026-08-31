@@ -25,7 +25,7 @@ export async function harness({browserPath,route,persistentPath}={}) {
   const persistent=persistentPath?await chromium.launchPersistentContext(persistentPath,options):null;
   const browser=persistent?{newContext:async()=>persistent,newPage:()=>persistent.newPage(),close:()=>persistent.close()}:await chromium.launch(options);
   const origin=`http://127.0.0.1:${server.address().port}`;
-  return {browser,origin,async close(){await browser.close();await new Promise(resolve=>server.close(resolve));}};
+  return {browser,origin,async close(){await browser.close();if(typeof server.closeAllConnections==='function')server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}};
 }
 export async function ready(page,url){
   await page.goto(url,{waitUntil:'networkidle'});

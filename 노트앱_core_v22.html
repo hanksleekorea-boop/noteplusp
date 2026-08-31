@@ -1823,7 +1823,7 @@ function renderList(){
   }
   notes.slice(v22ListPage*pageSize,(v22ListPage+1)*pageSize).forEach(function(n){
     var row=document.createElement("div");
-    row.className="row"+(n.id===ui.selectedId?" sel":"");
+    row.className="row"+(n.id===ui.selectedId?" sel":"");row.dataset.noteId=n.id;
     row.tabIndex=0; row.setAttribute("role","option"); row.setAttribute("aria-selected",n.id===ui.selectedId?"true":"false");
     var snip=(n.body||"").replace(/\n/g," ").slice(0,90) || "내용 없음";
     var tagsHtml=(n.tags||[]).slice(0,3).map(function(t){return '<span class="tg">#'+esc(t)+'</span>';}).join("");
@@ -3457,6 +3457,7 @@ window.storageReady=storageReady;
 </script>
 <script src="firebase-config.js"></script>
 <script src="noteplus-portable-v22.js"></script>
+<script src="noteplus-telemetry-v1.js"></script>
 <style>
  .v22-dialog{box-sizing:border-box;position:fixed;inset:0;margin:auto;max-width:min(620px,calc(100vw - 32px));width:100%;max-height:85vh;overflow:auto;border:1px solid #708378;border-radius:14px;padding:24px;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,sans-serif}
  .v22-dialog::backdrop{background:rgba(0,0,0,.45)}
@@ -3497,7 +3498,7 @@ document.getElementById('v22StartImport').onclick=function(){v22FinishWelcome('m
 document.getElementById('v22SkipWelcome').onclick=function(){v22FinishWelcome('skip');};
 v22Welcome.addEventListener('cancel',function(event){event.preventDefault();v22FinishWelcome('skip');});
 var v22WelcomeAgain=document.createElement('button');v22WelcomeAgain.type='button';v22WelcomeAgain.id='v22WelcomeAgain';v22WelcomeAgain.className='backup-btn full';v22WelcomeAgain.textContent='시작 안내 다시 보기';v22WelcomeAgain.onclick=function(){v22ShowDialog(v22Welcome);};document.getElementById('enexGuideSide').before(v22WelcomeAgain);
-function v22ShouldShowWelcome(fresh,prefs){return fresh===true&&!(prefs&&prefs.onboardingCompletedAt);}
+function v22ShouldShowWelcome(fresh,prefs){var action=new URLSearchParams(location.search).get('action');return fresh===true&&!(prefs&&prefs.onboardingCompletedAt)&&action!=='new'&&action!=='share';}
 storageReady.then(function(){if(v22ShouldShowWelcome(v22FreshProfile,state.preferences))v22ShowDialog(v22Welcome);});
 </script>
 <dialog id="v22StatusDialog" class="v22-dialog" aria-labelledby="v22StatusTitle">
@@ -3706,6 +3707,185 @@ document.getElementById('v22AccountSaveName').onclick=function(){try{v22AccountS
 document.getElementById('v22AccountSaveGoal').onclick=function(){try{v22AccountSettings=v22WriteAccountSettings({displayName:document.getElementById('v22AccountDisplayName').value,dailyGoal:document.getElementById('v22AccountGoal').value});v22AccountResult.textContent='하루 목표 '+v22AccountSettings.dailyGoal+'분을 이 기기에 저장했습니다.';}catch(error){v22AccountResult.textContent='하루 목표를 저장하지 못했습니다. 기존 노트는 그대로입니다.';}};
 document.getElementById('v22AccountBackup').onclick=function(){v22CloseDialog(v22AccountDialog);document.getElementById('v22DataOpen').click();};
 document.getElementById('v22AccountClose').onclick=function(){v22CloseDialog(v22AccountDialog);};
+</script>
+<dialog id="v22QuickCaptureDialog" class="v22-dialog" aria-labelledby="v22QuickCaptureTitle">
+ <h2 id="v22QuickCaptureTitle">빠른 캡처 미리보기</h2>
+ <p>외부 앱에서 받은 내용은 아직 저장되지 않았습니다. 내용을 확인한 뒤 저장하거나 취소하세요.</p>
+ <dl><dt>제목</dt><dd id="v22QuickCapturePreviewTitle"></dd><dt>내용</dt><dd id="v22QuickCapturePreviewText" style="white-space:pre-wrap;overflow-wrap:anywhere"></dd><dt>주소</dt><dd id="v22QuickCapturePreviewURL" style="overflow-wrap:anywhere"></dd></dl>
+ <p id="v22QuickCaptureResult" role="status" aria-live="polite"></p>
+ <button id="v22QuickCaptureSave" type="button">새 노트로 저장</button><button id="v22QuickCaptureCancel" type="button">취소</button>
+</dialog>
+<script>
+var V22_SHARE_CACHE='noteplusp-v22-share-inbox-v1',v22QuickCapturePayload=null,v22QuickCaptureBusy=false;
+function v22CleanQuickText(value,max){return String(value||'').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g,'').slice(0,max);}
+function v22CleanQuickURL(value){try{var url=new URL(String(value||''));return url.protocol==='http:'||url.protocol==='https:'?url.href.slice(0,2048):'';}catch(ignore){return '';}}
+function v22NormalizeQuickCapture(input){var value=input&&typeof input==='object'?input:{};return {title:v22CleanQuickText(value.title,300),text:v22CleanQuickText(value.text,20000),url:v22CleanQuickURL(value.url)};}
+async function v22QuickCaptureKey(payload){var bytes=new TextEncoder().encode([payload.title,payload.text,payload.url].join('\n')),hash=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(hash),function(byte){return byte.toString(16).padStart(2,'0');}).join('');}
+function v22OpenQuickCapture(input){var payload=v22NormalizeQuickCapture(input);if(!payload.title&&!payload.text&&!payload.url)throw new Error('저장할 공유 내용이 없습니다.');v22QuickCapturePayload=payload;document.getElementById('v22QuickCapturePreviewTitle').textContent=payload.title||'제목 없음';document.getElementById('v22QuickCapturePreviewText').textContent=payload.text||'내용 없음';document.getElementById('v22QuickCapturePreviewURL').textContent=payload.url||'주소 없음';document.getElementById('v22QuickCaptureResult').textContent='내용 확인 후 저장하세요.';v22ShowDialog(document.getElementById('v22QuickCaptureDialog'));return payload;}
+async function v22CommitQuickCapture(payload){
+ var normalized=v22NormalizeQuickCapture(payload),key=await v22QuickCaptureKey(normalized),prefs=state.preferences||(state.preferences={}),now=Date.now(),recent=Array.isArray(prefs.quickCaptureReceipts)?prefs.quickCaptureReceipts.filter(function(item){return item&&typeof item.key==='string'&&Number.isFinite(Number(item.at))&&now-Number(item.at)<86400000;}):[],duplicate=recent.find(function(item){return item.key===key&&now-Number(item.at)<600000;});
+ if(duplicate){var existing=byId(duplicate.noteId);if(existing){ui.selectedId=existing.id;render();setMobileView('editor');}return {created:false,duplicate:true,noteId:duplicate.noteId};}
+ if(!normalized.title&&!normalized.text&&!normalized.url)throw new Error('저장할 공유 내용이 없습니다.');
+ var text=[normalized.text,normalized.url].filter(Boolean).join('\n\n'),box=document.createElement('div');box.textContent=text;var note={id:uid(),title:normalized.title||'빠른 캡처',body:text,bodyHtml:text?'<div>'+box.innerHTML.replace(/\n/g,'<br>')+'</div>':'',notebook:state.notebooks[0]||'개인',tags:[],attachmentIds:[],favorite:false,history:[],updated:now,created:now};
+ if(!state.notebooks.length)state.notebooks.push('개인');state.notes.unshift(note);prefs.quickCaptureReceipts=recent.concat([{key:key,at:now,noteId:note.id}]).slice(-50);ui.trash=false;ui.notebook='all';ui.tag=null;ui.query='';ui.selectedId=note.id;document.getElementById('search').value='';var saved=await persist();render();setMobileView('editor');setBackupStatus(saved?'빠른 캡처를 새 노트로 저장했습니다.':'현재 화면에 캡처했습니다. 영구 저장을 확인하지 못했으니 탭을 닫기 전에 전체 내보내기를 만드세요.');return {created:true,duplicate:false,noteId:note.id,saved:saved};
+}
+async function v22TakeSharePayload(token){if(!/^[a-f0-9]{32}$/.test(String(token||''))||!window.caches)throw new Error('공유 내용을 안전하게 확인할 수 없습니다.');var cache=await caches.open(V22_SHARE_CACHE),request=new URL('./_noteplus-share-v22/'+token,location.href).href,response=await cache.match(request);await cache.delete(request);if(!response||!response.ok)throw new Error('공유 내용이 만료되었거나 이미 처리됐습니다.');return v22NormalizeQuickCapture(await response.json());}
+function v22ClearLaunchQuery(){try{history.replaceState({},'',location.pathname+location.hash);}catch(ignore){}}
+async function v22HandleLaunchAction(){
+ var params=new URLSearchParams(location.search),action=params.get('action');if(action!=='new'&&action!=='share')return {handled:false};
+ if(action==='new'){v22ClearLaunchQuery();document.getElementById('newBtn').click();setMobileView('editor');return {handled:true,action:'new'};}
+ try{if(params.get('shareError')==='empty')throw new Error('공유 앱에서 받은 내용이 비어 있습니다.');var payload=await v22TakeSharePayload(params.get('token'));v22ClearLaunchQuery();v22OpenQuickCapture(payload);return {handled:true,action:'share'};}catch(error){v22ClearLaunchQuery();setBackupStatus('빠른 캡처를 열지 못했습니다: '+error.message);return {handled:false,action:'share',error:error.message};}
+}
+document.getElementById('v22QuickCaptureSave').onclick=async function(){if(v22QuickCaptureBusy||!v22QuickCapturePayload)return;v22QuickCaptureBusy=true;this.disabled=true;try{var result=await v22CommitQuickCapture(v22QuickCapturePayload);document.getElementById('v22QuickCaptureResult').textContent=result.duplicate?'같은 공유 내용을 최근에 이미 저장했습니다. 기존 노트를 열었습니다.':'저장을 완료했습니다.';v22QuickCapturePayload=null;v22CloseDialog(document.getElementById('v22QuickCaptureDialog'));}catch(error){document.getElementById('v22QuickCaptureResult').textContent='저장하지 못했습니다: '+error.message;}finally{v22QuickCaptureBusy=false;this.disabled=false;}};
+document.getElementById('v22QuickCaptureCancel').onclick=function(){v22QuickCapturePayload=null;document.getElementById('v22QuickCaptureResult').textContent='취소 — 노트 변경 없음';v22CloseDialog(document.getElementById('v22QuickCaptureDialog'));};
+document.getElementById('v22QuickCaptureDialog').addEventListener('cancel',function(event){event.preventDefault();document.getElementById('v22QuickCaptureCancel').click();});
+storageReady.then(v22HandleLaunchAction);
+</script>
+<dialog id="v22WorkspaceSettingsDialog" class="v22-dialog" aria-labelledby="v22WorkspaceSettingsTitle">
+ <h2 id="v22WorkspaceSettingsTitle">내 시작 화면 설정</h2>
+ <p>이 선택은 현재 기기에만 저장되며 기존 노트·Google 계정·다른 기기의 화면을 바꾸지 않습니다.</p>
+ <fieldset><legend>시작 방식</legend>
+  <label><input type="radio" name="v22WorkspaceMode" value="classic"> 기존 노트 화면</label><br>
+  <label><input type="radio" name="v22WorkspaceMode" value="capture"> 빠른 기록 중심</label><br>
+  <label><input type="radio" name="v22WorkspaceMode" value="migration"> 자료 이관 중심</label><br>
+  <label><input type="radio" name="v22WorkspaceMode" value="knowledge"> 연결된 지식 중심</label>
+ </fieldset>
+ <label><input id="v22WorkspaceShowOnOpen" type="checkbox"> 앱을 열 때 내 시작 화면 표시</label>
+ <p id="v22WorkspaceSettingsResult" role="status" aria-live="polite"></p>
+ <button id="v22WorkspaceSave" type="button">이 기기에 저장</button><button id="v22WorkspaceReset" type="button">기존 화면으로 초기화</button><button id="v22WorkspaceSettingsClose" type="button">닫기</button>
+</dialog>
+<dialog id="v22WorkspaceHomeDialog" class="v22-dialog" aria-labelledby="v22WorkspaceHomeTitle">
+ <h2 id="v22WorkspaceHomeTitle">내 시작 화면</h2>
+ <p id="v22WorkspaceModeSummary"></p>
+ <div id="v22WorkspaceActions"></div>
+ <h3>최근 작업</h3><ol id="v22WorkspaceRecent"></ol>
+ <p id="v22WorkspaceHomeResult" role="status" aria-live="polite"></p>
+ <button id="v22WorkspaceOpenSettings" type="button">시작 화면 설정</button><button id="v22WorkspaceHomeClose" type="button">노트 화면으로 이동</button>
+</dialog>
+<script>
+var V22_WORKSPACE_KEY='noteplusp-v22-personal-workspace-v1',v22WorkspaceMemory={schema:1,mode:'classic',showOnOpen:false,explicit:false};
+function v22NormalizeWorkspace(value){var item=value&&typeof value==='object'?value:{},mode=['classic','capture','migration','knowledge'].includes(item.mode)?item.mode:'classic';return {schema:1,mode:mode,showOnOpen:item.showOnOpen===true,explicit:item.explicit===true};}
+function v22ReadWorkspace(){try{var raw=localStorage.getItem(V22_WORKSPACE_KEY);v22WorkspaceMemory=raw?v22NormalizeWorkspace(JSON.parse(raw)):v22NormalizeWorkspace(null);}catch(ignore){v22WorkspaceMemory=v22NormalizeWorkspace(null);}return Object.assign({},v22WorkspaceMemory);}
+function v22WriteWorkspace(value){var next=v22NormalizeWorkspace(Object.assign({},value,{explicit:true}));localStorage.setItem(V22_WORKSPACE_KEY,JSON.stringify(next));v22WorkspaceMemory=next;return Object.assign({},next);}
+function v22ResetWorkspace(){try{localStorage.removeItem(V22_WORKSPACE_KEY);}catch(ignore){}v22WorkspaceMemory=v22NormalizeWorkspace(null);return Object.assign({},v22WorkspaceMemory);}
+function v22RenderWorkspaceSettings(){var settings=v22ReadWorkspace(),choice=document.querySelector('input[name="v22WorkspaceMode"][value="'+settings.mode+'"]');if(choice)choice.checked=true;document.getElementById('v22WorkspaceShowOnOpen').checked=settings.showOnOpen;document.getElementById('v22WorkspaceSettingsResult').textContent=settings.explicit?'현재 기기에 저장된 선택입니다.':'아직 선택하지 않아 기존 노트 화면을 유지합니다.';return settings;}
+function v22WorkspaceRecentNotes(){return state.notes.slice().sort(function(a,b){return Number(b.updated||0)-Number(a.updated||0);}).slice(0,5);}
+function v22RenderWorkspaceHome(){var settings=v22ReadWorkspace(),labels={classic:'기존 노트 화면',capture:'빠른 기록 중심',migration:'자료 이관 중심',knowledge:'연결된 지식 중심'},actions=document.getElementById('v22WorkspaceActions'),recent=document.getElementById('v22WorkspaceRecent');document.getElementById('v22WorkspaceModeSummary').textContent='현재 방식: '+labels[settings.mode];actions.replaceChildren();recent.replaceChildren();
+ var definitions=settings.mode==='migration'?[['Evernote 자료 옮기기','migration'],['전체 자료 보존','export'],['새 노트','capture']]:settings.mode==='knowledge'?[['연결된 노트 보기','knowledge'],['검색','search'],['새 노트','capture']]:[['새 노트','capture'],['검색','search'],['전체 자료 보존','export']];
+ definitions.forEach(function(item){var button=document.createElement('button');button.type='button';button.textContent=item[0];button.dataset.workspaceAction=item[1];button.style.cssText='min-height:44px;margin:4px';button.onclick=function(){v22WorkspaceAction(item[1]);};actions.append(button);});
+ v22WorkspaceRecentNotes().forEach(function(note){var li=document.createElement('li'),button=document.createElement('button');button.type='button';button.textContent=note.title||'제목 없음';button.style.cssText='min-height:44px';button.onclick=function(){ui.selectedId=note.id;render();setMobileView('editor');v22CloseDialog(document.getElementById('v22WorkspaceHomeDialog'));};li.append(button);recent.append(li);});if(!recent.children.length){var empty=document.createElement('li');empty.textContent='최근 노트가 없습니다.';recent.append(empty);}return settings;
+}
+function v22OpenWorkspaceHome(){v22RenderWorkspaceHome();v22ShowDialog(document.getElementById('v22WorkspaceHomeDialog'));}
+function v22WorkspaceAction(action){var dialog=document.getElementById('v22WorkspaceHomeDialog');if(action==='capture'){v22CloseDialog(dialog);document.getElementById('newBtn').click();setMobileView('editor');}else if(action==='migration'){v22CloseDialog(dialog);setMobileView('side');document.getElementById('enexGuideSide').click();}else if(action==='export'){v22CloseDialog(dialog);document.getElementById('v22DataOpen').click();}else if(action==='search'){v22CloseDialog(dialog);document.getElementById('search').focus();}else if(action==='knowledge'){var linked=state.notes.filter(function(note){return /data-note-id=/.test(String(note.bodyHtml||''));});document.getElementById('v22WorkspaceHomeResult').textContent=linked.length?'연결을 포함한 노트 '+linked.length+'개가 있습니다. 검색에서 노트 제목을 입력하세요.':'아직 내부 연결이 없습니다. 편집기의 내부 노트 링크 버튼으로 연결할 수 있습니다.';}}
+var v22WorkspaceButton=document.createElement('button');v22WorkspaceButton.type='button';v22WorkspaceButton.id='v22WorkspaceOpen';v22WorkspaceButton.className='backup-btn full';v22WorkspaceButton.textContent='내 시작 화면';v22WorkspaceButton.setAttribute('aria-haspopup','dialog');v22WorkspaceButton.onclick=v22OpenWorkspaceHome;document.getElementById('v22WelcomeAgain').after(v22WorkspaceButton);
+var v22WorkspaceSettingsButton=document.createElement('button');v22WorkspaceSettingsButton.type='button';v22WorkspaceSettingsButton.id='v22WorkspaceSettingsOpen';v22WorkspaceSettingsButton.className='backup-btn full';v22WorkspaceSettingsButton.textContent='시작 화면 설정';v22WorkspaceSettingsButton.setAttribute('aria-haspopup','dialog');v22WorkspaceSettingsButton.onclick=function(){v22RenderWorkspaceSettings();v22ShowDialog(document.getElementById('v22WorkspaceSettingsDialog'));};v22WorkspaceButton.after(v22WorkspaceSettingsButton);
+document.getElementById('v22WorkspaceSave').onclick=function(){var selected=document.querySelector('input[name="v22WorkspaceMode"]:checked');try{var saved=v22WriteWorkspace({mode:selected?selected.value:'classic',showOnOpen:document.getElementById('v22WorkspaceShowOnOpen').checked});document.getElementById('v22WorkspaceSettingsResult').textContent='이 기기에 '+saved.mode+' 시작 방식을 저장했습니다.';}catch(ignore){document.getElementById('v22WorkspaceSettingsResult').textContent='이 기기에 설정을 저장하지 못했습니다. 기존 노트 화면을 유지합니다.';}};
+document.getElementById('v22WorkspaceReset').onclick=function(){v22ResetWorkspace();v22RenderWorkspaceSettings();document.getElementById('v22WorkspaceSettingsResult').textContent='이 기기의 시작 화면 설정을 초기화했습니다. 기존 노트 화면을 사용합니다.';};
+document.getElementById('v22WorkspaceSettingsClose').onclick=function(){v22CloseDialog(document.getElementById('v22WorkspaceSettingsDialog'));};
+document.getElementById('v22WorkspaceOpenSettings').onclick=function(){v22CloseDialog(document.getElementById('v22WorkspaceHomeDialog'));v22RenderWorkspaceSettings();v22ShowDialog(document.getElementById('v22WorkspaceSettingsDialog'));};
+document.getElementById('v22WorkspaceHomeClose').onclick=function(){v22CloseDialog(document.getElementById('v22WorkspaceHomeDialog'));};
+storageReady.then(function(){var settings=v22ReadWorkspace(),action=new URLSearchParams(location.search).get('action');if(settings.explicit&&settings.showOnOpen&&action!=='new'&&action!=='share'&&!document.getElementById('v22Welcome').open)v22OpenWorkspaceHome();});
+</script>
+<dialog id="v22SavedFilterDialog" class="v22-dialog" aria-labelledby="v22SavedFilterTitle">
+ <h2 id="v22SavedFilterTitle">저장한 검색 필터</h2>
+ <p>현재 검색 조건을 이름과 함께 저장하거나 이전 조건을 다시 실행할 수 있습니다.</p>
+ <label for="v22SavedFilterName">필터 이름</label><input id="v22SavedFilterName" type="text" maxlength="60" autocomplete="off">
+ <button id="v22SavedFilterSave" type="button">현재 검색 저장</button>
+ <ul id="v22SavedFilterList"></ul><p id="v22SavedFilterResult" role="status" aria-live="polite"></p>
+ <button id="v22SavedFilterClose" type="button">닫기</button>
+</dialog>
+<script>
+var v22AttachmentNamesByNote=new Map(),v22AttachmentIndexReady=Promise.resolve();
+function v22IndexAttachmentMeta(items){(items||[]).forEach(function(meta){meta=meta&&meta.meta?meta.meta:meta;if(!meta||typeof meta.noteId!=='string')return;var names=v22AttachmentNamesByNote.get(meta.noteId)||[],name=String(meta.name||'').toLocaleLowerCase('ko');if(name&&!names.includes(name))names.push(name);v22AttachmentNamesByNote.set(meta.noteId,names);});}
+function v22LoadAttachmentNames(){if(!noteDb)return Promise.resolve([]);return new Promise(function(resolve){var tx=noteDb.transaction('attachment_meta','readonly'),request=tx.objectStore('attachment_meta').getAll();request.onsuccess=function(){v22AttachmentNamesByNote.clear();v22IndexAttachmentMeta(request.result||[]);resolve(request.result||[]);};request.onerror=function(){resolve([]);};});}
+var v22BaseRememberAttachments=rememberAttachments;rememberAttachments=function(items){v22BaseRememberAttachments(items);v22IndexAttachmentMeta(items);};
+storageReady.then(function(){v22AttachmentIndexReady=v22LoadAttachmentNames();});
+function v22SearchTokens(query){return String(query||'').trim().match(/(?:[^\s"]+|"[^"]*")+/g)||[];}
+var v22SearchNoteCache=new WeakMap(),v22SearchPlanCache=new Map();
+function v22SearchIndex(note){var attachments=v22AttachmentNamesByNote.get(note.id)||[],signature=[note.title,note.body,note.notebook,(note.tags||[]).join('\u0001'),attachments.join('\u0001'),note.bodyHtml,note.favorite,note.updated].join('\u0000'),cached=v22SearchNoteCache.get(note);if(cached&&cached.signature===signature)return cached;cached={signature:signature,title:String(note.title||'').toLowerCase(),body:String(note.body||'').toLowerCase(),tags:(note.tags||[]).map(function(x){return String(x).toLowerCase();}),notebook:String(note.notebook||'').toLowerCase(),attachments:attachments,hasLinks:/data-note-id=/.test(String(note.bodyHtml||''))};v22SearchNoteCache.set(note,cached);return cached;}
+function v22SearchPlan(query){query=String(query||'');if(v22SearchPlanCache.has(query))return v22SearchPlanCache.get(query);var plan=v22SearchTokens(query).map(function(raw){var neg=raw.charAt(0)==='-',token=(neg?raw.slice(1):raw).replace(/^"|"$/g,'');if(!token)return {empty:true};var colon=token.indexOf(':'),key=colon>0?token.slice(0,colon).toLowerCase():'',value=(colon>0?token.slice(colon+1):token).toLowerCase();return {neg:neg,key:key,value:value,date:key==='before'||key==='after'?parseSearchDate(value):null};});if(v22SearchPlanCache.size>=40)v22SearchPlanCache.clear();v22SearchPlanCache.set(query,plan);return plan;}
+function v22SearchReasons(note,query){
+ var reasons=new Set(),positiveTerms=[],tokens=v22SearchPlan(query),index=v22SearchIndex(note),title=index.title,body=index.body,tags=index.tags,notebook=index.notebook,attachments=index.attachments,hasLinks=index.hasLinks;
+ var matched=tokens.every(function(part){if(part.empty)return true;var neg=part.neg,key=part.key,value=part.value,hit=false,local=[];
+  if(key==='tag'){hit=tags.some(function(x){return x.includes(value);});if(hit)local.push('태그');}
+  else if(key==='notebook'||key==='nb'){hit=notebook.includes(value);if(hit)local.push('노트북');}
+  else if(key==='has'){hit=value==='attachment'?(note.attachmentIds||[]).length>0:value==='link'?hasLinks:false;if(hit)local.push(value==='attachment'?'첨부':'내부 연결');}
+  else if(key==='is'){hit=value==='favorite'?!!note.favorite:false;if(hit)local.push('즐겨찾기');}
+  else if(key==='before'){hit=part.date!==null&&(note.updated||0)<part.date;if(hit)local.push('수정일');}
+  else if(key==='after'){hit=part.date!==null&&(note.updated||0)>=part.date;if(hit)local.push('수정일');}
+  else {if(title.includes(value))local.push('제목');if(body.includes(value))local.push('본문');if(tags.some(function(x){return x.includes(value);}))local.push('태그');if(notebook.includes(value))local.push('노트북');if(attachments.some(function(x){return x.includes(value);}))local.push('첨부 이름');if(hasLinks&&(title.includes(value)||body.includes(value)))local.push('내부 연결');hit=local.length>0;}
+  if(neg){if(!hit)reasons.add('제외 조건 통과');return !hit;}if(hit){local.forEach(function(x){reasons.add(x);});if(!key&&value)positiveTerms.push(value);}return hit;
+ });
+ return {matched:matched,reasons:Array.from(reasons),terms:positiveTerms};
+}
+matchesAdvancedQuery=function(note,query){return v22SearchReasons(note,query).matched;};
+function v22SafeHighlight(text,terms){var fragment=document.createDocumentFragment(),source=String(text||''),lower=source.toLocaleLowerCase('ko'),ranges=[];(terms||[]).forEach(function(term){var start=lower.indexOf(term);if(start>=0)ranges.push([start,start+term.length]);});ranges.sort(function(a,b){return a[0]-b[0];});var cursor=0;ranges.forEach(function(range){if(range[0]<cursor)return;fragment.append(document.createTextNode(source.slice(cursor,range[0])));var mark=document.createElement('mark');mark.textContent=source.slice(range[0],range[1]);fragment.append(mark);cursor=range[1];});fragment.append(document.createTextNode(source.slice(cursor)));return fragment;}
+var v22BaseRenderList=renderList;renderList=function(){v22BaseRenderList();if(!ui.query.trim())return;document.querySelectorAll('#listScroll .row[data-note-id]').forEach(function(row){var note=byId(row.dataset.noteId);if(!note)return;var result=v22SearchReasons(note,ui.query),reason=document.createElement('div');reason.className='v22-search-reasons';reason.textContent='일치: '+(result.reasons.join(' · ')||'검색 조건');reason.style.cssText='font-size:12px;color:var(--muted);margin-top:4px';row.append(reason);var evidence=document.createElement('div');evidence.className='v22-search-evidence';evidence.style.cssText='font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';evidence.append(v22SafeHighlight((note.title||'')+' '+(note.body||'').slice(0,120),result.terms));row.append(evidence);});};
+function v22SavedFilters(){var prefs=state.preferences||(state.preferences={});prefs.savedSearches=Array.isArray(prefs.savedSearches)?prefs.savedSearches:[];return prefs.savedSearches;}
+function v22RenderSavedFilters(){var list=document.getElementById('v22SavedFilterList'),filters=v22SavedFilters();list.replaceChildren();filters.forEach(function(item,index){var li=document.createElement('li'),run=document.createElement('button'),remove=document.createElement('button');run.type='button';run.textContent=item.name+' — '+item.query;run.dataset.savedFilterRun=String(index);run.onclick=function(){ui.query=item.query;document.getElementById('search').value=ui.query;renderList();document.getElementById('v22SavedFilterResult').textContent='저장한 검색을 다시 실행했습니다.';};remove.type='button';remove.textContent='삭제';remove.setAttribute('aria-label',item.name+' 필터 삭제');remove.onclick=function(){filters.splice(index,1);persist();v22RenderSavedFilters();};li.append(run,remove);list.append(li);});if(!filters.length){var empty=document.createElement('li');empty.textContent='저장한 검색이 없습니다.';list.append(empty);}}
+document.getElementById('savedSearchBtn').onclick=function(){document.getElementById('v22SavedFilterName').value='';document.getElementById('v22SavedFilterResult').textContent=ui.query?'현재 검색: '+ui.query:'먼저 검색어를 입력하세요.';v22RenderSavedFilters();v22ShowDialog(document.getElementById('v22SavedFilterDialog'));};
+document.getElementById('v22SavedFilterSave').onclick=function(){var name=v22CleanQuickText(document.getElementById('v22SavedFilterName').value,60).trim(),query=String(ui.query||'').trim();if(!name||!query){document.getElementById('v22SavedFilterResult').textContent='필터 이름과 현재 검색어가 모두 필요합니다.';return;}var filters=v22SavedFilters(),next={name:name,query:query.slice(0,160)},same=filters.findIndex(function(item){return item.name===name;});if(same>=0)filters[same]=next;else filters.push(next);state.preferences.savedSearches=filters.slice(-20);persist();v22RenderSavedFilters();document.getElementById('v22SavedFilterResult').textContent='현재 검색 조건을 저장했습니다.';};
+document.getElementById('v22SavedFilterClose').onclick=function(){v22CloseDialog(document.getElementById('v22SavedFilterDialog'));};
+</script>
+<dialog id="v22LinkDiscoveryDialog" class="v22-dialog" aria-labelledby="v22LinkDiscoveryTitle">
+ <h2 id="v22LinkDiscoveryTitle">연결된 노트 재발견</h2>
+ <p id="v22LinkDiscoverySummary"></p>
+ <h3>현재 노트로 들어오는 연결</h3><ul id="v22IncomingLinks"></ul>
+ <h3>현재 노트에서 나가는 연결</h3><ul id="v22OutgoingLinks"></ul>
+ <h3>깨진 연결</h3><ul id="v22BrokenLinks"></ul>
+ <h3>연결 없는 노트</h3><ul id="v22OrphanLinks"></ul>
+ <p>이 화면은 연결을 읽기만 하며 노트 원문을 자동 수정하지 않습니다.</p>
+ <button id="v22LinkDiscoveryClose" type="button">닫기</button>
+</dialog>
+<script>
+function v22ExtractNoteLinks(note){var found=[],seen=new Set(),pattern=/data-note-id\s*=\s*["']([^"']{1,200})["']/gi,text=String(note&&note.bodyHtml||''),match;while((match=pattern.exec(text))){var id=match[1].trim();if(id&&!seen.has(id)){seen.add(id);found.push(id);}}return found;}
+function v22BuildLinkIndex(data){var active=Array.isArray(data&&data.notes)?data.notes:[],byIdMap=new Map(active.filter(function(note){return note&&typeof note.id==='string';}).map(function(note){return [note.id,note];})),outgoing=new Map(),incoming=new Map(),broken=[];active.forEach(function(note){var ids=v22ExtractNoteLinks(note);outgoing.set(note.id,ids.filter(function(id){return byIdMap.has(id);}));ids.forEach(function(id){if(byIdMap.has(id)){var list=incoming.get(id)||[];if(!list.includes(note.id))list.push(note.id);incoming.set(id,list);}else broken.push({sourceId:note.id,targetId:id});});});var orphans=active.filter(function(note){return !(outgoing.get(note.id)||[]).length&&!(incoming.get(note.id)||[]).length;}).map(function(note){return note.id;});return {byId:byIdMap,outgoing:outgoing,incoming:incoming,broken:broken,orphans:orphans,nodeCount:active.length,edgeCount:Array.from(outgoing.values()).reduce(function(sum,list){return sum+list.length;},0)};}
+function v22LinkList(list,items,index,emptyText){list.replaceChildren();if(!items.length){var empty=document.createElement('li');empty.textContent=emptyText;list.append(empty);return;}items.slice(0,100).forEach(function(item){var note=index.byId.get(typeof item==='string'?item:item.sourceId),li=document.createElement('li'),button=document.createElement('button');button.type='button';button.textContent=note?(note.title||'제목 없음'):'찾을 수 없는 노트';button.style.cssText='min-height:44px';if(note)button.onclick=function(){ui.selectedId=note.id;render();setMobileView('editor');v22CloseDialog(document.getElementById('v22LinkDiscoveryDialog'));};else button.disabled=true;li.append(button);if(item&&typeof item==='object'){var detail=document.createElement('span');detail.textContent=' → 없는 대상 '+item.targetId.slice(0,80);li.append(detail);}list.append(li);});}
+function v22RenderLinkDiscovery(){var index=v22BuildLinkIndex(state),current=byId(ui.selectedId),incoming=current?(index.incoming.get(current.id)||[]):[],outgoing=current?(index.outgoing.get(current.id)||[]):[];document.getElementById('v22LinkDiscoverySummary').textContent='활성 노트 '+index.nodeCount+'개 · 연결 '+index.edgeCount+'개 · 깨진 연결 '+index.broken.length+'개 · 연결 없는 노트 '+index.orphans.length+'개';v22LinkList(document.getElementById('v22IncomingLinks'),incoming,index,'들어오는 연결이 없습니다.');v22LinkList(document.getElementById('v22OutgoingLinks'),outgoing,index,'나가는 연결이 없습니다.');v22LinkList(document.getElementById('v22BrokenLinks'),index.broken,index,'깨진 연결이 없습니다.');v22LinkList(document.getElementById('v22OrphanLinks'),index.orphans,index,'연결 없는 노트가 없습니다.');return index;}
+var v22LinkDiscoveryOpen=document.createElement('button');v22LinkDiscoveryOpen.type='button';v22LinkDiscoveryOpen.id='v22LinkDiscoveryOpen';v22LinkDiscoveryOpen.className='backup-btn full';v22LinkDiscoveryOpen.textContent='연결된 노트 재발견';v22LinkDiscoveryOpen.setAttribute('aria-haspopup','dialog');v22LinkDiscoveryOpen.onclick=function(){v22RenderLinkDiscovery();v22ShowDialog(document.getElementById('v22LinkDiscoveryDialog'));};document.getElementById('savedSearchBtn').after(v22LinkDiscoveryOpen);
+document.getElementById('v22LinkDiscoveryClose').onclick=function(){v22CloseDialog(document.getElementById('v22LinkDiscoveryDialog'));};
+</script>
+<dialog id="v22PerformanceDialog" class="v22-dialog" aria-labelledby="v22PerformanceTitle">
+ <h2 id="v22PerformanceTitle">성능 상태</h2>
+ <p>이 기기에서 최근 실행한 목록·노트 열기·저장의 95% 지점을 표시합니다. 노트 내용은 기록하지 않습니다.</p>
+ <dl id="v22PerformanceSummary"></dl>
+ <p id="v22PerformanceResult" role="status" aria-live="polite"></p>
+ <button id="v22PerformanceClear" type="button">측정값 초기화</button>
+ <button id="v22PerformanceClose" type="button">닫기</button>
+</dialog>
+<script>
+var V22_PERFORMANCE_BUDGETS=Object.freeze({search:500,open:300,save:500,longTask:2000}),v22PerformanceSamples={search:[],open:[],save:[],longTask:[]};
+function v22RecordPerformance(name,duration){if(!Object.prototype.hasOwnProperty.call(v22PerformanceSamples,name))return;duration=Number(duration);if(!Number.isFinite(duration)||duration<0)return;var list=v22PerformanceSamples[name];list.push(duration);if(list.length>60)list.splice(0,list.length-60);}
+function v22Percentile95(values){if(!values.length)return null;var sorted=values.slice().sort(function(a,b){return a-b;}),index=Math.max(0,Math.ceil(sorted.length*.95)-1);return sorted[index];}
+function v22MeasurePerformance(name,work){var started=performance.now();try{return work();}finally{v22RecordPerformance(name,performance.now()-started);}}
+async function v22MeasurePerformanceAsync(name,work){var started=performance.now();try{return await work();}finally{v22RecordPerformance(name,performance.now()-started);}}
+function v22PerformanceSnapshot(){var result={};Object.keys(V22_PERFORMANCE_BUDGETS).forEach(function(name){var p95=v22Percentile95(v22PerformanceSamples[name]),budget=V22_PERFORMANCE_BUDGETS[name];result[name]={samples:v22PerformanceSamples[name].length,p95:p95,budget:budget,pass:p95===null?null:p95<=budget};});return result;}
+function v22RenderPerformance(){var labels={search:'검색·목록',open:'노트 열기',save:'저장',longTask:'장기 작업'},snapshot=v22PerformanceSnapshot(),summary=document.getElementById('v22PerformanceSummary'),failed=false;summary.replaceChildren();Object.keys(snapshot).forEach(function(name){var item=snapshot[name],dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=labels[name];dd.textContent=item.p95===null?'측정 전 · 기준 '+item.budget+'ms':('P95 '+Math.round(item.p95)+'ms / 기준 '+item.budget+'ms · '+(item.pass?'예산 내':'예산 초과'));if(item.pass===false)failed=true;summary.append(dt,dd);});document.getElementById('v22PerformanceResult').textContent=failed?'주의: 성능 예산을 넘은 항목이 있습니다. 자료를 보존한 채 앱을 다시 열고 확인하세요.':'현재 측정된 항목은 성능 예산 안입니다.';return snapshot;}
+var v22PerformanceBaseRenderList=renderList;renderList=function(){return v22MeasurePerformance('search',function(){return v22PerformanceBaseRenderList();});};
+var v22PerformanceBaseRenderEditor=renderEditor;renderEditor=function(){return v22MeasurePerformance('open',function(){return v22PerformanceBaseRenderEditor();});};
+var v22PerformanceOpen=document.createElement('button');v22PerformanceOpen.type='button';v22PerformanceOpen.id='v22PerformanceOpen';v22PerformanceOpen.className='backup-btn full';v22PerformanceOpen.textContent='성능 상태';v22PerformanceOpen.setAttribute('aria-haspopup','dialog');v22PerformanceOpen.onclick=function(){v22RenderPerformance();v22ShowDialog(document.getElementById('v22PerformanceDialog'));};document.getElementById('v22LinkDiscoveryOpen').after(v22PerformanceOpen);
+document.getElementById('v22PerformanceClear').onclick=function(){Object.keys(v22PerformanceSamples).forEach(function(name){v22PerformanceSamples[name]=[];});v22RenderPerformance();document.getElementById('v22PerformanceResult').textContent='이 탭의 측정값을 초기화했습니다. 노트와 설정은 바뀌지 않았습니다.';};
+document.getElementById('v22PerformanceClose').onclick=function(){v22CloseDialog(document.getElementById('v22PerformanceDialog'));};
+</script>
+<dialog id="v22TelemetryDialog" class="v22-dialog" aria-labelledby="v22TelemetryTitle">
+ <h2 id="v22TelemetryTitle">선택형 품질 측정</h2>
+ <p>기본값은 꺼짐입니다. 켜도 성공 단계·오류 코드·시간 범위·개수 범위만 이 기기에 기록합니다.</p>
+ <p><strong>기록 금지:</strong> 노트 본문, 검색어, 첨부 이름, 전체 주소, 인증 열쇠, 위치.</p>
+ <label><input id="v22TelemetryEnabled" type="checkbox"> 이 기기에서 최소 품질 측정 허용</label>
+ <h3>외부 전송 전 미리보기</h3><pre id="v22TelemetryPreview" style="white-space:pre-wrap;max-height:30vh;overflow:auto"></pre>
+ <p id="v22TelemetryResult" role="status" aria-live="polite"></p>
+ <button id="v22TelemetrySave" type="button">선택 저장</button>
+ <button id="v22TelemetryClear" type="button">로컬 기록 삭제</button>
+ <button id="v22TelemetryClose" type="button">닫기</button>
+</dialog>
+<script>
+function v22RenderTelemetry(){var api=window.noteplusTelemetry,settings=api.getSettings(),preview=api.preview();document.getElementById('v22TelemetryEnabled').checked=settings.enabled;document.getElementById('v22TelemetryPreview').textContent=preview.length?JSON.stringify(preview,null,2):'기록 없음';document.getElementById('v22TelemetryResult').textContent='현재 외부 수신점이 없어 어떤 기록도 전송하지 않습니다. 로컬 기록 '+preview.length+'개.';return {settings:settings,preview:preview};}
+var v22TelemetryOpen=document.createElement('button');v22TelemetryOpen.type='button';v22TelemetryOpen.id='v22TelemetryOpen';v22TelemetryOpen.className='backup-btn full';v22TelemetryOpen.textContent='선택형 품질 측정';v22TelemetryOpen.setAttribute('aria-haspopup','dialog');v22TelemetryOpen.onclick=function(){v22RenderTelemetry();v22ShowDialog(document.getElementById('v22TelemetryDialog'));};document.getElementById('v22PerformanceOpen').after(v22TelemetryOpen);
+document.getElementById('v22TelemetrySave').onclick=function(){var enabled=document.getElementById('v22TelemetryEnabled').checked;window.noteplusTelemetry.setEnabled(enabled);v22RenderTelemetry();document.getElementById('v22TelemetryResult').textContent=enabled?'이 기기에서 최소 측정을 켰습니다. 외부 전송은 없습니다.':'측정을 끄고 로컬 기록을 함께 삭제했습니다. 모든 기능은 그대로 사용할 수 있습니다.';};
+document.getElementById('v22TelemetryClear').onclick=function(){window.noteplusTelemetry.clear();v22RenderTelemetry();document.getElementById('v22TelemetryResult').textContent='이 기기의 품질 측정 기록을 삭제했습니다. 노트와 설정은 바뀌지 않았습니다.';};
+document.getElementById('v22TelemetryClose').onclick=function(){v22CloseDialog(document.getElementById('v22TelemetryDialog'));};
+var v22TelemetryBasePersist=persist;persist=function(){var started=performance.now();return v22TelemetryBasePersist().then(function(ok){window.noteplusTelemetry.record({event:'local_save',stage:ok?'success':'error',status:ok?'ok':'error',errorCode:ok?'NONE':'LOCAL_SAVE',durationMs:performance.now()-started,count:(state.notes||[]).length});return ok;}).catch(function(error){window.noteplusTelemetry.record({event:'local_save',stage:'error',status:'error',errorCode:'LOCAL_SAVE',durationMs:performance.now()-started,count:(state.notes||[]).length});throw error;});};
+storageReady.then(function(ok){window.noteplusTelemetry.record({event:'app_open',stage:ok?'success':'error',status:ok?'ok':'error',errorCode:ok?'NONE':'LOCAL_OPEN',durationMs:0,count:(state.notes||[]).length});});
 </script>
 </body>
 </html>

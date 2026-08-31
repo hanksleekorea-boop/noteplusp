@@ -8,13 +8,16 @@
  </style>
 </head>
 <body>
- <header class="hero"><h1>노트플러스P v22 상용화 진척 대시보드</h1><p>기준: 2026-08-26 · 개발 후보 브랜치 <code>codex/v22-stage1</code> · 공개 main은 변경하지 않음</p><div class="bar" aria-label="1단계 카드 12개 중 7개 완료"><span></span></div><p><strong>1단계 카드 7/12 완료(58.3%)</strong> — 카드 크기가 달라 제품 전체 완성률과 같은 수치가 아닙니다.</p></header>
+ <header class="hero"><h1>노트플러스P v22 상용화 진척 대시보드</h1><p>기준: 2026-08-31 · 개발 후보 브랜치 <code>codex/v22-stage1</code> · 공개 main은 변경하지 않음</p><div class="bar" aria-label="1단계 카드 12개 중 7개 완료"><span></span></div><p><strong>1단계 카드 7/12 완료(58.3%)</strong> — 2단계 독립 구현 S2-001~006의 자동·브라우저 검사는 완료했지만 실제 출시 증거를 대신하지 않습니다.</p></header>
  <section class="grid" aria-label="핵심 수치">
-  <article class="card"><div class="metric ok">59/59</div><p>로컬 전체 자동검사 PASS · 최신 접근성 보강 포함</p></article>
-  <article class="card"><div class="metric ok">11/11</div><p>GitHub 빠른 검사 PASS</p></article>
+  <article class="card"><div class="metric ok">68/68</div><p>로컬 전체 자동검사 PASS · 1GiB·1만 노트·S2-001~006 포함</p></article>
+  <article class="card"><div class="metric ok">21/21</div><p>로컬 빠른 검사 PASS</p></article>
   <article class="card"><div class="metric warn">3/7</div><p>실제 출시 증거 PASS</p></article>
   <article class="card"><div class="metric blocked">11</div><p>출시 차단 조건</p></article>
  </section>
+ <section class="card"><h2>2단계 독립 구현 결과</h2><ul>
+  <li>S2-001: 홈 바로가기·Android POST 공유 대상·명시적 미리보기 저장·중복 방지.</li><li>S2-002: 기존/빠른 기록/이관/연결 중심 시작 화면과 안전한 초기화.</li><li>S2-003: 제목·본문·태그·노트북·첨부·내부 연결별 검색 이유와 저장 필터.</li><li>S2-004: 들어오는·나가는·깨진·연결 없는 노트 재발견.</li><li>S2-005: 3배 CPU·1만 노트 성능 예산 자동 차단과 성능 상태 화면.</li><li>S2-006: 기본 꺼짐, 외부 전송 0, 허용 7필드 로컬 품질 측정·미리보기·삭제.</li>
+ </ul><p class="blocked"><strong>S2-008 공개는 차단 상태입니다.</strong> 실제 Android 공유·Drive 왕복·TalkBack·비개발자 3명·운영 훈련과 운영자 7개 값이 남았습니다. 결제 S2-007은 범위에서 제외했습니다.</p></section>
  <section class="card"><h2>지금 사용 가능한 공개판</h2><ul>
   <li><a href="https://hanksleekorea-boop.github.io/noteplusp/">PC 기본 공개 주소</a> — HTTP 200, 현재 main 기본판 유지</li>
   <li><a href="https://hanksleekorea-boop.github.io/noteplusp/%EB%85%B8%ED%8A%B8%EC%95%B1_v21.html">모바일·PC v21 공개 앱</a> — HTTP 200</li>
