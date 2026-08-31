@@ -37,22 +37,28 @@ for (const heading of requiredArchive) if (!archive.includes(heading)) errors.pu
 const phases = [...history.matchAll(/^### PH-(\d{2})/gm)].map((match) => match[1]);
 const archiveIds = [...archive.matchAll(/\| (RA-\d{3}) \|/g)].map((match) => match[1]);
 const reusePacks = [...archive.matchAll(/^### (RP-\d{2})/gm)].map((match) => match[1]);
-if (new Set(phases).size < 12) errors.push(`expected at least 12 phases, found ${new Set(phases).size}`);
-if (new Set(archiveIds).size < 112) errors.push(`expected at least 112 reusable archive items, found ${new Set(archiveIds).size}`);
-if (new Set(reusePacks).size < 6) errors.push(`expected at least 6 reuse packs, found ${new Set(reusePacks).size}`);
+if (new Set(phases).size < 13) errors.push(`expected at least 13 phases, found ${new Set(phases).size}`);
+if (new Set(archiveIds).size < 120) errors.push(`expected at least 120 reusable archive items, found ${new Set(archiveIds).size}`);
+if (new Set(reusePacks).size < 7) errors.push(`expected at least 7 reuse packs, found ${new Set(reusePacks).size}`);
 if (!history.includes("2026-07-18") || !history.includes("2026-08-31")) errors.push("history date boundary missing");
 if (!history.includes("v21") || !history.includes("v22")) errors.push("current public/candidate versions missing");
 if (!archive.includes("대체됨") || !archive.includes("범위 제외") || !archive.includes("보류") || !archive.includes("거부")) errors.push("archive status taxonomy incomplete");
-for (let number = 1; number <= 112; number += 1) {
+for (let number = 1; number <= 120; number += 1) {
   const id = `RA-${String(number).padStart(3, "0")}`;
   if (!archiveIds.includes(id)) errors.push(`archive id missing: ${id}`);
 }
 for (const strength of ["E1 명시", "E2 반복", "E3 구현 흔적", "E4 추정"]) {
   if (!archive.includes(strength)) errors.push(`evidence strength missing: ${strength}`);
 }
-const inferredIds = archiveIds.filter((id) => Number(id.slice(3)) >= 101);
-if (inferredIds.length < 12) errors.push(`expected at least 12 explicitly separated inferred items, found ${inferredIds.length}`);
+const inferredIds = archiveIds.filter((id) => Number(id.slice(3)) >= 101 && Number(id.slice(3)) <= 112);
+if (inferredIds.length !== 12) errors.push(`expected exactly 12 explicitly separated inferred items, found ${inferredIds.length}`);
 if (!archive.includes("저장소에서 확인되는 328개 경로") || !archive.includes("개인 Evernote 백업 ZIP 내부 내용")) errors.push("whole-file audit scope or private-data boundary missing");
+for (const fact of ["PH-13", "EV-003", "GETTING_READY", "개인 노트 편집기", "209f82f"]) {
+  if (!history.includes(fact)) errors.push(`latest monetization history missing: ${fact}`);
+}
+for (const fact of ["RA-120", "RP-07", "실제 광고 클릭", "중복 `ads.txt`"]) {
+  if (!archive.includes(fact)) errors.push(`monetization reuse boundary missing: ${fact}`);
+}
 
 function gitNames(args) {
   try {
@@ -81,6 +87,8 @@ const watched = [...changed].filter((name) =>
   /^노트앱_.*\.html$/u.test(name) ||
   /^noteplus.*\.(js|webmanifest)$/i.test(name) ||
   /^(pricing|privacy|terms|support|status|data-rights)\.html$/i.test(name)
+  || /^(guides|guide-.*)\.html$/i.test(name)
+  || /^(ADSENSE_.*\.md|adsense-readiness\.json|sitemap\.xml)$/i.test(name)
 );
 const historyTouched = changed.has(historyName) || changed.has(archiveName);
 const negativeControls = {
@@ -94,8 +102,13 @@ const negativeControls = {
     const sampleWatched = [...sample].some((name) => /^노트앱_.*\.html$/u.test(name));
     return sampleWatched && (sample.has(historyName) || sample.has(archiveName));
   })(),
+  monetizationWithoutHistoryRejected: (() => {
+    const sample = new Set(["guides.html"]);
+    const sampleWatched = [...sample].some((name) => /^(guides|guide-.*)\.html$/i.test(name));
+    return sampleWatched && !sample.has(historyName) && !sample.has(archiveName);
+  })(),
 };
-if (!negativeControls.watchedWithoutHistoryRejected || !negativeControls.watchedWithHistoryAccepted) errors.push("history update negative controls failed");
+if (!negativeControls.watchedWithoutHistoryRejected || !negativeControls.watchedWithHistoryAccepted || !negativeControls.monetizationWithoutHistoryRejected) errors.push("history update negative controls failed");
 if (watched.length && !historyTouched) errors.push(`history update required for: ${watched.join(", ")}`);
 
 if (errors.length) {
