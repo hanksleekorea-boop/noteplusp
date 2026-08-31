@@ -25,8 +25,10 @@ const requiredArchive = [
   "## 4. 알파 일정에서 제외됐던 항목",
   "## 5. 명시적으로 거부한 제품 방식",
   "## 6. 현재 보류된 기획·기능",
-  "## 7. 다른 프로젝트에 바로 재사용할 수 있는 묶음",
-  "## 9. 갱신 기록",
+  "## 7. 전 파일 흔적 보충 목록",
+  "## 8. 다른 프로젝트에 바로 재사용할 수 있는 묶음",
+  "## 9. 보관 규칙",
+  "## 10. 갱신 기록",
 ];
 
 for (const heading of requiredHistory) if (!history.includes(heading)) errors.push(`history heading missing: ${heading}`);
@@ -36,11 +38,21 @@ const phases = [...history.matchAll(/^### PH-(\d{2})/gm)].map((match) => match[1
 const archiveIds = [...archive.matchAll(/\| (RA-\d{3}) \|/g)].map((match) => match[1]);
 const reusePacks = [...archive.matchAll(/^### (RP-\d{2})/gm)].map((match) => match[1]);
 if (new Set(phases).size < 12) errors.push(`expected at least 12 phases, found ${new Set(phases).size}`);
-if (new Set(archiveIds).size < 40) errors.push(`expected at least 40 reusable archive items, found ${new Set(archiveIds).size}`);
+if (new Set(archiveIds).size < 112) errors.push(`expected at least 112 reusable archive items, found ${new Set(archiveIds).size}`);
 if (new Set(reusePacks).size < 6) errors.push(`expected at least 6 reuse packs, found ${new Set(reusePacks).size}`);
 if (!history.includes("2026-07-18") || !history.includes("2026-08-31")) errors.push("history date boundary missing");
 if (!history.includes("v21") || !history.includes("v22")) errors.push("current public/candidate versions missing");
 if (!archive.includes("대체됨") || !archive.includes("범위 제외") || !archive.includes("보류") || !archive.includes("거부")) errors.push("archive status taxonomy incomplete");
+for (let number = 1; number <= 112; number += 1) {
+  const id = `RA-${String(number).padStart(3, "0")}`;
+  if (!archiveIds.includes(id)) errors.push(`archive id missing: ${id}`);
+}
+for (const strength of ["E1 명시", "E2 반복", "E3 구현 흔적", "E4 추정"]) {
+  if (!archive.includes(strength)) errors.push(`evidence strength missing: ${strength}`);
+}
+const inferredIds = archiveIds.filter((id) => Number(id.slice(3)) >= 101);
+if (inferredIds.length < 12) errors.push(`expected at least 12 explicitly separated inferred items, found ${inferredIds.length}`);
+if (!archive.includes("저장소에서 확인되는 328개 경로") || !archive.includes("개인 Evernote 백업 ZIP 내부 내용")) errors.push("whole-file audit scope or private-data boundary missing");
 
 function gitNames(args) {
   try {
@@ -91,4 +103,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(JSON.stringify({ status: "PASS", phases: new Set(phases).size, archiveItems: new Set(archiveIds).size, reusePacks: new Set(reusePacks).size, watchedChanges: watched, historyTouched, negativeControls }, null, 2));
+console.log(JSON.stringify({ status: "PASS", phases: new Set(phases).size, archiveItems: new Set(archiveIds).size, inferredItems: inferredIds.length, reusePacks: new Set(reusePacks).size, watchedChanges: watched, historyTouched, negativeControls }, null, 2));
