@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-08-31",
+  "publisherId": "ca-pub-2476023536699107",
+  "site": "hanksleekorea-boop.github.io",
+  "siteStatus": "GETTING_READY",
+  "adsTxtStatus": "AUTHORIZED",
+  "autoAds": true,
+  "autoOptimization": true,
+  "pageExclusions": 0,
+  "consentMessages": { "euUkSwitzerland": true, "usStates": true },
+  "policyCenter": "NO_CURRENT_ISSUES",
+  "editorAds": false,
+  "contentPages": ["guides.html", "guide-evernote-migration.html", "guide-data-safety.html"],
+  "adUnits": [
+    { "name": "NotePlusP Guides Responsive Display", "slot": "2605987155", "type": "responsive-display" },
+    { "name": "NotePlusP Guide In Article", "slot": "1314026134", "type": "in-article" },
+    { "name": "NotePlusP Guides Multiplex", "slot": "6353660478", "type": "multiplex" },
+    { "name": "NotePlusP Guides Text Feed", "slot": "3173902712", "type": "in-feed-text" }
+  ],
+  "externalBlocker": "Google must change the site status from GETTING_READY to READY before ad serving can be considered active."
+}
