@@ -6,8 +6,12 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const historyName = "PROJECT_EVOLUTION_HISTORY.md";
 const archiveName = "PROJECT_REUSE_ARCHIVE.md";
+const auditName = "PROJECT_FULL_TRACE_AUDIT_v2.md";
+const auditJsonName = "project-full-trace-audit-v2.json";
 const history = fs.readFileSync(path.join(root, historyName), "utf8");
 const archive = fs.readFileSync(path.join(root, archiveName), "utf8");
+const audit = fs.readFileSync(path.join(root, auditName), "utf8");
+const auditJson = JSON.parse(fs.readFileSync(path.join(root, auditJsonName), "utf8"));
 const errors = [];
 
 const requiredHistory = [
@@ -38,20 +42,20 @@ const phases = [...history.matchAll(/^### PH-(\d{2})/gm)].map((match) => match[1
 const archiveIds = [...archive.matchAll(/\| (RA-\d{3}) \|/g)].map((match) => match[1]);
 const reusePacks = [...archive.matchAll(/^### (RP-\d{2})/gm)].map((match) => match[1]);
 if (new Set(phases).size < 13) errors.push(`expected at least 13 phases, found ${new Set(phases).size}`);
-if (new Set(archiveIds).size < 120) errors.push(`expected at least 120 reusable archive items, found ${new Set(archiveIds).size}`);
-if (new Set(reusePacks).size < 7) errors.push(`expected at least 7 reuse packs, found ${new Set(reusePacks).size}`);
+if (new Set(archiveIds).size < 150) errors.push(`expected at least 150 reusable archive items, found ${new Set(archiveIds).size}`);
+if (new Set(reusePacks).size < 8) errors.push(`expected at least 8 reuse packs, found ${new Set(reusePacks).size}`);
 if (!history.includes("2026-07-18") || !history.includes("2026-08-31")) errors.push("history date boundary missing");
 if (!history.includes("v21") || !history.includes("v22")) errors.push("current public/candidate versions missing");
 if (!archive.includes("대체됨") || !archive.includes("범위 제외") || !archive.includes("보류") || !archive.includes("거부")) errors.push("archive status taxonomy incomplete");
-for (let number = 1; number <= 120; number += 1) {
+for (let number = 1; number <= 150; number += 1) {
   const id = `RA-${String(number).padStart(3, "0")}`;
   if (!archiveIds.includes(id)) errors.push(`archive id missing: ${id}`);
 }
 for (const strength of ["E1 명시", "E2 반복", "E3 구현 흔적", "E4 추정"]) {
   if (!archive.includes(strength)) errors.push(`evidence strength missing: ${strength}`);
 }
-const inferredIds = archiveIds.filter((id) => Number(id.slice(3)) >= 101 && Number(id.slice(3)) <= 112);
-if (inferredIds.length !== 12) errors.push(`expected exactly 12 explicitly separated inferred items, found ${inferredIds.length}`);
+const inferredIds = [...archive.matchAll(/\| (RA-\d{3}) \|[^\n]*추정 후보 · E4/g)].map((match) => match[1]);
+if (inferredIds.length !== 28) errors.push(`expected exactly 28 explicitly separated inferred items, found ${inferredIds.length}`);
 if (!archive.includes("저장소에서 확인되는 328개 경로") || !archive.includes("개인 Evernote 백업 ZIP 내부 내용")) errors.push("whole-file audit scope or private-data boundary missing");
 for (const fact of ["PH-13", "EV-003", "GETTING_READY", "개인 노트 편집기", "209f82f"]) {
   if (!history.includes(fact)) errors.push(`latest monetization history missing: ${fact}`);
@@ -59,6 +63,19 @@ for (const fact of ["PH-13", "EV-003", "GETTING_READY", "개인 노트 편집기
 for (const fact of ["RA-120", "RP-07", "실제 광고 클릭", "중복 `ads.txt`"]) {
   if (!archive.includes(fact)) errors.push(`monetization reuse boundary missing: ${fact}`);
 }
+for (const fact of ["EV-004", auditName, "안정 파일 1,386개", "고유 내용 410개"]) {
+  if (!history.includes(fact)) errors.push(`full trace history missing: ${fact}`);
+}
+for (const fact of ["RA-150", "RP-08", "RA-121～134", "RA-135～150"]) {
+  if (!archive.includes(fact)) errors.push(`full trace archive boundary missing: ${fact}`);
+}
+for (const fact of ["물리적으로 발견한 파일: 8,112개", "안정 감사 대상: 1,386개", "고유 텍스트 내용: 410개", "개인 또는 실제 자료일 수 있는 ENEX 5개"]) {
+  if (!audit.includes(fact)) errors.push(`full trace audit fact missing: ${fact}`);
+}
+for (const [key, expected] of Object.entries({ physicalFilesDiscovered: 8112, stableFilesAudited: 1386, volatileFilesExcluded: 6726, stableTextFiles: 1113, normalizedUniqueTextContents: 410, duplicateTextCopies: 703 })) {
+  if (auditJson[key] !== expected) errors.push(`full trace audit JSON mismatch: ${key}`);
+}
+if (auditJson.archiveAfterAudit?.lastId !== "RA-150" || auditJson.archiveAfterAudit?.reusePacks !== 8) errors.push("full trace archive JSON summary mismatch");
 
 function gitNames(args) {
   try {
@@ -90,7 +107,7 @@ const watched = [...changed].filter((name) =>
   || /^(guides|guide-.*)\.html$/i.test(name)
   || /^(ADSENSE_.*\.md|adsense-readiness\.json|sitemap\.xml)$/i.test(name)
 );
-const historyTouched = changed.has(historyName) || changed.has(archiveName);
+const historyTouched = changed.has(historyName) || changed.has(archiveName) || changed.has(auditName) || changed.has(auditJsonName);
 const negativeControls = {
   watchedWithoutHistoryRejected: (() => {
     const sample = new Set(["PRODUCT_PLAN_sample.md"]);
