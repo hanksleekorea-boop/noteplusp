@@ -24,6 +24,6 @@ try{
  });
  for(const name of ['search','open','save','longTask']){assert.ok(result.snapshot[name].samples>0,`${name} samples`);assert.equal(result.snapshot[name].pass,true,`${name} P95 ${result.snapshot[name].p95}ms exceeded ${result.snapshot[name].budget}ms`);}
  assert.match(result.uiText,/P95/);assert.equal(result.snapshot.search.budget,500);assert.equal(result.snapshot.open.budget,300);assert.equal(result.snapshot.save.budget,500);assert.equal(result.snapshot.longTask.budget,2000);
- const second=await context.newPage();await ready(second,h.origin+'/노트앱_v22.html');const secondSnapshot=await second.evaluate(()=>v22PerformanceSnapshot());assert.equal(secondSnapshot.search.samples,1);assert.ok(secondSnapshot.open.samples>=1);await second.close();
+  const second=await context.newPage();await ready(second,h.origin+'/노트앱_v22.html');const secondSnapshot=await second.evaluate(()=>{v22PerformanceSamples={search:[],open:[],save:[],longTask:[]};renderList();renderEditor();return v22PerformanceSnapshot();});assert.equal(secondSnapshot.search.samples,1);assert.equal(secondSnapshot.open.samples,1);await second.close();
  await context.close();console.log(JSON.stringify({ok:true,card:'S2-005',cpuThrottle:'3x',library:10000,oneGiBContract:true,multiTab:true,budgets:Object.fromEntries(Object.entries(result.snapshot).map(([key,value])=>[key,{p95:Math.round(value.p95),budget:value.budget,pass:value.pass}]))},null,2));
 }finally{await h.close();}

@@ -1,0 +1,29 @@
+(function(){'use strict';
+ const $=id=>document.getElementById(id);
+ function el(tag,text){const n=document.createElement(tag);n.textContent=text;return n;}
+ function card(id,title,paragraphs,steps){const n=el('article','');n.className='card';n.id=id;n.append(el('h3',title));paragraphs.forEach(x=>n.append(el('p',x)));if(steps){const list=el('ol','');steps.forEach(x=>list.append(el('li',x)));n.append(list);}return n;}
+ const topics=[
+ ['first-note','90초 첫 노트',['새 노트를 눌러 한 문장을 쓰세요. 제목은 나중에 정해도 됩니다. 다른 노트를 열었다가 돌아와 문장이 남아 있는지 확인하세요.','자동 저장은 이 브라우저 저장입니다. 기기 고장에 대비하려면 별도 백업이 필요합니다.']],
+ ['find','검색·태그·노트북',['노트북은 큰 묶음(예: 업무), 태그는 여러 노트를 가로지르는 주제(예: 회의)입니다.','검색 예: tag:회의 has:attachment. 결과가 없으면 검색어 줄이기 → 태그 해제 → 노트북 전체 선택 순서로 확인하세요.','일치 이유는 제목·본문·태그·노트북·첨부 이름·내부 링크를 구분합니다. 첨부 내부 글자 검색을 뜻하지 않습니다.']],
+ ['templates','템플릿 15개와 내 템플릿',['빠른 메모, 회의록, 할 일, 학습 노트, 여행 계획, 주간 회고, 독서 기록, 프로젝트 계획, 의사결정, 연구 자료, 업무 인수인계, 아이디어, 일일 회고, 장기 보관, 문제 해결 중에서 선택하세요. 선택 전 노트를 만들지 않습니다.','템플릿 선택 화면에서 0을 입력하면 현재 노트를 사용자 템플릿으로 보관합니다. 개인정보가 포함된 예시는 먼저 지우세요.']],
+ ['attachments','첨부: 원본·미리보기·검색은 다릅니다',['원본 있음은 파일이 보관됐다는 뜻입니다. 형식에 맞는 프로그램에서 정상 재생되는지는 따로 확인하세요.','이미지·음성·동영상 일부는 브라우저에서 미리 볼 수 있습니다. PDF·Office 등은 원본을 내려받아 적합한 앱으로 확인하세요.','현재 검색은 첨부 파일명 중심입니다. 문서 내부 글자와 OCR 검색을 지원한다고 해석하지 마세요.']],
+ ['formats','내보내기 형식 선택',['일반 ZIP은 첨부를 포함한 이사용 묶음입니다. 전체 자료 이동·보존에서 지원하는 ZIP을 선택하고 빈 보관함에서 복원을 검증하세요.','암호화 백업은 암호를 알아야 열 수 있습니다. 암호를 잊으면 복구할 수 없으므로 파일과 다른 안전한 위치에 보관하세요.','JSON은 구조화된 자료 확인·이동에 쓰입니다. 해당 내보내기의 첨부 포함 안내를 확인하고 ZIP을 대신한다고 가정하지 마세요.']],
+ ['conflicts','충돌 비교: 안전한 선택 예시 3개',['PC와 폰에서 서로 다른 문장을 썼다면 양쪽을 보존한 채 필요한 문장을 새 노트에 합칩니다.','한쪽 본문은 같고 첨부가 다르면 첨부 참조 수와 원본을 각각 확인합니다.','날짜가 더 최신이어도 내용이 더 완전하다는 보장은 없습니다. 선택 전 본문과 첨부를 대조하세요. 선택 뒤에도 보존본은 금고에 남습니다.']],
+ ['enex','ENEX 이전 전·중·후',['전: 원본 ENEX를 별도 보관하고 첨부 포함 내보내기인지 확인하세요. 중: 분석 수량과 미리보기 후 적용하세요.','후: 실패는 원본 유지 후 재시도, 제외는 지원 형식·사유 확인, 중복은 기존 노트와 대조합니다. 완료 수량만 보고 원본을 지우지 마세요.']],
+ ['links','연결과 제목 언급',['들어오는 링크는 다른 노트가 현재 노트를 가리키는 관계입니다. 끊어진 링크는 대상이 없다는 뜻입니다.','연결되지 않은 언급은 현재 제목 두 글자 이상이 다른 본문에 문자 그대로 나타난 결과입니다. 의미 분석이나 자동 연결이 아닙니다.']],
+ ['large','대량 정리와 안전 모드',['묶음 정리는 최대 100개씩 목록을 표시하며 선택 → 미리보기 → 적용 순서입니다. 미리보기 후 자료가 바뀌면 다시 확인해야 합니다.','첨부 허브는 한 번에 한 원본을 검사하고 일시정지·이어서 검사를 제공합니다. 처리시간은 자료 크기와 기기 속도에 따라 달라지므로 임의 완료시각을 약속하지 않습니다.']],
+ ['device-recovery','기기 교체·브라우저 초기화·서비스 종료',['현재 기기에서 전체 사본을 만든 뒤 새 기기의 빈 보관함에서 복원하세요. 노트·첨부 수량과 대표 자료를 대조하세요.','복원 확인 전 기존 기기나 백업을 삭제하지 마세요. 서비스 화면이 없어져도 반출 파일과 이전 앱 사본을 별도로 보관하면 복구 선택지가 남습니다.']],
+ ['accessibility','키보드·화면낭독기·확대',['Tab은 다음 항목, Shift+Tab은 이전 항목, Enter는 실행, Esc는 대화창 닫기입니다. 본문으로 이동 링크로 탐색을 건너뛸 수 있습니다.','200% 확대에서도 본문과 버튼을 사용할 수 있도록 화면이 재배치됩니다. 실제 Android TalkBack 검증 완료 전 접근성 전체 완료를 보장하지 않습니다.']],
+ ['news','v22 변경·알려진 문제·이전 판 복귀',['새 기능: 15개 템플릿, 도움말 검색, 목적·숙련도 설정, 묶음 정리, 첨부 상태 검사, 문의용 진단, 복구 안내.','알려진 미검증: 실제 PC↔Android Drive 왕복, 실제 TalkBack 대표 과업, 비개발자 사용성, 운영 문의·훈련.','업데이트 전 전체 반출을 보관하세요. v21로 돌아가도 v22에서 작성한 자료가 자동 이동하지 않습니다. 먼저 반출·호환 여부를 확인하세요.']]
+ ];
+ topics.forEach(([id,title,body])=>$('articles').append(card(id,title,body)));
+ function search(){const q=$('helpSearch').value.trim().toLocaleLowerCase();let count=0;document.querySelectorAll('article.card').forEach(n=>{n.hidden=!!q&&!n.textContent.toLocaleLowerCase().includes(q);if(!n.hidden)count++;});$('helpSearchResult').textContent=count?count+'개 도움말을 찾았습니다.':'결과가 없습니다. 검색어를 줄이거나 초기화하세요.';}
+ $('helpSearch').addEventListener('input',search);$('helpClear').onclick=()=>{$('helpSearch').value='';search();$('helpSearch').focus();};
+ const historyKey='noteplusp-v22-help-history-v1',historyLabel=el('label',' 이 기기에 최근 도움말 보관 (선택)'),historyToggle=document.createElement('input'),historyList=el('div','');historyToggle.type='checkbox';historyLabel.prepend(historyToggle);$('search').append(historyLabel,historyList);let history=[];
+ try{const saved=JSON.parse(localStorage.getItem(historyKey));if(saved&&saved.enabled===true){historyToggle.checked=true;history=Array.isArray(saved.ids)?saved.ids.filter(x=>typeof x==='string').slice(0,8):[];}}catch{}
+ function renderHistory(){historyList.replaceChildren(el('p','최근 도움말 — 검색어·노트 내용은 보관하지 않습니다.'));history.forEach(id=>{const target=document.getElementById(id);if(!target||!target.matches('article.card'))return;const a=el('a',target.querySelector('h3').textContent);a.href='#'+id;a.style.marginRight='12px';historyList.append(a);});}
+ function saveHistory(id){if(!historyToggle.checked)return;if(id&&document.getElementById(id)?.matches('article.card'))history=[id,...history.filter(x=>x!==id)].slice(0,8);try{localStorage.setItem(historyKey,JSON.stringify({enabled:true,ids:history}));}catch{}renderHistory();}
+ historyToggle.onchange=()=>{if(historyToggle.checked)saveHistory();else{history=[];try{localStorage.removeItem(historyKey);}catch{}renderHistory();}};
+ document.addEventListener('click',event=>{const article=event.target.closest('article.card');if(article)saveHistory(article.id);});window.addEventListener('hashchange',()=>saveHistory(location.hash.slice(1)));renderHistory();
+ fetch('content/content-ko-v1.json').then(r=>{if(!r.ok)throw Error();return r.json();}).then(data=>{data.coreJourneys.forEach(x=>$('coreJourneys').append(card('core-'+x.id,x.title,[],x.steps)));data.journeys.forEach(x=>$('journeys').append(card('journey-'+x.id,x.title,[x.summary],x.steps)));data.terms.forEach(x=>$('terms').append(card('term-'+x.id,x.title,[x.description])));data.errors.forEach(x=>{const n=card('error-'+x.id,x.title,['가능한 원인: '+x.cause,'자료 영향: 저장 여부를 확인하기 전에는 창을 닫거나 원본을 지우지 마세요.','지금 할 일: '+x.action]);const a=el('a','이 방법으로 해결되지 않으면 지원 안내');a.href='support.html';n.append(a);$('errors').append(n);});search();if(location.hash){const target=document.getElementById(decodeURIComponent(location.hash.slice(1)));if(target)target.scrollIntoView();}}).catch(()=>{$('helpSearchResult').textContent='일부 도움말 자료를 불러오지 못했습니다. 아래 기본 안내는 사용할 수 있습니다. 연결 후 새로고침하세요.';});
+}());

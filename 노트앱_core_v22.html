@@ -1819,7 +1819,8 @@ function renderList(){
     ui.query ? '검색: "'+ui.query+'"' : ui.trash ? "휴지통" : ui.tag ? "# "+ui.tag : ui.notebook==="all" ? "전체 노트" : ui.notebook;
   document.getElementById("listCount").textContent = notes.length+"개";
   if(notes.length===0){
-    box.innerHTML='<div class="empty">'+(ui.trash?"휴지통이 비어 있습니다.":"노트가 없습니다.<br>왼쪽 <b>새 노트</b>로 시작하세요.")+"</div>"; return;
+    var emptyMessage=ui.trash?"휴지통이 비어 있습니다.<br>삭제한 노트가 없다면 정상입니다.":(ui.query?"검색 결과가 없습니다.<br>검색어를 줄이거나 태그·저장 필터를 해제해 보세요.":"노트가 없습니다.<br>왼쪽 <b>새 노트</b> 또는 <b>템플릿</b>으로 시작하세요.");
+    box.innerHTML='<div class="empty">'+emptyMessage+'<br><a href="help.html#recovery" target="_blank" rel="noopener">도움말 보기</a></div>'; return;
   }
   notes.slice(v22ListPage*pageSize,(v22ListPage+1)*pageSize).forEach(function(n){
     var row=document.createElement("div");
@@ -2640,7 +2641,14 @@ document.getElementById("storageBtn").onclick=function(){
   var ids=[];allStoredNotes().forEach(function(note){normalizeAttachmentIds(note.attachmentIds).forEach(function(id){if(ids.indexOf(id)<0)ids.push(id);});});
   Promise.all(ids.map(getAttachmentRecord)).then(function(items){var bytes=items.reduce(function(sum,item){return sum+(item&&item.blob?item.blob.size:0);},0);var message="활성 노트 "+state.notes.length+"개 · 휴지통 "+(state.trash||[]).length+"개 · 첨부 "+ids.length+"개("+formatBytes(bytes)+")";if(navigator.storage&&navigator.storage.estimate){navigator.storage.estimate().then(function(e){var ratio=e.quota?(e.usage||0)/e.quota:0;setBackupStatus(message+" · 브라우저 사용량 "+formatBytes(e.usage||0)+" / 한도 "+formatBytes(e.quota||0)+(ratio>=.85?" · 공간이 거의 찼습니다. 암호화 백업 후 정리를 권장합니다.":ratio>=.65?" · 저장소 사용량이 높습니다.":""));});}else setBackupStatus(message);});
 };
-var DEFAULT_TEMPLATES=[{name:"회의록",title:"회의 제목",bodyHtml:"<h1>회의 목표</h1><div>• 참석자: </div><div>• 결정: </div><h2>할 일</h2><div><input type=\"checkbox\">&nbsp;</div>"},{name:"주간 회고",title:"주간 회고",bodyHtml:"<h1>잘한 점</h1><div><br></div><h1>배운 점</h1><div><br></div><h1>다음 주</h1><div><input type=\"checkbox\">&nbsp;</div>"},{name:"빠른 메모",title:"",bodyHtml:"<div><br></div>"}];
+var DEFAULT_TEMPLATES=[
+ {name:"빠른 메모",title:"",bodyHtml:"<div><br></div>"},
+ {name:"회의록",title:"회의 제목",bodyHtml:"<h1>회의 목표</h1><div>• 참석자: </div><div>• 결정: </div><h2>할 일</h2><div><input type=\"checkbox\">&nbsp;</div>"},
+ {name:"할 일",title:"할 일",bodyHtml:"<h1>가장 중요한 일</h1><div><input type=\"checkbox\">&nbsp;</div><h2>나중에 할 일</h2><div><input type=\"checkbox\">&nbsp;</div>"},
+ {name:"학습 노트",title:"학습 주제",bodyHtml:"<h1>한 문장 요약</h1><div><br></div><h2>핵심 개념</h2><div><br></div><h2>복습 질문</h2><div><br></div>"},
+ {name:"여행 계획",title:"여행 계획",bodyHtml:"<h1>일정</h1><div><br></div><h2>예약 정보</h2><div><br></div><h2>준비물</h2><div><input type=\"checkbox\">&nbsp;</div>"},
+ {name:"주간 회고",title:"주간 회고",bodyHtml:"<h1>잘한 점</h1><div><br></div><h1>배운 점</h1><div><br></div><h1>다음 주</h1><div><input type=\"checkbox\">&nbsp;</div>"}
+];
 function createFromTemplate(t){var now=Date.now(),nb=ui.notebook!=="all"?ui.notebook:(state.notebooks[0]||"개인");var n={id:uid(),title:t.title||"",body:"",bodyHtml:sanitizeExternalHtml(t.bodyHtml||""),notebook:nb,tags:ui.tag?[ui.tag]:[],attachmentIds:[],favorite:false,history:[],updated:now,created:now};var box=document.createElement("div");box.innerHTML=n.bodyHtml;n.body=box.innerText;state.notes.unshift(n);ui.selectedId=n.id;ui.trash=false;persist();render();setMobileView("editor");}
 document.getElementById("templateBtn").onclick=function(){
   var prefs=state.preferences||(state.preferences={savedSearches:[],templates:[],sync:{version:1,deviceId:uid(),updatedAt:Date.now(),pendingOps:[],conflicts:[]},snapshots:[]}),custom=prefs.templates||[],templates=DEFAULT_TEMPLATES.concat(custom),menu="0. 현재 노트를 사용자 템플릿으로 저장\n"+templates.map(function(t,index){return (index+1)+". "+t.name+(index>=DEFAULT_TEMPLATES.length?" (사용자)":"");}).join("\n");
@@ -3510,6 +3518,7 @@ storageReady.then(function(){if(v22ShouldShowWelcome(v22FreshProfile,state.prefe
  <button id="v22GoCloud" type="button">Drive 연결·백업 화면</button><button id="v22StatusClose" type="button">닫기</button>
 </dialog>
 <script>
+function v22VaultItems(data){var value=data.preferences&&data.preferences.conflictVaultV1;return Array.isArray(value)?value.filter(function(c){return c&&typeof c.conflictId==='string'&&c.localCopy&&c.remoteCopy;}):[];}
 var v22Status={lastLocalSaveAt:0,lastBackupAt:0,lastBackupId:null,pendingCount:0,localState:'loading'};
 document.querySelectorAll('button[title]').forEach(function(button){if(!button.hasAttribute('aria-label'))button.setAttribute('aria-label',button.title);});
 function v22ValidStatusTime(value){return Number.isFinite(value)&&value>0&&value<=Date.now();}
@@ -3557,7 +3566,6 @@ window.addEventListener('online',v22RenderStatus);window.addEventListener('offli
 <dialog id="v22ConflictDialog" class="v22-dialog" aria-labelledby="v22ConflictTitle"><h2 id="v22ConflictTitle">충돌 금고</h2><p>양쪽 본문과 첨부는 해결 전 자동 삭제하지 않습니다. 지금 보이는 노트와 별도로 보관됩니다.</p><div id="v22ConflictItems"></div><button type="button" id="v22ConflictClose">닫기</button></dialog>
 <script>
 function v22VersionIndex(data){var map=new Map(),latest=Date.now()+300000;function add(n,trash){if(!n||typeof n.id!=='string'||!n.id.trim()||map.has(n.id))throw new Error('중복 또는 잘못된 노트 식별자');var updated=Number(n.updated);if(!Number.isFinite(updated)||updated<=0||updated>latest)throw new Error('노트 수정 시각을 확인할 수 없습니다. 자료를 변경하지 않았습니다.');map.set(n.id,{note:n,trash:trash});}(data.notes||[]).forEach(function(n){add(n,false);});(data.trash||[]).forEach(function(n){add(n,true);});return map;}
-function v22VaultItems(data){var value=data.preferences&&data.preferences.conflictVaultV1;return Array.isArray(value)?value.filter(function(c){return c&&typeof c.conflictId==='string'&&c.localCopy&&c.remoteCopy;}):[];}
 function v22SwapState(expected,next){return new Promise(function(resolve,reject){var tx=noteDb.transaction('app_state','readwrite'),store=tx.objectStore('app_state'),get=store.get('root');get.onsuccess=function(){if(!get.result||stateSignature(migrateState(get.result))!==expected||stateSignature(state)!==expected){tx.abort();return;}store.put(cloneState(next),'root');};tx.oncomplete=resolve;tx.onabort=function(){reject(new Error('다른 편집 또는 저장 실패가 감지되어 원본을 덮어쓰지 않았습니다.'));};tx.onerror=function(){reject(tx.error||new Error('저장 실패'));};});}
 function v22RestoreDiff(local,remote){
  var a=v22VersionIndex(local),b=v22VersionIndex(remote),result={added:[],removed:[],changed:[],unchanged:0};
@@ -3658,7 +3666,7 @@ async function v22ApplyPortable(prepared,expectedSignature){
  state=next;v22FreshProfile=false;rememberAttachments(prepared.items);ui.trash=false;ui.notebook='all';ui.selectedId=state.notes[0]?.id||null;render();return true;
 }
 var v22DataButton=document.createElement('button');v22DataButton.type='button';v22DataButton.id='v22DataOpen';v22DataButton.className='backup-btn full';v22DataButton.textContent='전체 자료 이동·보존';v22DataButton.onclick=function(){v22ShowDialog(document.getElementById('v22DataDialog'));};document.getElementById('exportBtn').parentElement.after(v22DataButton);
-var v22Trust=document.createElement('nav');v22Trust.setAttribute('aria-label','서비스 정책 및 지원');[['pricing.html','요금'],['data-rights.html','자료 보존'],['privacy.html','개인정보'],['terms.html','이용약관'],['support.html','지원'],['status.html','출시 상태']].forEach(function(item){var link=document.createElement('a');link.href=item[0];link.target='_blank';link.rel='noopener';link.textContent=item[1]+' (초안)';link.style.cssText='display:inline-block;padding:12px 8px';v22Trust.append(link);});v22DataButton.after(v22Trust);
+var v22Trust=document.createElement('nav');v22Trust.setAttribute('aria-label','서비스 정책 및 지원');[['help.html','도움말',false],['pricing.html','요금',true],['data-rights.html','자료 보존',true],['privacy.html','개인정보',true],['terms.html','이용약관',true],['support.html','지원',true],['status.html','출시 상태',true]].forEach(function(item){var link=document.createElement('a');link.href=item[0];link.target='_blank';link.rel='noopener';link.textContent=item[1]+(item[2]?' (초안)':'');link.style.cssText='display:inline-block;padding:12px 8px';v22Trust.append(link);});v22DataButton.after(v22Trust);
 document.getElementById('v22DataClose').onclick=function(){v22CloseDialog(document.getElementById('v22DataDialog'));};
 document.getElementById('v22PortablePick').onclick=function(){document.getElementById('v22PortableFile').click();};
 document.getElementById('v22PortableExport').onclick=async function(){if(v22PortableBusy)return;v22PortableBusy=true;var status=document.getElementById('v22PortableStatus');status.textContent='전체 자료와 첨부를 대조 중입니다…';try{var zip=await v22ExportPortable();downloadBlob(zip,'noteplusp-portable.zip');v22RecordFullExport('portable-zip',zip.size,Object.keys(referencedAttachmentIdsIncludingSnapshots()).length);status.textContent='전체 ZIP 내보내기 완료. 암호화되지 않은 파일을 안전하게 보관하세요.';}catch(e){status.textContent='내보내기 중단: '+e.message;}finally{v22PortableBusy=false;}};
@@ -3669,7 +3677,7 @@ document.getElementById('v22PortableFile').onchange=async function(e){var file=e
  <h2 id="v22AccountTitle">내 계정</h2>
  <p id="v22AccountIdentity" role="status" aria-live="polite">Google 로그인 상태를 확인 중입니다.</p>
  <p id="v22AccountAuthHelp">로그인만으로 노트나 첨부는 전송되지 않습니다. 백업 또는 복원을 직접 눌러야 합니다.</p>
- <div id="v22AccountSignedOut"><button id="v22AccountSignIn" type="button">Google로 로그인·무료 가입</button></div>
+ <div id="v22AccountSignedOut"><button id="v22AccountSignIn" type="button">Google Drive 연결</button></div>
  <div id="v22AccountSignedIn" hidden><button id="v22AccountSignOut" type="button">로그아웃</button></div>
  <hr>
  <label for="v22AccountDisplayName">이 앱에서 쓸 표시 이름</label>
@@ -3694,7 +3702,7 @@ document.getElementById('v22AccountDisplayName').value=v22AccountSettings.displa
 function v22RenderAccount(detail){var cloud=detail&&typeof detail==='object'?detail:cloudUiState||{},user=cloud.user||null,busy=cloud.phase==='authenticating'||cloud.phase==='auth-returning',configured=cloud.configured!==false;
  v22AccountIdentity.textContent=busy?'Google 로그인 상태를 확인하고 있습니다.':user?('연결됨: '+v22MaskedCloudAccount(user)):'로그인하지 않음';
  document.getElementById('v22AccountSignedOut').hidden=!!user;document.getElementById('v22AccountSignedIn').hidden=!user;
- var signIn=document.getElementById('v22AccountSignIn');signIn.disabled=busy||!configured;signIn.textContent=busy?'Google 로그인 확인 중…':'Google로 로그인·무료 가입';
+ var signIn=document.getElementById('v22AccountSignIn');signIn.disabled=busy||!configured;signIn.textContent=busy?'Google 연결 확인 중…':'Google Drive 연결';
  document.getElementById('v22AccountSignOut').disabled=busy||!user;
  if(cloud.phase==='error')v22AccountResult.textContent='연결 설정 또는 네트워크를 확인한 뒤 다시 시도하세요. 기존 로컬 자료는 그대로입니다.';
 }
@@ -3887,5 +3895,6 @@ document.getElementById('v22TelemetryClose').onclick=function(){v22CloseDialog(d
 var v22TelemetryBasePersist=persist;persist=function(){var started=performance.now();return v22TelemetryBasePersist().then(function(ok){window.noteplusTelemetry.record({event:'local_save',stage:ok?'success':'error',status:ok?'ok':'error',errorCode:ok?'NONE':'LOCAL_SAVE',durationMs:performance.now()-started,count:(state.notes||[]).length});return ok;}).catch(function(error){window.noteplusTelemetry.record({event:'local_save',stage:'error',status:'error',errorCode:'LOCAL_SAVE',durationMs:performance.now()-started,count:(state.notes||[]).length});throw error;});};
 storageReady.then(function(ok){window.noteplusTelemetry.record({event:'app_open',stage:ok?'success':'error',status:ok?'ok':'error',errorCode:ok?'NONE':'LOCAL_OPEN',durationMs:0,count:(state.notes||[]).length});});
 </script>
+<script src="noteplus-advanced-v22.js"></script>
 </body>
 </html>
