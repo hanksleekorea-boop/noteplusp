@@ -10,6 +10,7 @@ $tests = @(
     "tests/test_v22_content_stage1_v1.mjs",
     "tests/test_v22_advanced_workspace_v1.mjs",
     "tests/test_v22_advanced_recovery_v1.mjs",
+    "tests/test_v22_stage3_contracts_v1.mjs",
     "tests/test_v22_quick_capture_v1.mjs",
     "tests/test_v22_personal_workspace_v1.mjs",
     "tests/test_v22_search_explanation_v1.mjs",

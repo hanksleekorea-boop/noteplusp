@@ -22,5 +22,5 @@ assert.match(core,/help\.html#recovery/);
 assert.match(core,/Google Drive 연결/);
 assert.doesNotMatch(core,/Google로 로그인·무료 가입/);
 assert.match(help,/id="start"/);assert.match(help,/id="recovery"/);
-assert.match(worker,/noteplusp-v22-shell-6/);assert.match(worker,/\.\/help\.html/);assert.match(worker,/\.\/content\/content-ko-v1\.json/);
+assert.match(worker,/noteplusp-v22-shell-7/);assert.match(worker,/\.\/help\.html/);assert.match(worker,/\.\/content\/content-ko-v1\.json/);assert.match(worker,/\.\/noteplus-stage3-v22\.js/);
 console.log('PASS v22 content stage 1 has 6 journeys, 20 recovery cards, 6 templates, contextual empty states, accurate Drive wording and offline help');
